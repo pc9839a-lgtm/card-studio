@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const STORAGE_KEY = 'business_card_studio_state_v16';
+  const STORAGE_KEY = 'business_card_studio_state_v15';
 
   const inputs = {
     company: document.getElementById('input-company'),
@@ -169,9 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company || '';
+    elements.frontCompany.textContent = company || ' ';
     elements.frontCompany.classList.toggle('is-empty', !company);
-    elements.backCompany.textContent = company || '';
+    elements.backCompany.textContent = company || ' ';
     elements.backCompany.classList.toggle('is-empty', !company);
 
     elements.frontName.textContent = name || '이름';
@@ -393,9 +393,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const clone = elements.cardFront.cloneNode(true);
       clone.removeAttribute('id');
       clone.className = `business-card ${option.value} front-face is-compare-card`;
-      clone.style.width = '100%';
-      clone.style.maxWidth = 'none';
-      clone.style.aspectRatio = '9 / 5';
 
       const cloneLogo = clone.querySelector('.preview-logo-front');
       if (cloneLogo) cloneLogo.style.display = 'none';
@@ -436,17 +433,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function waitForImages(root) {
-    const images = Array.from(root.querySelectorAll('img'));
+  async function waitForImages(scope) {
+    const images = Array.from(scope.querySelectorAll('img')).filter((img) => img.src && img.style.display !== 'none');
     await Promise.all(images.map((img) => {
-      if (!img.getAttribute('src')) return Promise.resolve();
-      if (img.complete) return Promise.resolve();
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      if (typeof img.decode === 'function') {
+        return img.decode().catch(() => new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        }));
+      }
       return new Promise((resolve) => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
       });
     }));
+  }
+
+  function lockCloneVisualPosition(sourceCard, sourceEl, cloneEl) {
+    if (!sourceEl || !cloneEl) return;
+    const sourceStyle = window.getComputedStyle(sourceEl);
+    if (sourceStyle.display === 'none' || sourceStyle.visibility === 'hidden') {
+      cloneEl.style.display = 'none';
+      return;
+    }
+
+    const cardRect = sourceCard.getBoundingClientRect();
+    const elRect = sourceEl.getBoundingClientRect();
+    const left = elRect.left - cardRect.left;
+    const top = elRect.top - cardRect.top;
+
+    cloneEl.style.position = 'absolute';
+    cloneEl.style.left = `${left}px`;
+    cloneEl.style.top = `${top}px`;
+    cloneEl.style.width = `${elRect.width}px`;
+    cloneEl.style.height = `${elRect.height}px`;
+    cloneEl.style.maxWidth = 'none';
+    cloneEl.style.maxHeight = 'none';
+    cloneEl.style.transform = 'none';
+    cloneEl.style.margin = '0';
+  }
+
+  function createExportClone(card) {
+    const cardRect = card.getBoundingClientRect();
+    const clone = card.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('export-card-clone');
+    clone.style.width = `${cardRect.width}px`;
+    clone.style.height = `${cardRect.height}px`;
+    clone.style.maxWidth = 'none';
+    clone.style.aspectRatio = 'unset';
+    clone.style.margin = '0';
+    clone.style.position = 'relative';
+    clone.style.overflow = 'hidden';
+
+    lockCloneVisualPosition(card, card.querySelector('.preview-logo-front'), clone.querySelector('.preview-logo-front'));
+    lockCloneVisualPosition(card, card.querySelector('.preview-logo-back'), clone.querySelector('.preview-logo-back'));
+    lockCloneVisualPosition(card, card.querySelector('.front-inserted-img'), clone.querySelector('.front-inserted-img'));
+    lockCloneVisualPosition(card, card.querySelector('.back-inserted-img'), clone.querySelector('.back-inserted-img'));
+
+    return clone;
   }
 
   async function downloadCard(cardElement, filename, button) {
@@ -454,42 +500,29 @@ document.addEventListener('DOMContentLoaded', () => {
     button.disabled = true;
     button.textContent = '이미지 저장 중...';
 
-    const rect = cardElement.getBoundingClientRect();
-    const width = Math.max(450, Math.round(rect.width));
-    const height = Math.max(250, Math.round(rect.height));
     const sandbox = document.createElement('div');
-    sandbox.className = 'export-sandbox';
-    sandbox.style.width = `${width}px`;
-    sandbox.style.height = `${height}px`;
-
-    const clone = cardElement.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.style.width = `${width}px`;
-    clone.style.height = `${height}px`;
-    clone.style.maxWidth = 'none';
-    clone.style.aspectRatio = 'auto';
-    clone.style.margin = '0';
-    clone.style.transform = 'none';
-
-    const bg = getComputedStyle(cardElement).backgroundColor || '#ffffff';
-    clone.style.backgroundColor = bg;
-    sandbox.style.backgroundColor = bg;
-
-    sandbox.appendChild(clone);
+    sandbox.style.position = 'fixed';
+    sandbox.style.left = '-10000px';
+    sandbox.style.top = '0';
+    // sandbox.style.opacity = '0'; <--- 이 부분이 삭제되었습니다.
+    sandbox.style.pointerEvents = 'none';
+    sandbox.style.zIndex = '-1';
     document.body.appendChild(sandbox);
 
     try {
-      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      const clone = createExportClone(cardElement);
+      sandbox.appendChild(clone);
       await waitForImages(clone);
-      const canvas = await html2canvas(sandbox, {
-        width,
-        height,
-        scale: 2,
+      await document.fonts.ready;
+
+      const canvas = await html2canvas(clone, {
+        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
         useCORS: true,
-        backgroundColor: bg,
-        logging: false,
-        removeContainer: true
+        backgroundColor: null,
+        width: Math.round(clone.getBoundingClientRect().width),
+        height: Math.round(clone.getBoundingClientRect().height)
       });
+
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
@@ -583,6 +616,12 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.removeItem(STORAGE_KEY);
     setStatus('초기화했습니다.', 'warning');
   }
+
+  [inputs.frontLogoFile, inputs.backLogoFile, inputs.frontImageFile, inputs.backImageFile].forEach((input) => {
+    input.addEventListener('click', () => {
+      input.value = '';
+    });
+  });
 
   paletteButtons.forEach((button) => {
     button.addEventListener('click', () => {
