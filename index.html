@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>프로페셔널 명함 생성기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="controls">
+      <div class="simple-header">
+        <h1>Business Card Studio</h1>
+      </div>
+
+      <div class="control-group quick-start-group">
+        <h3>빠른 시작</h3>
+        <div class="preset-buttons">
+          <button id="btn-fill-sample" class="btn btn-outline" type="button">샘플 채우기</button>
+          <button id="btn-reset-all" class="btn btn-outline" type="button">전체 초기화</button>
+        </div>
+        <div class="palette-row">
+          <button class="palette-btn" type="button" data-front="#ffffff" data-back="#ffffff" data-text="#1f2937" data-point="#2563eb">블루</button>
+          <button class="palette-btn" type="button" data-front="#ffffff" data-back="#ffffff" data-text="#1f2937" data-point="#2a5a43">그린</button>
+          <button class="palette-btn" type="button" data-front="#fff7ed" data-back="#ffffff" data-text="#7c2d12" data-point="#f97316">웜</button>
+          <button class="palette-btn" type="button" data-front="#faf5ff" data-back="#ffffff" data-text="#3b0764" data-point="#a855f7">퍼플</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>기본 정보</h3>
+        <input type="text" id="input-company" placeholder="회사/브랜드명">
+        <input type="text" id="input-position" placeholder="직책/직위">
+        <input type="text" id="input-name" placeholder="이름">
+        <input type="text" id="input-phone" placeholder="연락처">
+        <input type="email" id="input-email" placeholder="이메일">
+        <input type="text" id="input-address" placeholder="주소">
+        <input type="text" id="input-extra" placeholder="추가정보">
+        <input type="text" id="input-slogan" placeholder="뒷면 슬로건">
+      </div>
+
+      <div class="control-group">
+        <h3>앞면 로고</h3>
+        <div class="flex-row image-action-row">
+          <label class="file-label flex-grow">로고 업로드<input type="file" id="input-front-logo" accept="image/*"></label>
+          <button id="btn-delete-front-logo" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+        </div>
+        <div class="sub-panel">
+          <div class="range-wrap">
+            <label>로고 크기 <span id="val-front-logo-size">110px</span></label>
+            <input type="range" id="range-front-logo-size" min="40" max="220" value="110">
+          </div>
+          <div class="range-wrap">
+            <label>가로 위치 <span id="val-front-logo-x">50%</span></label>
+            <input type="range" id="range-front-logo-x" min="0" max="100" value="50">
+          </div>
+          <div class="range-wrap">
+            <label>세로 위치 <span id="val-front-logo-y">18%</span></label>
+            <input type="range" id="range-front-logo-y" min="0" max="100" value="18">
+          </div>
+          <div class="align-buttons">
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-logo" data-align="left">좌측</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-logo" data-align="center">가운데</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-logo" data-align="right">우측</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>뒷면 로고</h3>
+        <div class="flex-row image-action-row">
+          <label class="file-label flex-grow">로고 업로드<input type="file" id="input-back-logo" accept="image/*"></label>
+          <button id="btn-delete-back-logo" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+        </div>
+        <div class="sub-panel">
+          <div class="range-wrap">
+            <label>로고 크기 <span id="val-back-logo-size">110px</span></label>
+            <input type="range" id="range-back-logo-size" min="40" max="220" value="110">
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>텍스트 설정</h3>
+        <div class="range-wrap">
+          <label>이름 크기 <span id="val-size">24px</span></label>
+          <input type="range" id="range-size" min="14" max="40" value="24">
+        </div>
+        <div class="range-wrap">
+          <label>이름 굵기 <span id="val-weight">700</span></label>
+          <input type="range" id="range-weight" min="300" max="900" step="100" value="700">
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>앞면 이미지 & 오버레이</h3>
+        <div class="flex-row image-action-row">
+          <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-front-image" accept="image/*"></label>
+          <button id="btn-delete-front-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+        </div>
+        <div id="front-image-controls" class="sub-panel" style="display:none;">
+          <div class="range-wrap">
+            <label>크기 조절 <span id="val-front-img-size">100%</span></label>
+            <input type="range" id="range-front-img-size" min="10" max="200" value="100">
+          </div>
+          <div class="range-wrap">
+            <label>가로 위치 <span id="val-front-img-x">50%</span></label>
+            <input type="range" id="range-front-img-x" min="0" max="100" value="50">
+          </div>
+          <div class="range-wrap">
+            <label>세로 위치 <span id="val-front-img-y">50%</span></label>
+            <input type="range" id="range-front-img-y" min="0" max="100" value="50">
+          </div>
+          <div class="align-buttons">
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-image" data-align="left">좌측</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-image" data-align="center">가운데</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="front-image" data-align="right">우측</button>
+          </div>
+        </div>
+        <div class="range-wrap mt-2">
+          <label>오버레이 <span id="val-front-overlay">0%</span></label>
+          <div class="flex-row overlay-row">
+            <input type="color" id="color-front-overlay" value="#000000">
+            <input type="range" id="range-front-overlay" min="0" max="1" step="0.1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>뒷면 이미지 & 오버레이</h3>
+        <div class="flex-row image-action-row">
+          <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-back-image" accept="image/*"></label>
+          <button id="btn-delete-back-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+        </div>
+        <div id="back-image-controls" class="sub-panel" style="display:none;">
+          <div class="range-wrap">
+            <label>크기 조절 <span id="val-back-img-size">100%</span></label>
+            <input type="range" id="range-back-img-size" min="10" max="200" value="100">
+          </div>
+          <div class="range-wrap">
+            <label>가로 위치 <span id="val-back-img-x">50%</span></label>
+            <input type="range" id="range-back-img-x" min="0" max="100" value="50">
+          </div>
+          <div class="range-wrap">
+            <label>세로 위치 <span id="val-back-img-y">50%</span></label>
+            <input type="range" id="range-back-img-y" min="0" max="100" value="50">
+          </div>
+          <div class="align-buttons">
+            <button type="button" class="btn btn-outline btn-sm" data-target="back-image" data-align="left">좌측</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="back-image" data-align="center">가운데</button>
+            <button type="button" class="btn btn-outline btn-sm" data-target="back-image" data-align="right">우측</button>
+          </div>
+        </div>
+        <div class="range-wrap mt-2">
+          <label>오버레이 <span id="val-back-overlay">0%</span></label>
+          <div class="flex-row overlay-row">
+            <input type="color" id="color-back-overlay" value="#000000">
+            <input type="range" id="range-back-overlay" min="0" max="1" step="0.1" value="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>스타일 & 템플릿</h3>
+        <div class="actions-inline template-row">
+          <select id="input-template" class="flex-grow">
+            <option value="template-modern">1. 베이직 모던</option>
+            <option value="template-pet">2. 미니멀 스튜디오</option>
+            <option value="template-transport">3. 볼드 임팩트</option>
+            <option value="template-clinic">4. 엘레강스 커브</option>
+            <option value="template-classic">5. 클래식 센터</option>
+            <option value="template-split">6. 하프 앤 하프</option>
+            <option value="template-accent">7. 사이드 액센트</option>
+            <option value="template-bottom">8. 바텀 포인트</option>
+            <option value="template-dark">9. 다크 앤 시크</option>
+            <option value="template-creative">10. 크리에이티브 라인</option>
+          </select>
+          <button id="btn-compare" class="btn btn-outline" type="button">한눈에 비교</button>
+        </div>
+
+        <select id="input-font">
+          <option value="'Pretendard', sans-serif">프리텐다드</option>
+          <option value="'Noto Sans KR', sans-serif">노토 산스</option>
+          <option value="'Nanum Myeongjo', serif">나눔 명조</option>
+          <option value="'Gowun Dodum', sans-serif">고운 돋움</option>
+        </select>
+
+        <div class="color-picker-group split-color-group">
+          <div class="color-item">
+            <label>앞면 배경</label>
+            <input type="color" id="color-front-bg" value="#ffffff">
+          </div>
+          <div class="color-item">
+            <label>뒷면 배경</label>
+            <input type="color" id="color-back-bg" value="#ffffff">
+          </div>
+          <div class="color-item">
+            <label>텍스트</label>
+            <input type="color" id="color-text" value="#333333">
+          </div>
+          <div class="color-item">
+            <label>포인트</label>
+            <input type="color" id="color-point" value="#2a5a43">
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="btn-download-front" class="btn btn-primary" type="button">앞면 다운로드</button>
+        <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
+        <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
+      </div>
+    </aside>
+
+    <main class="preview-area" id="preview-area">
+      <div class="preview-stage">
+        <div class="preview-toolbar">
+          <div>
+            <strong>실시간 미리보기</strong>
+            <p id="preview-template-label">현재 템플릿: 1. 베이직 모던</p>
+          </div>
+        </div>
+
+        <div class="cards-wrapper" id="single-view">
+          <div class="card-section">
+            <div class="card-label">명함 앞면 (Front)</div>
+            <div id="card-front" class="business-card template-modern logo-align-center front-face">
+              <div class="card-custom-img-layer front-image-layer">
+                <img class="inserted-img front-inserted-img" src="" alt="">
+              </div>
+              <div class="card-overlay-layer front-overlay-layer"></div>
+              <div class="card-content front-content">
+                <div class="accent-shape"></div>
+                <img class="preview-logo preview-logo-front" src="" alt="앞면 로고" style="display:none;">
+                <div class="brand-area">
+                  <div class="preview-company">회사명</div>
+                </div>
+                <div class="info-area">
+                  <div class="name-wrap">
+                    <span class="preview-name">이름</span>
+                    <span class="preview-position">직책</span>
+                  </div>
+                  <div class="preview-divider"></div>
+                  <div class="contact-info">
+                    <div class="info-row"><span class="icon">T.</span><span class="preview-phone">연락처</span></div>
+                    <div class="info-row"><span class="icon">E.</span><span class="preview-email">이메일</span></div>
+                    <div class="info-row"><span class="icon">A.</span><span class="preview-address">주소</span></div>
+                    <div class="info-row"><span class="icon extra-icon">▶</span><span class="preview-extra">추가정보</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-section">
+            <div class="card-label">명함 뒷면 (Back)</div>
+            <div id="card-back" class="business-card template-modern back-face">
+              <div class="card-custom-img-layer back-image-layer">
+                <img class="inserted-img back-inserted-img" src="" alt="">
+              </div>
+              <div class="card-overlay-layer back-overlay-layer"></div>
+              <div class="card-content back-content">
+                <div class="accent-shape"></div>
+                <img class="preview-logo preview-logo-back" src="" alt="뒷면 로고" style="display:none;">
+                <div class="preview-company back-company">회사명</div>
+                <div class="preview-slogan back-slogan"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="compare-wrapper" id="compare-view" style="display:none;">
+          <div class="compare-header">
+            <h2>전체 템플릿 비교</h2>
+          </div>
+          <div class="compare-grid" id="compare-grid"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="./main.js"></script>
+</body>
+</html>
