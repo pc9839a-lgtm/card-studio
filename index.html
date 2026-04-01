@@ -210,7 +210,6 @@
       </div>
 
       <div class="actions">
-        <button id="btn-save-state" class="btn btn-outline" type="button">현재 설정 저장</button>
         <button id="btn-download-front" class="btn btn-primary" type="button">앞면 다운로드</button>
         <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
         <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
@@ -219,11 +218,6 @@
 
     <main class="preview-area" id="preview-area">
       <div class="preview-stage">
-        <div class="preview-notice" id="preview-notice">
-          <strong>공지사항</strong>
-          <p>현재 브라우저에서 작업 상태를 저장할 수 있습니다. 저장 후에도 다운로드 전에는 미리보기로 한 번 더 확인해 주세요.</p>
-        </div>
-
         <div class="preview-toolbar">
           <div>
             <strong>실시간 미리보기</strong>
@@ -289,13 +283,12 @@
     </main>
   </div>
 
-  <footer class="site-footer">
+  <footer class="site-footer" aria-label="사이트 정보">
     <div class="site-footer__inner">
-      <div class="site-footer__brand">웨이지 (wayzi)</div>
-      <div class="site-footer__meta">대표 김도윤 · 사업자번호 538-42-01450 · 문의 <a href="mailto:roadfor@kakao.com">roadfor@kakao.com</a></div>
+      <strong>웨이지 (wayzi)</strong>
+      <p>대표 김도윤 · 사업자번호 538-42-01450 · 문의 roadfor@kakao.com</p>
     </div>
   </footer>
-
   <script src="./main.js"></script>
 </body>
 </html>

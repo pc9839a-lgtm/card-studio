@@ -911,204 +911,72 @@ body {
 }
 
 
-/* ===== P0 hotfix v3 ===== */
-.export-sandbox {
-  position: fixed;
-  left: -10000px;
-  top: 0;
-  pointer-events: none;
-  z-index: -1;
-  visibility: visible !important;
-  opacity: 1 !important;
+/* ===== precision patch: compare/footer/export ===== */
+.compare-wrapper {
+  margin-top: 12px;
+  padding-bottom: 8px;
 }
 
-.preview-company.is-empty,
-.back-company.is-empty {
-  visibility: hidden;
+.compare-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+  gap: 20px !important;
+  max-width: 1200px !important;
 }
 
-.brand-area {
-  min-height: 22px;
-}
-
-.back-content .back-company {
-  min-height: 22px;
+.compare-item {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  align-items: stretch;
+  padding: 18px !important;
 }
 
 .compare-preview-stage {
   width: 100%;
   aspect-ratio: 9 / 5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  border-radius: 14px;
 }
 
 .is-compare-card {
-  width: 280px !important;
-  max-width: 280px !important;
-  height: auto !important;
-  aspect-ratio: 9 / 5;
+  width: 100% !important;
+  max-width: none !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border-radius: 14px !important;
   box-shadow: none !important;
-}
-
-#card-back.template-clinic.back-face {
-  background-color: var(--back-bg) !important;
-  color: var(--card-text) !important;
-}
-
-#card-back.template-clinic.back-face .card-content.back-content {
-  padding: 30px 35px !important;
-  justify-content: center !important;
-  align-items: center !important;
-  text-align: center !important;
-  gap: 10px !important;
-}
-
-#card-back.template-clinic.back-face .accent-shape {
-  display: none !important;
-}
-
-#card-back.template-clinic.back-face .preview-logo-back,
-#card-back.template-clinic.back-face .back-company,
-#card-back.template-clinic.back-face .back-slogan {
-  text-align: center !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-
-/* ===== requested fix v8 ===== */
-html, body {
-  height: auto !important;
-  min-height: 100%;
-}
-
-body {
-  overflow: auto !important;
-}
-
-.app-container {
-  min-height: 100vh;
-  height: auto !important;
-  align-items: flex-start;
-}
-
-.controls {
-  align-self: flex-start;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-.preview-area {
-  overflow: visible !important;
-  min-height: auto;
-  padding-bottom: 56px;
-}
-
-.preview-stage {
-  position: static !important;
-  top: auto !important;
-  width: 100%;
-  max-width: 1200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.preview-notice {
-  width: min(100%, 1160px);
-  margin-bottom: 16px;
-  padding: 16px 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(229, 231, 235, 0.92);
-  box-shadow: var(--shadow-soft);
-}
-
-.preview-notice strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 16px;
-}
-
-.preview-notice p {
-  margin: 0;
-  font-size: 13px;
-  color: var(--ui-muted);
-}
-
-.actions {
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.92) 18%, rgba(255,255,255,0.98) 100%);
-  padding-top: 12px;
-}
-
-#btn-save-state {
-  margin-bottom: 8px;
+  pointer-events: none !important;
+  margin: 0 !important;
 }
 
 .site-footer {
-  padding: 22px 20px 30px;
-  border-top: 1px solid rgba(229, 231, 235, 0.95);
-  background: rgba(255, 255, 255, 0.92);
+  width: 100%;
+  padding: 30px 20px 44px;
 }
 
 .site-footer__inner {
-  max-width: 1640px;
+  max-width: 1200px;
   margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #475569;
 }
 
-.site-footer__brand {
+.site-footer__inner strong {
   font-size: 15px;
   font-weight: 800;
-  margin-bottom: 6px;
+  color: #0f172a;
 }
 
-.site-footer__meta {
+.site-footer__inner p {
+  margin: 0;
   font-size: 13px;
-  color: var(--ui-muted);
-  line-height: 1.6;
-}
-
-.site-footer__meta a {
-  color: inherit;
-}
-
-.export-sandbox {
-  position: fixed;
-  left: 0;
-  top: -20000px;
-  width: 0;
-  height: 0;
-  overflow: visible;
-  pointer-events: none;
-  opacity: 1 !important;
-  visibility: visible !important;
-  z-index: 1;
-}
-
-.export-card-clone {
-  box-shadow: none !important;
-}
-
-@media (max-width: 1200px) {
-  .controls {
-    position: static;
-    height: auto;
-    overflow: visible;
-  }
-
-  .preview-area {
-    padding-top: 20px;
-  }
-
-  .actions {
-    position: static;
-    background: transparent;
-    padding-top: 0;
-  }
+  line-height: 1.7;
 }

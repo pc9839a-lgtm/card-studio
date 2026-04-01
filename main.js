@@ -49,8 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
     downloadFront: document.getElementById('btn-download-front'),
-    downloadBack: document.getElementById('btn-download-back'),
-    saveStateButton: document.getElementById('btn-save-state')
+    downloadBack: document.getElementById('btn-download-back')
   };
 
   const elements = {
@@ -120,14 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (type !== 'info') elements.statusBox.classList.add(type);
   }
 
-  function flashSavedMessage() {
-    setStatus('저장되었습니다.', 'success');
-    window.clearTimeout(flashSavedMessage._timer);
-    flashSavedMessage._timer = window.setTimeout(() => {
-      setStatus('준비 완료');
-    }, 1400);
-  }
-
   function saveState() {
     const saved = { ...state };
     persistIds.forEach((key) => {
@@ -178,10 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company || ' ';
-    elements.frontCompany.classList.toggle('is-empty', !company);
-    elements.backCompany.textContent = company || ' ';
-    elements.backCompany.classList.toggle('is-empty', !company);
+    elements.frontCompany.textContent = company;
+    elements.frontCompany.style.display = company ? 'block' : 'none';
+    elements.backCompany.textContent = company;
+    elements.backCompany.style.display = company ? 'block' : 'none';
 
     elements.frontName.textContent = name || '이름';
     elements.frontPosition.textContent = position;
@@ -386,49 +377,55 @@ document.addEventListener('DOMContentLoaded', () => {
     onMove: updateColorVars
   }));
 
-  function renderCompareGrid() {
-    elements.compareGrid.innerHTML = '';
-    Array.from(inputs.template.options).forEach((option) => {
-      const item = document.createElement('button');
-      item.type = 'button';
-      item.className = 'compare-item';
+  
+function renderCompareGrid() {
+  elements.compareGrid.innerHTML = '';
+  Array.from(inputs.template.options).forEach((option) => {
+    const item = document.createElement('button');
+    item.type = 'button';
+    item.className = 'compare-item';
 
-      const title = document.createElement('h3');
-      title.textContent = option.text;
+    const title = document.createElement('h3');
+    title.textContent = option.text;
 
-      const stage = document.createElement('div');
-      stage.className = 'compare-preview-stage';
+    const stage = document.createElement('div');
+    stage.className = 'compare-preview-stage';
 
-      const clone = elements.cardFront.cloneNode(true);
-      clone.removeAttribute('id');
-      clone.className = `business-card ${option.value} front-face is-compare-card`;
+    const clone = elements.cardFront.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.className = `business-card ${option.value} front-face is-compare-card`;
+    clone.style.width = '100%';
+    clone.style.height = '100%';
+    clone.style.maxWidth = 'none';
+    clone.style.aspectRatio = '9 / 5';
+    clone.style.margin = '0';
 
-      const cloneLogo = clone.querySelector('.preview-logo-front');
-      if (cloneLogo) cloneLogo.style.display = 'none';
-      const cloneImageLayer = clone.querySelector('.front-image-layer');
-      if (cloneImageLayer) cloneImageLayer.style.display = 'none';
-      const cloneOverlay = clone.querySelector('.front-overlay-layer');
-      if (cloneOverlay) cloneOverlay.style.display = 'none';
+    const cloneLogo = clone.querySelector('.preview-logo-front');
+    if (cloneLogo) cloneLogo.style.display = 'none';
+    const cloneImageLayer = clone.querySelector('.front-image-layer');
+    if (cloneImageLayer) cloneImageLayer.style.display = 'none';
+    const cloneOverlay = clone.querySelector('.front-overlay-layer');
+    if (cloneOverlay) cloneOverlay.style.display = 'none';
 
-      stage.appendChild(clone);
-      item.appendChild(title);
-      item.appendChild(stage);
+    stage.appendChild(clone);
+    item.appendChild(title);
+    item.appendChild(stage);
 
-      item.addEventListener('click', () => {
-        inputs.template.value = option.value;
-        applyTemplate(option.value);
-        saveState();
-        isCompareMode = false;
-        elements.compareView.style.display = 'none';
-        elements.singleView.style.display = 'flex';
-        buttons.compare.textContent = '한눈에 비교';
-      });
-
-      elements.compareGrid.appendChild(item);
+    item.addEventListener('click', () => {
+      inputs.template.value = option.value;
+      applyTemplate(option.value);
+      saveState();
+      isCompareMode = false;
+      elements.compareView.style.display = 'none';
+      elements.singleView.style.display = 'flex';
+      buttons.compare.textContent = '한눈에 비교';
     });
-  }
 
-  function toggleCompare() {
+    elements.compareGrid.appendChild(item);
+  });
+}
+
+function toggleCompare() {
     isCompareMode = !isCompareMode;
     if (isCompareMode) {
       renderCompareGrid();
@@ -442,113 +439,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function waitForImages(scope) {
-    const images = Array.from(scope.querySelectorAll('img')).filter((img) => img.src && img.style.display !== 'none');
-    await Promise.all(images.map((img) => {
-      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      if (typeof img.decode === 'function') {
-        return img.decode().catch(() => new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true });
-          img.addEventListener('error', resolve, { once: true });
-        }));
-      }
-      return new Promise((resolve) => {
-        img.addEventListener('load', resolve, { once: true });
-        img.addEventListener('error', resolve, { once: true });
-      });
-    }));
-  }
-
-  function lockCloneVisualPosition(sourceCard, sourceEl, cloneEl) {
-    if (!sourceEl || !cloneEl) return;
-    const sourceStyle = window.getComputedStyle(sourceEl);
-    if (sourceStyle.display === 'none' || sourceStyle.visibility === 'hidden') {
-      cloneEl.style.display = 'none';
-      return;
-    }
-
-    const cardRect = sourceCard.getBoundingClientRect();
-    const elRect = sourceEl.getBoundingClientRect();
-    const left = elRect.left - cardRect.left;
-    const top = elRect.top - cardRect.top;
-
-    cloneEl.style.position = 'absolute';
-    cloneEl.style.left = `${left}px`;
-    cloneEl.style.top = `${top}px`;
-    cloneEl.style.width = `${elRect.width}px`;
-    cloneEl.style.height = `${elRect.height}px`;
-    cloneEl.style.maxWidth = 'none';
-    cloneEl.style.maxHeight = 'none';
-    cloneEl.style.transform = 'none';
-    cloneEl.style.margin = '0';
-    cloneEl.style.display = sourceStyle.display === 'none' ? 'none' : 'block';
-    cloneEl.style.visibility = sourceStyle.visibility;
-    cloneEl.style.objectFit = sourceStyle.objectFit;
-    cloneEl.style.objectPosition = sourceStyle.objectPosition;
-  }
-
-  function createExportClone(card) {
-    const cardRect = card.getBoundingClientRect();
-    const clone = card.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.classList.add('export-card-clone');
-    clone.style.width = `${cardRect.width}px`;
-    clone.style.height = `${cardRect.height}px`;
-    clone.style.maxWidth = 'none';
-    clone.style.aspectRatio = 'unset';
-    clone.style.margin = '0';
-    clone.style.position = 'relative';
-    clone.style.overflow = 'hidden';
-
-    lockCloneVisualPosition(card, card.querySelector('.preview-logo-front'), clone.querySelector('.preview-logo-front'));
-    lockCloneVisualPosition(card, card.querySelector('.preview-logo-back'), clone.querySelector('.preview-logo-back'));
-    lockCloneVisualPosition(card, card.querySelector('.front-inserted-img'), clone.querySelector('.front-inserted-img'));
-    lockCloneVisualPosition(card, card.querySelector('.back-inserted-img'), clone.querySelector('.back-inserted-img'));
-
-    return clone;
-  }
-
-  async function downloadCard(cardElement, filename, button) {
+  function downloadCard(cardElement, filename, button) {
+    const card = cardElement;
     const original = button.textContent;
     button.disabled = true;
     button.textContent = '이미지 저장 중...';
-
-    const sandbox = document.createElement('div');
-    sandbox.className = 'export-sandbox';
-    document.body.appendChild(sandbox);
-
-    try {
-      const clone = createExportClone(cardElement);
-      sandbox.appendChild(clone);
-      await waitForImages(clone);
-      await document.fonts.ready;
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-      const cardBg = window.getComputedStyle(cardElement).backgroundColor || '#ffffff';
-      const canvas = await html2canvas(clone, {
-        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
-        useCORS: true,
-        backgroundColor: cardBg,
-        width: Math.round(clone.getBoundingClientRect().width),
-        height: Math.round(clone.getBoundingClientRect().height),
-        logging: false
-      });
-
+    html2canvas(card, {
+      scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
+      useCORS: true,
+      backgroundColor: null
+    }).then((canvas) => {
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
-      document.body.appendChild(link);
       link.click();
-      link.remove();
-      setStatus('다운로드를 시작했습니다.', 'success');
-    } catch (error) {
-      console.error(error);
+      setStatus('저장을 시작했습니다.', 'success');
+    }).catch(() => {
       setStatus('저장 중 문제가 발생했습니다.', 'error');
-    } finally {
-      sandbox.remove();
+    }).finally(() => {
       button.disabled = false;
       button.textContent = original;
-    }
+    });
   }
 
   function fillSample() {
@@ -630,12 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus('초기화했습니다.', 'warning');
   }
 
-  [inputs.frontLogoFile, inputs.backLogoFile, inputs.frontImageFile, inputs.backImageFile].forEach((input) => {
-    input.addEventListener('click', () => {
-      input.value = '';
-    });
-  });
-
   paletteButtons.forEach((button) => {
     button.addEventListener('click', () => {
       inputs.frontBg.value = button.dataset.front;
@@ -706,12 +611,6 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetAll);
   buttons.compare.addEventListener('click', toggleCompare);
-  if (buttons.saveStateButton) {
-    buttons.saveStateButton.addEventListener('click', () => {
-      saveState();
-      flashSavedMessage();
-    });
-  }
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, 'business-card-front.png', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, 'business-card-back.png', buttons.downloadBack));
 
