@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fillSample: document.getElementById('btn-fill-sample'),
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
-    saveState: document.getElementById('btn-save-state'),
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back')
   };
@@ -113,11 +112,25 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   let isCompareMode = false;
   let activeDrag = null;
+  let statusTimer = null;
 
   function setStatus(message, type = 'info') {
+    if (statusTimer) {
+      clearTimeout(statusTimer);
+      statusTimer = null;
+    }
     elements.statusBox.textContent = message;
     elements.statusBox.className = 'status-box';
     if (type !== 'info') elements.statusBox.classList.add(type);
+  }
+
+  function flashStatus(message, type = 'success', duration = 1800) {
+    setStatus(message, type);
+    statusTimer = window.setTimeout(() => {
+      elements.statusBox.textContent = '준비 완료';
+      elements.statusBox.className = 'status-box';
+      statusTimer = null;
+    }, duration);
   }
 
   function saveState() {
@@ -170,12 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company || '\u00A0';
-    elements.frontCompany.style.display = 'block';
-    elements.frontCompany.style.visibility = company ? 'visible' : 'hidden';
-    elements.backCompany.textContent = company || '\u00A0';
-    elements.backCompany.style.display = 'block';
-    elements.backCompany.style.visibility = company ? 'visible' : 'hidden';
+    elements.frontCompany.textContent = company || ' ';
+    elements.frontCompany.classList.toggle('is-empty', !company);
+    elements.backCompany.textContent = company || ' ';
+    elements.backCompany.classList.toggle('is-empty', !company);
 
     elements.frontName.textContent = name || '이름';
     elements.frontPosition.textContent = position;
@@ -436,62 +447,94 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function waitForImages(scope) {
-    const imgs = Array.from(scope.querySelectorAll('img')).filter((img) => img.getAttribute('src'));
-    if (!imgs.length) return Promise.resolve();
-    return Promise.all(imgs.map((img) => {
+  async function waitForImages(scope) {
+    const images = Array.from(scope.querySelectorAll('img')).filter((img) => img.src && img.style.display !== 'none');
+    await Promise.all(images.map((img) => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      if (typeof img.decode === 'function') {
+        return img.decode().catch(() => new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        }));
+      }
       return new Promise((resolve) => {
-        const done = () => resolve();
-        img.addEventListener('load', done, { once: true });
-        img.addEventListener('error', done, { once: true });
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
       });
     }));
   }
 
-  function lockCloneVisualPosition(sourceCard, sourceEl, cloneEl) {
-    if (!sourceEl || !cloneEl) return;
-    const sourceStyle = window.getComputedStyle(sourceEl);
-    if (sourceStyle.display === 'none' || sourceStyle.visibility === 'hidden') {
-      cloneEl.style.display = 'none';
-      return;
-    }
-
-    const cardRect = sourceCard.getBoundingClientRect();
-    const elRect = sourceEl.getBoundingClientRect();
-    const left = elRect.left - cardRect.left;
-    const top = elRect.top - cardRect.top;
-
-    cloneEl.style.position = 'absolute';
-    cloneEl.style.left = `${left}px`;
-    cloneEl.style.top = `${top}px`;
-    cloneEl.style.width = `${elRect.width}px`;
-    cloneEl.style.height = `${elRect.height}px`;
-    cloneEl.style.maxWidth = 'none';
-    cloneEl.style.maxHeight = 'none';
-    cloneEl.style.transform = 'none';
-    cloneEl.style.margin = '0';
-  }
-
-  function createExportClone(card) {
+  function freezeVisualElements(card) {
     const cardRect = card.getBoundingClientRect();
-    const clone = card.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.classList.add('export-card-clone');
-    clone.style.width = `${cardRect.width}px`;
-    clone.style.height = `${cardRect.height}px`;
-    clone.style.maxWidth = 'none';
-    clone.style.aspectRatio = 'unset';
-    clone.style.margin = '0';
-    clone.style.position = 'relative';
-    clone.style.overflow = 'hidden';
+    const targets = [
+      '.preview-logo-front',
+      '.preview-logo-back',
+      '.front-inserted-img',
+      '.back-inserted-img'
+    ];
 
-    lockCloneVisualPosition(card, card.querySelector('.preview-logo-front'), clone.querySelector('.preview-logo-front'));
-    lockCloneVisualPosition(card, card.querySelector('.preview-logo-back'), clone.querySelector('.preview-logo-back'));
-    lockCloneVisualPosition(card, card.querySelector('.front-inserted-img'), clone.querySelector('.front-inserted-img'));
-    lockCloneVisualPosition(card, card.querySelector('.back-inserted-img'), clone.querySelector('.back-inserted-img'));
+    const restoreStack = [];
 
-    return clone;
+    targets.forEach((selector) => {
+      const element = card.querySelector(selector);
+      if (!element) return;
+      const computed = window.getComputedStyle(element);
+      if (computed.display === 'none' || computed.visibility === 'hidden') return;
+
+      const rect = element.getBoundingClientRect();
+      const previous = {
+        left: element.style.left,
+        top: element.style.top,
+        width: element.style.width,
+        height: element.style.height,
+        maxWidth: element.style.maxWidth,
+        maxHeight: element.style.maxHeight,
+        transform: element.style.transform,
+        transformOrigin: element.style.transformOrigin,
+        margin: element.style.margin,
+        position: element.style.position,
+        objectFit: element.style.objectFit,
+        objectPosition: element.style.objectPosition,
+        display: element.style.display
+      };
+
+      const left = rect.left - cardRect.left;
+      const top = rect.top - cardRect.top;
+
+      element.style.position = 'absolute';
+      element.style.left = `${left}px`;
+      element.style.top = `${top}px`;
+      element.style.width = `${rect.width}px`;
+      element.style.height = `${rect.height}px`;
+      element.style.maxWidth = 'none';
+      element.style.maxHeight = 'none';
+      element.style.transform = 'none';
+      element.style.transformOrigin = 'top left';
+      element.style.margin = '0';
+      element.style.objectFit = computed.objectFit;
+      element.style.objectPosition = computed.objectPosition;
+      element.style.display = computed.display;
+
+      restoreStack.push(() => {
+        element.style.left = previous.left;
+        element.style.top = previous.top;
+        element.style.width = previous.width;
+        element.style.height = previous.height;
+        element.style.maxWidth = previous.maxWidth;
+        element.style.maxHeight = previous.maxHeight;
+        element.style.transform = previous.transform;
+        element.style.transformOrigin = previous.transformOrigin;
+        element.style.margin = previous.margin;
+        element.style.position = previous.position;
+        element.style.objectFit = previous.objectFit;
+        element.style.objectPosition = previous.objectPosition;
+        element.style.display = previous.display;
+      });
+    });
+
+    return () => {
+      restoreStack.reverse().forEach((restore) => restore());
+    };
   }
 
   async function downloadCard(cardElement, filename, button) {
@@ -499,53 +542,42 @@ document.addEventListener('DOMContentLoaded', () => {
     button.disabled = true;
     button.textContent = '이미지 저장 중...';
 
-    const sandbox = document.createElement('div');
-    sandbox.style.position = 'fixed';
-    sandbox.style.left = '-10000px';
-    sandbox.style.top = '0';
-    sandbox.style.opacity = '0';
-    sandbox.style.pointerEvents = 'none';
-    sandbox.style.zIndex = '-1';
-    document.body.appendChild(sandbox);
+    let restoreFrozen = null;
 
     try {
-      const clone = createExportClone(cardElement);
-      sandbox.appendChild(clone);
-      await waitForImages(clone);
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
+      restoreFrozen = freezeVisualElements(cardElement);
+      await waitForImages(cardElement);
+      await document.fonts.ready;
 
-      const cloneRect = clone.getBoundingClientRect();
-      const canvas = await html2canvas(clone, {
+      const cardRect = cardElement.getBoundingClientRect();
+      const canvas = await html2canvas(cardElement, {
         scale: Math.max(2, Math.min(4, window.devicePixelRatio || 2)),
         useCORS: true,
         backgroundColor: null,
-        width: Math.round(cloneRect.width),
-        height: Math.round(cloneRect.height),
-        windowWidth: Math.round(cloneRect.width),
-        windowHeight: Math.round(cloneRect.height),
+        width: Math.round(cardRect.width),
+        height: Math.round(cardRect.height),
         scrollX: 0,
-        scrollY: 0
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.clientWidth,
+        windowHeight: document.documentElement.clientHeight
       });
 
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      setStatus('저장을 시작했습니다.', 'success');
+      flashStatus('저장을 시작했습니다.', 'success');
     } catch (error) {
       console.error(error);
       setStatus('저장 중 문제가 발생했습니다.', 'error');
     } finally {
-      sandbox.remove();
+      if (restoreFrozen) restoreFrozen();
       button.disabled = false;
       button.textContent = original;
     }
   }
 
   function fillSample() {
-
     inputs.company.value = 'MORNING STUDIO';
     inputs.position.value = 'Creative Director';
     inputs.name.value = '홍지현';
@@ -624,6 +656,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus('초기화했습니다.', 'warning');
   }
 
+  [inputs.frontLogoFile, inputs.backLogoFile, inputs.frontImageFile, inputs.backImageFile].forEach((input) => {
+    input.addEventListener('click', () => {
+      input.value = '';
+    });
+  });
+
   paletteButtons.forEach((button) => {
     button.addEventListener('click', () => {
       inputs.frontBg.value = button.dataset.front;
@@ -694,7 +732,10 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetAll);
   buttons.compare.addEventListener('click', toggleCompare);
-  buttons.saveState.addEventListener('click', () => { saveState(); setStatus('현재 설정을 저장했습니다.', 'success'); });
+  buttons.saveSettings.addEventListener('click', () => {
+    saveState();
+    flashStatus('저장되었습니다.', 'success');
+  });
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, 'business-card-front.png', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, 'business-card-back.png', buttons.downloadBack));
 
