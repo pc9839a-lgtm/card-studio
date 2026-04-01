@@ -3,24 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>카드 studio | Business Card Studio</title>
-  <meta name="description" content="회원가입 없이 웹에서 바로 명함을 제작하고 앞면과 뒷면을 각각 편집한 뒤 PNG로 저장할 수 있는 Business Card Studio입니다.">
-  <link rel="canonical" href="https://cardstudio.pages.dev/">
-  <meta name="robots" content="index,follow,max-image-preview:large">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="카드 studio | Business Card Studio">
-  <meta property="og:description" content="앞면과 뒷면을 각각 편집하고 바로 저장하는 웹 기반 명함 생성기">
-  <meta property="og:url" content="https://cardstudio.pages.dev/">
-  <meta property="og:image" content="https://cardstudio.pages.dev/og-image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="카드 studio | Business Card Studio">
-  <meta name="twitter:description" content="회원가입 없이 웹에서 바로 만드는 명함 생성기">
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="apple-touch-icon" href="./favicon.svg">
-  <link rel="manifest" href="./site.webmanifest">
-  <!-- TODO: 네이버 웹마스터도구 검증 메타 삽입 위치 -->
-  <!-- TODO: Google Search Console 검증 메타 삽입 위치 -->
-  <!-- TODO: GTM head 코드 삽입 위치 -->
+  <title>프로페셔널 명함 생성기</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -242,11 +225,6 @@
           </div>
         </div>
 
-        <div class="preview-switcher" id="preview-switcher" aria-label="모바일 미리보기 전환">
-          <button id="btn-show-front" class="preview-switch-btn is-active" type="button">앞면 보기</button>
-          <button id="btn-show-back" class="preview-switch-btn" type="button">뒷면 보기</button>
-        </div>
-
         <div class="cards-wrapper" id="single-view">
           <div class="card-section">
             <div class="card-label">명함 앞면 (Front)</div>
@@ -302,51 +280,8 @@
           <div class="compare-grid" id="compare-grid"></div>
         </div>
       </div>
-
-      <section class="ops-section" aria-label="운영 확장 영역">
-        <div class="ops-card notice-card">
-          <h2>공지사항 연동 자리</h2>
-          <p>향후 Google Sheets + Apps Script + JSON fetch 구조로 공지 배너 또는 팝업을 연결할 수 있도록 비워둔 운영 영역입니다.</p>
-        </div>
-        <div class="ops-grid">
-          <article class="ops-card">
-            <h3>광고/제휴 영역</h3>
-            <p>다운로드 버튼과 분리된 위치에 제휴 카드 또는 콘텐츠형 광고를 배치할 수 있는 영역입니다.</p>
-          </article>
-          <article class="ops-card">
-            <h3>심볼 추천 영역</h3>
-            <p>업종 키워드 기반 무료 상업용 심볼 추천 기능이 들어갈 확장 자리입니다.</p>
-          </article>
-        </div>
-      </section>
     </main>
   </div>
-
-  <div class="mobile-actions-bar" aria-label="모바일 다운로드 바">
-    <button id="btn-mobile-front" class="btn btn-primary" type="button">앞면 저장</button>
-    <button id="btn-mobile-back" class="btn btn-secondary" type="button">뒷면 저장</button>
-  </div>
-
-  <footer class="site-footer">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <strong>웨이지 (wayzi)</strong>
-        <p>카드 studio / Business Card Studio 운영 정보</p>
-      </div>
-      <div class="footer-meta">
-        <span>대표 김도윤</span>
-        <span>사업자번호 538-42-01450</span>
-        <a href="mailto:roadfor@kakao.com">roadfor@kakao.com</a>
-      </div>
-      <div class="footer-links">
-        <a href="#" aria-disabled="true">이용약관</a>
-        <a href="#" aria-disabled="true">개인정보처리방침</a>
-        <a href="mailto:roadfor@kakao.com?subject=%EA%B4%91%EA%B3%A0%20%EB%B0%8F%20%EC%A0%9C%ED%9C%B4%20%EB%AC%B8%EC%9D%98">광고/제휴문의</a>
-      </div>
-    </div>
-  </footer>
-
-  <!-- TODO: GTM body 코드 삽입 위치 -->
   <script src="./main.js"></script>
 </body>
 </html>
