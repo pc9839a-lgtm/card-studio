@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fillSample: document.getElementById('btn-fill-sample'),
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
+    saveState: document.getElementById('btn-save-state'),
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back')
   };
@@ -112,11 +113,19 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   let isCompareMode = false;
   let activeDrag = null;
+  let statusResetTimer = null;
 
-  function setStatus(message, type = 'info') {
+  function setStatus(message, type = 'info', resetMs = 0) {
     elements.statusBox.textContent = message;
     elements.statusBox.className = 'status-box';
     if (type !== 'info') elements.statusBox.classList.add(type);
+    if (statusResetTimer) clearTimeout(statusResetTimer);
+    if (resetMs > 0) {
+      statusResetTimer = window.setTimeout(() => {
+        elements.statusBox.textContent = '준비 완료';
+        elements.statusBox.className = 'status-box';
+      }, resetMs);
+    }
   }
 
   function saveState() {
@@ -169,10 +178,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company;
-    elements.frontCompany.style.display = company ? 'block' : 'none';
-    elements.backCompany.textContent = company;
-    elements.backCompany.style.display = company ? 'block' : 'none';
+    elements.frontCompany.textContent = company || ' ';
+    elements.frontCompany.classList.toggle('is-empty', !company);
+    elements.backCompany.textContent = company || ' ';
+    elements.backCompany.classList.toggle('is-empty', !company);
 
     elements.frontName.textContent = name || '이름';
     elements.frontPosition.textContent = position;
@@ -190,8 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (row) row.style.display = value ? 'flex' : 'none';
     });
 
-    elements.backSlogan.textContent = slogan;
-    elements.backSlogan.style.display = slogan ? 'block' : 'none';
+    elements.backSlogan.textContent = slogan || ' ';
+    elements.backSlogan.classList.toggle('is-empty', !slogan);
   }
 
   function updateColorVars() {
@@ -377,55 +386,52 @@ document.addEventListener('DOMContentLoaded', () => {
     onMove: updateColorVars
   }));
 
-  
-function renderCompareGrid() {
-  elements.compareGrid.innerHTML = '';
-  Array.from(inputs.template.options).forEach((option) => {
-    const item = document.createElement('button');
-    item.type = 'button';
-    item.className = 'compare-item';
+  function renderCompareGrid() {
+    elements.compareGrid.innerHTML = '';
+    Array.from(inputs.template.options).forEach((option) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'compare-item';
 
-    const title = document.createElement('h3');
-    title.textContent = option.text;
+      const title = document.createElement('h3');
+      title.textContent = option.text;
 
-    const stage = document.createElement('div');
-    stage.className = 'compare-preview-stage';
+      const stage = document.createElement('div');
+      stage.className = 'compare-preview-stage';
 
-    const clone = elements.cardFront.cloneNode(true);
-    clone.removeAttribute('id');
-    clone.className = `business-card ${option.value} front-face is-compare-card`;
-    clone.style.width = '100%';
-    clone.style.height = '100%';
-    clone.style.maxWidth = 'none';
-    clone.style.aspectRatio = '9 / 5';
-    clone.style.margin = '0';
+      const clone = elements.cardFront.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.className = `business-card ${option.value} front-face is-compare-card`;
+      clone.style.width = '100%';
+      clone.style.maxWidth = '450px';
+      clone.style.margin = '0 auto';
 
-    const cloneLogo = clone.querySelector('.preview-logo-front');
-    if (cloneLogo) cloneLogo.style.display = 'none';
-    const cloneImageLayer = clone.querySelector('.front-image-layer');
-    if (cloneImageLayer) cloneImageLayer.style.display = 'none';
-    const cloneOverlay = clone.querySelector('.front-overlay-layer');
-    if (cloneOverlay) cloneOverlay.style.display = 'none';
+      const cloneLogo = clone.querySelector('.preview-logo-front');
+      if (cloneLogo) cloneLogo.style.display = 'none';
+      const cloneImageLayer = clone.querySelector('.front-image-layer');
+      if (cloneImageLayer) cloneImageLayer.style.display = 'none';
+      const cloneOverlay = clone.querySelector('.front-overlay-layer');
+      if (cloneOverlay) cloneOverlay.style.display = 'none';
 
-    stage.appendChild(clone);
-    item.appendChild(title);
-    item.appendChild(stage);
+      stage.appendChild(clone);
+      item.appendChild(title);
+      item.appendChild(stage);
 
-    item.addEventListener('click', () => {
-      inputs.template.value = option.value;
-      applyTemplate(option.value);
-      saveState();
-      isCompareMode = false;
-      elements.compareView.style.display = 'none';
-      elements.singleView.style.display = 'flex';
-      buttons.compare.textContent = '한눈에 비교';
+      item.addEventListener('click', () => {
+        inputs.template.value = option.value;
+        applyTemplate(option.value);
+        saveState();
+        isCompareMode = false;
+        elements.compareView.style.display = 'none';
+        elements.singleView.style.display = 'flex';
+        buttons.compare.textContent = '한눈에 비교';
+      });
+
+      elements.compareGrid.appendChild(item);
     });
+  }
 
-    elements.compareGrid.appendChild(item);
-  });
-}
-
-function toggleCompare() {
+  function toggleCompare() {
     isCompareMode = !isCompareMode;
     if (isCompareMode) {
       renderCompareGrid();
@@ -439,27 +445,125 @@ function toggleCompare() {
     }
   }
 
-  function downloadCard(cardElement, filename, button) {
-    const card = cardElement;
+  async function waitForImages(scope) {
+    const images = Array.from(scope.querySelectorAll('img')).filter((img) => img.src && img.style.display !== 'none');
+    await Promise.all(images.map((img) => {
+      if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+      if (typeof img.decode === 'function') {
+        return img.decode().catch(() => new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        }));
+      }
+      return new Promise((resolve) => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+      });
+    }));
+  }
+
+  function freezeCloneElement(sourceCard, cloneCard, selector, { treatAsImage = false } = {}) {
+    const sourceEl = sourceCard.querySelector(selector);
+    const cloneEl = cloneCard.querySelector(selector);
+    if (!sourceEl || !cloneEl) return;
+
+    const sourceStyle = window.getComputedStyle(sourceEl);
+    if (sourceStyle.display === 'none' || sourceStyle.visibility === 'hidden' || sourceEl.getBoundingClientRect().width === 0 || sourceEl.getBoundingClientRect().height === 0) {
+      cloneEl.style.display = 'none';
+      return;
+    }
+
+    const cardRect = sourceCard.getBoundingClientRect();
+    const rect = sourceEl.getBoundingClientRect();
+    cloneCard.appendChild(cloneEl);
+    cloneEl.style.position = 'absolute';
+    cloneEl.style.left = `${rect.left - cardRect.left}px`;
+    cloneEl.style.top = `${rect.top - cardRect.top}px`;
+    cloneEl.style.width = `${rect.width}px`;
+    cloneEl.style.height = `${rect.height}px`;
+    cloneEl.style.maxWidth = 'none';
+    cloneEl.style.maxHeight = 'none';
+    cloneEl.style.transform = 'none';
+    cloneEl.style.margin = '0';
+    cloneEl.style.inset = 'auto';
+    cloneEl.style.right = 'auto';
+    cloneEl.style.bottom = 'auto';
+    if (treatAsImage) {
+      cloneEl.style.objectFit = 'contain';
+      cloneEl.style.objectPosition = 'center';
+      cloneEl.removeAttribute('width');
+      cloneEl.removeAttribute('height');
+    }
+  }
+
+  function createExportClone(sourceCard) {
+    const rect = sourceCard.getBoundingClientRect();
+    const clone = sourceCard.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('export-card-clone');
+    clone.style.width = `${Math.round(rect.width)}px`;
+    clone.style.height = `${Math.round(rect.height)}px`;
+    clone.style.maxWidth = 'none';
+    clone.style.aspectRatio = 'unset';
+    clone.style.position = 'relative';
+    clone.style.margin = '0';
+    clone.style.overflow = 'hidden';
+
+    freezeCloneElement(sourceCard, clone, '.preview-logo-front', { treatAsImage: true });
+    freezeCloneElement(sourceCard, clone, '.preview-logo-back', { treatAsImage: true });
+    freezeCloneElement(sourceCard, clone, '.front-inserted-img', { treatAsImage: true });
+    freezeCloneElement(sourceCard, clone, '.back-inserted-img', { treatAsImage: true });
+    freezeCloneElement(sourceCard, clone, '.brand-area');
+    freezeCloneElement(sourceCard, clone, '.info-area');
+    freezeCloneElement(sourceCard, clone, '.back-company');
+    freezeCloneElement(sourceCard, clone, '.back-slogan');
+
+    return clone;
+  }
+
+  async function downloadCard(cardElement, filename, button) {
     const original = button.textContent;
     button.disabled = true;
     button.textContent = '이미지 저장 중...';
-    html2canvas(card, {
-      scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
-      useCORS: true,
-      backgroundColor: null
-    }).then((canvas) => {
+
+    const sandbox = document.createElement('div');
+    sandbox.style.position = 'fixed';
+    sandbox.style.left = '-10000px';
+    sandbox.style.top = '0';
+    sandbox.style.opacity = '0';
+    sandbox.style.pointerEvents = 'none';
+    sandbox.style.zIndex = '-1';
+    document.body.appendChild(sandbox);
+
+    try {
+      const clone = createExportClone(cardElement);
+      sandbox.appendChild(clone);
+      await waitForImages(clone);
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
+      const canvas = await html2canvas(clone, {
+        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
+        useCORS: true,
+        backgroundColor: null,
+        width: Math.round(clone.getBoundingClientRect().width),
+        height: Math.round(clone.getBoundingClientRect().height)
+      });
+
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
       link.click();
-      setStatus('저장을 시작했습니다.', 'success');
-    }).catch(() => {
-      setStatus('저장 중 문제가 발생했습니다.', 'error');
-    }).finally(() => {
+      setStatus('저장을 시작했습니다.', 'success', 1600);
+    } catch (error) {
+      console.error(error);
+      setStatus('저장 중 문제가 발생했습니다.', 'error', 2200);
+    } finally {
+      sandbox.remove();
       button.disabled = false;
       button.textContent = original;
-    });
+    }
   }
 
   function fillSample() {
@@ -610,6 +714,13 @@ function toggleCompare() {
   inputs.template.addEventListener('change', () => { applyTemplate(inputs.template.value); saveState(); });
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetAll);
+  if (buttons.saveState) {
+    buttons.saveState.addEventListener('click', () => {
+      saveState();
+      setStatus('저장되었습니다.', 'success', 1400);
+    });
+  }
+
   buttons.compare.addEventListener('click', toggleCompare);
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, 'business-card-front.png', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, 'business-card-back.png', buttons.downloadBack));
