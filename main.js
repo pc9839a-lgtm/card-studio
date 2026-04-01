@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', () => {
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
     downloadFront: document.getElementById('btn-download-front'),
-    downloadBack: document.getElementById('btn-download-back')
+    downloadBack: document.getElementById('btn-download-back'),
+    saveStateButton: document.getElementById('btn-save-state')
   };
 
   const elements = {
@@ -112,25 +113,19 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   let isCompareMode = false;
   let activeDrag = null;
-  let statusTimer = null;
 
   function setStatus(message, type = 'info') {
-    if (statusTimer) {
-      clearTimeout(statusTimer);
-      statusTimer = null;
-    }
     elements.statusBox.textContent = message;
     elements.statusBox.className = 'status-box';
     if (type !== 'info') elements.statusBox.classList.add(type);
   }
 
-  function flashStatus(message, type = 'success', duration = 1800) {
-    setStatus(message, type);
-    statusTimer = window.setTimeout(() => {
-      elements.statusBox.textContent = '준비 완료';
-      elements.statusBox.className = 'status-box';
-      statusTimer = null;
-    }, duration);
+  function flashSavedMessage() {
+    setStatus('저장되었습니다.', 'success');
+    window.clearTimeout(flashSavedMessage._timer);
+    flashSavedMessage._timer = window.setTimeout(() => {
+      setStatus('준비 완료');
+    }, 1400);
   }
 
   function saveState() {
@@ -464,77 +459,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   }
 
-  function freezeVisualElements(card) {
+  function lockCloneVisualPosition(sourceCard, sourceEl, cloneEl) {
+    if (!sourceEl || !cloneEl) return;
+    const sourceStyle = window.getComputedStyle(sourceEl);
+    if (sourceStyle.display === 'none' || sourceStyle.visibility === 'hidden') {
+      cloneEl.style.display = 'none';
+      return;
+    }
+
+    const cardRect = sourceCard.getBoundingClientRect();
+    const elRect = sourceEl.getBoundingClientRect();
+    const left = elRect.left - cardRect.left;
+    const top = elRect.top - cardRect.top;
+
+    cloneEl.style.position = 'absolute';
+    cloneEl.style.left = `${left}px`;
+    cloneEl.style.top = `${top}px`;
+    cloneEl.style.width = `${elRect.width}px`;
+    cloneEl.style.height = `${elRect.height}px`;
+    cloneEl.style.maxWidth = 'none';
+    cloneEl.style.maxHeight = 'none';
+    cloneEl.style.transform = 'none';
+    cloneEl.style.margin = '0';
+    cloneEl.style.display = sourceStyle.display === 'none' ? 'none' : 'block';
+    cloneEl.style.visibility = sourceStyle.visibility;
+    cloneEl.style.objectFit = sourceStyle.objectFit;
+    cloneEl.style.objectPosition = sourceStyle.objectPosition;
+  }
+
+  function createExportClone(card) {
     const cardRect = card.getBoundingClientRect();
-    const targets = [
-      '.preview-logo-front',
-      '.preview-logo-back',
-      '.front-inserted-img',
-      '.back-inserted-img'
-    ];
+    const clone = card.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.classList.add('export-card-clone');
+    clone.style.width = `${cardRect.width}px`;
+    clone.style.height = `${cardRect.height}px`;
+    clone.style.maxWidth = 'none';
+    clone.style.aspectRatio = 'unset';
+    clone.style.margin = '0';
+    clone.style.position = 'relative';
+    clone.style.overflow = 'hidden';
 
-    const restoreStack = [];
+    lockCloneVisualPosition(card, card.querySelector('.preview-logo-front'), clone.querySelector('.preview-logo-front'));
+    lockCloneVisualPosition(card, card.querySelector('.preview-logo-back'), clone.querySelector('.preview-logo-back'));
+    lockCloneVisualPosition(card, card.querySelector('.front-inserted-img'), clone.querySelector('.front-inserted-img'));
+    lockCloneVisualPosition(card, card.querySelector('.back-inserted-img'), clone.querySelector('.back-inserted-img'));
 
-    targets.forEach((selector) => {
-      const element = card.querySelector(selector);
-      if (!element) return;
-      const computed = window.getComputedStyle(element);
-      if (computed.display === 'none' || computed.visibility === 'hidden') return;
-
-      const rect = element.getBoundingClientRect();
-      const previous = {
-        left: element.style.left,
-        top: element.style.top,
-        width: element.style.width,
-        height: element.style.height,
-        maxWidth: element.style.maxWidth,
-        maxHeight: element.style.maxHeight,
-        transform: element.style.transform,
-        transformOrigin: element.style.transformOrigin,
-        margin: element.style.margin,
-        position: element.style.position,
-        objectFit: element.style.objectFit,
-        objectPosition: element.style.objectPosition,
-        display: element.style.display
-      };
-
-      const left = rect.left - cardRect.left;
-      const top = rect.top - cardRect.top;
-
-      element.style.position = 'absolute';
-      element.style.left = `${left}px`;
-      element.style.top = `${top}px`;
-      element.style.width = `${rect.width}px`;
-      element.style.height = `${rect.height}px`;
-      element.style.maxWidth = 'none';
-      element.style.maxHeight = 'none';
-      element.style.transform = 'none';
-      element.style.transformOrigin = 'top left';
-      element.style.margin = '0';
-      element.style.objectFit = computed.objectFit;
-      element.style.objectPosition = computed.objectPosition;
-      element.style.display = computed.display;
-
-      restoreStack.push(() => {
-        element.style.left = previous.left;
-        element.style.top = previous.top;
-        element.style.width = previous.width;
-        element.style.height = previous.height;
-        element.style.maxWidth = previous.maxWidth;
-        element.style.maxHeight = previous.maxHeight;
-        element.style.transform = previous.transform;
-        element.style.transformOrigin = previous.transformOrigin;
-        element.style.margin = previous.margin;
-        element.style.position = previous.position;
-        element.style.objectFit = previous.objectFit;
-        element.style.objectPosition = previous.objectPosition;
-        element.style.display = previous.display;
-      });
-    });
-
-    return () => {
-      restoreStack.reverse().forEach((restore) => restore());
-    };
+    return clone;
   }
 
   async function downloadCard(cardElement, filename, button) {
@@ -542,36 +513,39 @@ document.addEventListener('DOMContentLoaded', () => {
     button.disabled = true;
     button.textContent = '이미지 저장 중...';
 
-    let restoreFrozen = null;
+    const sandbox = document.createElement('div');
+    sandbox.className = 'export-sandbox';
+    document.body.appendChild(sandbox);
 
     try {
-      restoreFrozen = freezeVisualElements(cardElement);
-      await waitForImages(cardElement);
+      const clone = createExportClone(cardElement);
+      sandbox.appendChild(clone);
+      await waitForImages(clone);
       await document.fonts.ready;
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
-      const cardRect = cardElement.getBoundingClientRect();
-      const canvas = await html2canvas(cardElement, {
-        scale: Math.max(2, Math.min(4, window.devicePixelRatio || 2)),
+      const cardBg = window.getComputedStyle(cardElement).backgroundColor || '#ffffff';
+      const canvas = await html2canvas(clone, {
+        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
         useCORS: true,
-        backgroundColor: null,
-        width: Math.round(cardRect.width),
-        height: Math.round(cardRect.height),
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        windowWidth: document.documentElement.clientWidth,
-        windowHeight: document.documentElement.clientHeight
+        backgroundColor: cardBg,
+        width: Math.round(clone.getBoundingClientRect().width),
+        height: Math.round(clone.getBoundingClientRect().height),
+        logging: false
       });
 
       const link = document.createElement('a');
       link.download = filename;
       link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
       link.click();
-      flashStatus('저장을 시작했습니다.', 'success');
+      link.remove();
+      setStatus('다운로드를 시작했습니다.', 'success');
     } catch (error) {
       console.error(error);
       setStatus('저장 중 문제가 발생했습니다.', 'error');
     } finally {
-      if (restoreFrozen) restoreFrozen();
+      sandbox.remove();
       button.disabled = false;
       button.textContent = original;
     }
@@ -732,10 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetAll);
   buttons.compare.addEventListener('click', toggleCompare);
-  buttons.saveSettings.addEventListener('click', () => {
-    saveState();
-    flashStatus('저장되었습니다.', 'success');
-  });
+  if (buttons.saveStateButton) {
+    buttons.saveStateButton.addEventListener('click', () => {
+      saveState();
+      flashSavedMessage();
+    });
+  }
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, 'business-card-front.png', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, 'business-card-back.png', buttons.downloadBack));
 
