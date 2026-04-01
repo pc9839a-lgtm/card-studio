@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Business Card Studio">
+  <rect width="128" height="128" rx="24" fill="#111827"/>
+  <rect x="18" y="34" width="92" height="60" rx="12" fill="#ffffff" opacity="0.96"/>
+  <rect x="30" y="50" width="34" height="6" rx="3" fill="#2563eb"/>
+  <rect x="30" y="64" width="50" height="6" rx="3" fill="#1f2937" opacity="0.88"/>
+  <circle cx="92" cy="62" r="10" fill="#2563eb"/>
+</svg>
