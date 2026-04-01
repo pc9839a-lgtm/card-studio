@@ -911,119 +911,129 @@ body {
 }
 
 
-/* ===== repair patch v2 ===== */
+/* ===== actual fix block ===== */
+html, body {
+  height: auto !important;
+  min-height: 100%;
+}
+body {
+  overflow: auto !important;
+}
+.app-container {
+  min-height: 0 !important;
+  height: auto !important;
+  align-items: flex-start;
+}
+.controls {
+  overflow: visible !important;
+  max-height: none !important;
+}
+.preview-area {
+  overflow: visible !important;
+  padding-bottom: 28px;
+}
+.preview-stage {
+  position: static !important;
+  top: auto !important;
+  max-width: 1200px;
+}
+.actions {
+  position: static !important;
+  bottom: auto !important;
+  background: transparent !important;
+}
 .preview-notice {
-  width: min(100%, 1160px);
-  margin: 0 0 18px;
-  padding: 14px 18px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(229, 231, 235, 0.96);
-  box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(12px);
-}
-
-.preview-notice__title {
-  font-size: 13px;
-  font-weight: 900;
-  color: #111827;
-  margin-bottom: 4px;
-}
-
-.preview-notice__text {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #64748b;
-}
-
-.btn-save {
-  background: #fff;
-  border: 1px solid #cbd5e1;
-}
-
-.site-footer {
   width: 100%;
-  padding: 28px 16px 38px;
-  text-align: center;
-}
-
-.site-footer__inner {
-  max-width: 1160px;
-  margin: 0 auto;
-  padding: 18px 20px;
+  max-width: 1200px;
+  margin: 0 auto 14px;
+  padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(229, 231, 235, 0.94);
-  box-shadow: var(--shadow-soft);
-}
-
-.site-footer__brand {
-  font-size: 15px;
-  font-weight: 900;
-  color: #0f172a;
-  margin-bottom: 6px;
-}
-
-.site-footer__meta,
-.site-footer__meta a {
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(229,231,235,0.95);
+  box-shadow: 0 10px 24px rgba(15,23,42,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
   font-size: 13px;
-  color: #64748b;
-  text-decoration: none;
 }
-
+.preview-notice strong {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+.btn-save {
+  font-weight: 800;
+}
+.compare-wrapper {
+  align-items: stretch;
+}
 .compare-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  max-width: 1080px;
+  max-width: 980px;
+  gap: 18px !important;
 }
-
 .compare-item {
-  min-width: 0;
-}
-
-.compare-preview-stage {
   width: 100%;
   min-width: 0;
   overflow: hidden;
 }
-
+.compare-preview-stage {
+  width: 100%;
+  min-width: 0;
+}
 .is-compare-card {
   width: 100% !important;
-  max-width: 450px;
-  margin: 0 auto;
+  max-width: none !important;
+  min-width: 0;
 }
-
-.preview-area {
-  overflow: visible !important;
-}
-
-.preview-stage {
-  position: static !important;
-  top: auto !important;
+.site-footer {
   width: 100%;
-  max-width: 1200px;
+  padding: 22px 16px 32px;
+  border-top: 1px solid rgba(229,231,235,0.9);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(10px);
 }
-
-body {
-  height: auto !important;
-  min-height: 100vh;
-  overflow: auto !important;
+.site-footer__inner {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-
-.app-container {
-  height: auto !important;
-  min-height: calc(100vh - 110px);
+.site-footer__brand {
+  font-size: 15px;
+  font-weight: 900;
+  color: #0f172a;
 }
-
-#card-front .preview-company.is-empty,
-#card-back .back-company.is-empty,
-#card-back .back-slogan.is-empty {
-  visibility: hidden;
+.site-footer__meta {
+  font-size: 13px;
+  color: #475569;
 }
-
 @media (max-width: 900px) {
   .compare-grid {
-    grid-template-columns: 1fr !important;
-    max-width: 520px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .compare-item {
+    padding: 12px;
+  }
+}
+@media (max-width: 767px) {
+  .preview-notice {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .compare-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+  .compare-item {
+    padding: 12px;
+  }
+  .compare-item h3 {
+    font-size: 12px;
   }
 }

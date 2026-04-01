@@ -210,7 +210,7 @@
       </div>
 
       <div class="actions">
-        <button id="btn-save-state" class="btn btn-outline btn-save" type="button">현재 설정 저장</button>
+        <button id="btn-save" class="btn btn-outline btn-save" type="button">현재 설정 저장</button>
         <button id="btn-download-front" class="btn btn-primary" type="button">앞면 다운로드</button>
         <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
         <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
@@ -218,12 +218,11 @@
     </aside>
 
     <main class="preview-area" id="preview-area">
+      <div class="preview-notice" id="preview-notice">
+        <strong>공지사항</strong>
+        <span>현재 브라우저·현재 기기 기준으로 자동 저장 및 다운로드가 동작합니다.</span>
+      </div>
       <div class="preview-stage">
-        <section class="preview-notice" aria-label="공지사항">
-          <div class="preview-notice__title">공지사항</div>
-          <p class="preview-notice__text">저장 버튼은 현재 브라우저에서 작업 내용을 이어보기 위한 저장입니다. PNG 다운로드와는 별개입니다.</p>
-        </section>
-
         <div class="preview-toolbar">
           <div>
             <strong>실시간 미리보기</strong>
@@ -289,10 +288,10 @@
     </main>
   </div>
 
-  <footer class="site-footer" aria-label="사이트 푸터">
+  <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">웨이지 (wayzi)</div>
-      <div class="site-footer__meta">대표 김도윤 · 사업자번호 538-42-01450 · 문의 <a href="mailto:roadfor@kakao.com">roadfor@kakao.com</a></div>
+      <div class="site-footer__meta">대표 김도윤 · 사업자번호 538-42-01450 · 문의 roadfor@kakao.com</div>
     </div>
   </footer>
 
