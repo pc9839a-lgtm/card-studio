@@ -3,28 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Business Card Studio | 웹 명함 제작기</title>
-  <meta name="description" content="웹에서 바로 앞면과 뒷면을 편집하고 다운로드할 수 있는 정적 명함 제작 도구입니다.">
-  <link rel="canonical" href="https://cardstudio.pages.dev/">
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Business Card Studio | 웹 명함 제작기">
-  <meta property="og:description" content="회원가입 없이 명함 앞면과 뒷면을 편집하고 바로 다운로드하세요.">
-  <meta property="og:url" content="https://cardstudio.pages.dev/">
-  <meta property="og:image" content="https://cardstudio.pages.dev/og-image.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Business Card Studio | 웹 명함 제작기">
-  <meta name="twitter:description" content="회원가입 없이 명함 앞면과 뒷면을 편집하고 바로 다운로드하세요.">
-  <meta name="theme-color" content="#eef2f7">
-  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
-  <link rel="apple-touch-icon" href="./favicon.svg">
-  <link rel="manifest" href="./site.webmanifest">
-  <!-- 네이버 웹마스터도구 검증 메타 자리 -->
-  <!-- <meta name="naver-site-verification" content="여기에-검증코드"> -->
-  <!-- Google Search Console 검증 메타 자리 -->
-  <!-- <meta name="google-site-verification" content="여기에-검증코드"> -->
-  <!-- Google Tag Manager (head) 자리 시작 -->
-  <!-- GTM_HEAD_PLACEHOLDER -->
-  <!-- Google Tag Manager (head) 자리 끝 -->
+  <title>프로페셔널 명함 생성기</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -32,9 +11,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
-  <!-- Google Tag Manager (body) 자리 시작 -->
-  <!-- GTM_BODY_PLACEHOLDER -->
-  <!-- Google Tag Manager (body) 자리 끝 -->
+  <section class="top-notice" aria-label="공지사항">
+    <div class="top-notice__inner">
+      <strong>공지사항</strong>
+      <p>업데이트 · 점검 · 운영 공지를 여기에 입력해서 상단에 바로 노출하세요.</p>
+    </div>
+  </section>
+
   <div class="app-container">
     <aside class="controls">
       <div class="simple-header">
@@ -234,6 +217,7 @@
       </div>
 
       <div class="actions">
+        <button id="btn-save-state" class="btn btn-outline btn-save" type="button">현재 설정 저장</button>
         <button id="btn-download-front" class="btn btn-primary" type="button">앞면 다운로드</button>
         <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
         <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
@@ -304,55 +288,15 @@
           <div class="compare-grid" id="compare-grid"></div>
         </div>
 
-        <section class="site-ops" aria-label="운영 확장 영역">
-          <div class="site-ops__inner">
-            <div class="ops-card ops-card--notice">
-              <div class="ops-card__eyebrow">운영 준비</div>
-              <h2>공지사항 영역</h2>
-              <p>향후 Google Sheets + Apps Script + JSON fetch 구조로 연동할 수 있는 자리입니다. 지금은 기존 편집 기능에 영향 없이 안내 영역으로만 노출됩니다.</p>
-            </div>
-
-            <div class="ops-grid">
-              <article class="ops-card">
-                <div class="ops-card__eyebrow">광고 · 제휴</div>
-                <h3>광고/제휴 카드 영역</h3>
-                <p>다운로드 버튼과 분리된 하단 영역입니다. 쿠팡파트너스, 애드센스, 자체 배너를 이 구간에만 붙이는 운영용 블록입니다.</p>
-              </article>
-
-              <article class="ops-card">
-                <div class="ops-card__eyebrow">상업용 확장</div>
-                <h3>심볼 추천 영역</h3>
-                <p>업종 키워드 기반 무료 상업용 심볼 추천 UI를 붙일 수 있도록 비워둔 자리입니다. 현재는 구조만 먼저 반영했습니다.</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <footer class="site-footer" aria-label="사이트 정보">
-          <div class="site-footer__inner">
-            <div class="site-footer__brand">
-              <strong>웨이지 (wayzi)</strong>
-              <p>웹에서 바로 명함을 만들고 저장하는 Business Card Studio 운영 정보입니다.</p>
-            </div>
-
-            <div class="site-footer__meta">
-              <span>대표 김도윤</span>
-              <span>사업자번호 538-42-01450</span>
-              <a href="mailto:roadfor@kakao.com">roadfor@kakao.com</a>
-            </div>
-
-            <div class="site-footer__links">
-              <a href="#" onclick="return false;">이용약관</a>
-              <a href="#" onclick="return false;">개인정보처리방침</a>
-              <a href="mailto:roadfor@kakao.com?subject=광고%20및%20제휴%20문의">광고/제휴문의</a>
-            </div>
+        <footer class="preview-footer" aria-label="사이트 푸터">
+          <div class="preview-footer__inner">
+            <div class="preview-footer__brand">웨이지 (wayzi)</div>
+            <div class="preview-footer__meta">대표 김도윤 · 사업자번호 538-42-01450 · 문의 roadfor@kakao.com</div>
           </div>
         </footer>
       </div>
     </main>
   </div>
-
-
   <script src="./main.js"></script>
 </body>
 </html>

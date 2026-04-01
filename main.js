@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fillSample: document.getElementById('btn-fill-sample'),
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
+    saveState: document.getElementById('btn-save-state'),
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back')
   };
@@ -169,10 +170,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company || ' ';
-    elements.frontCompany.classList.toggle('is-empty', !company);
-    elements.backCompany.textContent = company || ' ';
-    elements.backCompany.classList.toggle('is-empty', !company);
+    elements.frontCompany.textContent = company || '\u00A0';
+    elements.frontCompany.style.display = 'block';
+    elements.frontCompany.style.visibility = company ? 'visible' : 'hidden';
+    elements.backCompany.textContent = company || '\u00A0';
+    elements.backCompany.style.display = 'block';
+    elements.backCompany.style.visibility = company ? 'visible' : 'hidden';
 
     elements.frontName.textContent = name || '이름';
     elements.frontPosition.textContent = position;
@@ -433,19 +436,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function waitForImages(scope) {
-    const images = Array.from(scope.querySelectorAll('img')).filter((img) => img.src && img.style.display !== 'none');
-    await Promise.all(images.map((img) => {
+  function waitForImages(scope) {
+    const imgs = Array.from(scope.querySelectorAll('img')).filter((img) => img.getAttribute('src'));
+    if (!imgs.length) return Promise.resolve();
+    return Promise.all(imgs.map((img) => {
       if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-      if (typeof img.decode === 'function') {
-        return img.decode().catch(() => new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true });
-          img.addEventListener('error', resolve, { once: true });
-        }));
-      }
       return new Promise((resolve) => {
-        img.addEventListener('load', resolve, { once: true });
-        img.addEventListener('error', resolve, { once: true });
+        const done = () => resolve();
+        img.addEventListener('load', done, { once: true });
+        img.addEventListener('error', done, { once: true });
       });
     }));
   }
@@ -504,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sandbox.style.position = 'fixed';
     sandbox.style.left = '-10000px';
     sandbox.style.top = '0';
-    // sandbox.style.opacity = '0'; <--- 이 부분이 삭제되었습니다.
+    sandbox.style.opacity = '0';
     sandbox.style.pointerEvents = 'none';
     sandbox.style.zIndex = '-1';
     document.body.appendChild(sandbox);
@@ -513,14 +512,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const clone = createExportClone(cardElement);
       sandbox.appendChild(clone);
       await waitForImages(clone);
-      await document.fonts.ready;
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
 
+      const cloneRect = clone.getBoundingClientRect();
       const canvas = await html2canvas(clone, {
-        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
+        scale: Math.max(2, Math.min(4, window.devicePixelRatio || 2)),
         useCORS: true,
         backgroundColor: null,
-        width: Math.round(clone.getBoundingClientRect().width),
-        height: Math.round(clone.getBoundingClientRect().height)
+        width: Math.round(cloneRect.width),
+        height: Math.round(cloneRect.height),
+        windowWidth: Math.round(cloneRect.width),
+        windowHeight: Math.round(cloneRect.height),
+        scrollX: 0,
+        scrollY: 0
       });
 
       const link = document.createElement('a');
@@ -539,6 +545,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function fillSample() {
+
     inputs.company.value = 'MORNING STUDIO';
     inputs.position.value = 'Creative Director';
     inputs.name.value = '홍지현';
@@ -617,12 +624,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus('초기화했습니다.', 'warning');
   }
 
-  [inputs.frontLogoFile, inputs.backLogoFile, inputs.frontImageFile, inputs.backImageFile].forEach((input) => {
-    input.addEventListener('click', () => {
-      input.value = '';
-    });
-  });
-
   paletteButtons.forEach((button) => {
     button.addEventListener('click', () => {
       inputs.frontBg.value = button.dataset.front;
@@ -693,6 +694,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetAll);
   buttons.compare.addEventListener('click', toggleCompare);
+  buttons.saveState.addEventListener('click', () => { saveState(); setStatus('현재 설정을 저장했습니다.', 'success'); });
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, 'business-card-front.png', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, 'business-card-back.png', buttons.downloadBack));
 
