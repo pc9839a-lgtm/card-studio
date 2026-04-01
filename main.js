@@ -169,10 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company;
-    elements.frontCompany.style.display = company ? 'block' : 'none';
-    elements.backCompany.textContent = company;
-    elements.backCompany.style.display = company ? 'block' : 'none';
+    elements.frontCompany.textContent = company || '';
+    elements.frontCompany.classList.toggle('is-empty', !company);
+    elements.backCompany.textContent = company || '';
+    elements.backCompany.classList.toggle('is-empty', !company);
 
     elements.frontName.textContent = name || '이름';
     elements.frontPosition.textContent = position;
@@ -455,18 +455,25 @@ document.addEventListener('DOMContentLoaded', () => {
     button.textContent = '이미지 저장 중...';
 
     const rect = cardElement.getBoundingClientRect();
+    const width = Math.max(450, Math.round(rect.width));
+    const height = Math.max(250, Math.round(rect.height));
     const sandbox = document.createElement('div');
     sandbox.className = 'export-sandbox';
-    sandbox.style.width = `${Math.round(rect.width)}px`;
-    sandbox.style.height = `${Math.round(rect.height)}px`;
+    sandbox.style.width = `${width}px`;
+    sandbox.style.height = `${height}px`;
 
     const clone = cardElement.cloneNode(true);
     clone.removeAttribute('id');
-    clone.style.width = `${Math.round(rect.width)}px`;
-    clone.style.height = `${Math.round(rect.height)}px`;
+    clone.style.width = `${width}px`;
+    clone.style.height = `${height}px`;
     clone.style.maxWidth = 'none';
     clone.style.aspectRatio = 'auto';
     clone.style.margin = '0';
+    clone.style.transform = 'none';
+
+    const bg = getComputedStyle(cardElement).backgroundColor || '#ffffff';
+    clone.style.backgroundColor = bg;
+    sandbox.style.backgroundColor = bg;
 
     sandbox.appendChild(clone);
     document.body.appendChild(sandbox);
@@ -474,11 +481,14 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (document.fonts && document.fonts.ready) await document.fonts.ready;
       await waitForImages(clone);
-      const canvas = await html2canvas(clone, {
-        scale: Math.max(2, Math.min(3, window.devicePixelRatio || 2)),
+      const canvas = await html2canvas(sandbox, {
+        width,
+        height,
+        scale: 2,
         useCORS: true,
-        backgroundColor: null,
-        logging: false
+        backgroundColor: bg,
+        logging: false,
+        removeContainer: true
       });
       const link = document.createElement('a');
       link.download = filename;

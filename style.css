@@ -514,11 +514,12 @@ input[type="color"]:focus,
 
 .export-sandbox {
   position: fixed;
-  left: -10000px;
+  left: -99999px;
   top: 0;
-  visibility: hidden;
+  opacity: 0;
   pointer-events: none;
   z-index: -1;
+  overflow: hidden;
 }
 
 .business-card {
@@ -885,46 +886,139 @@ body {
 #card-back .card-content {
   z-index: 3;
 }
-#card-back .card-content.back-content {
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  align-items: center !important;
-  text-align: center !important;
-  gap: 8px !important;
+#card-front .card-content,
+#card-back .card-content {
+  z-index: 3;
 }
-#card-back .back-company {
-  display: block;
-}
+
 #card-front .preview-logo-front {
   left: 50%;
 }
-#card-back.back-face {
-  background: var(--back-bg) !important;
-  color: var(--card-text) !important;
+
+#card-back .preview-logo-back {
+  width: var(--back-logo-size);
+  max-width: 240px;
+  max-height: 100px;
+  display: block;
 }
 
-#card-back.back-face .accent-shape {
-  display: none !important;
+#card-back.template-modern .card-content.back-content,
+#card-back.template-pet .card-content.back-content,
+#card-back.template-transport .card-content.back-content,
+#card-back.template-classic .card-content.back-content,
+#card-back.template-dark .card-content.back-content,
+#card-back.template-creative .card-content.back-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
 }
 
-#card-back.back-face .preview-logo-back,
-#card-back.back-face .back-company,
-#card-back.back-face .back-slogan,
-#card-back.back-face .preview-company {
-  color: var(--card-text) !important;
+#card-back.template-modern .preview-logo-back,
+#card-back.template-pet .preview-logo-back,
+#card-back.template-transport .preview-logo-back,
+#card-back.template-classic .preview-logo-back,
+#card-back.template-dark .preview-logo-back,
+#card-back.template-creative .preview-logo-back {
+  margin: 0 auto 14px;
 }
 
-#card-back.back-face .card-content.back-content {
-  gap: 10px !important;
+#card-back.template-clinic .card-content.back-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+  padding-right: 120px;
 }
 
-#card-back.back-face .back-company {
+#card-back.template-clinic .accent-shape {
+  display: block;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  border-top-left-radius: 100px;
+  border-bottom-left-radius: 100px;
+}
+
+#card-back.template-clinic .preview-logo-back {
+  margin: 0 0 14px;
+}
+
+#card-back.template-clinic .back-company,
+#card-back.template-clinic .back-slogan {
+  text-align: left;
+}
+
+#card-back.template-split .card-content.back-content {
+  padding: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
+#card-back.template-split .back-brand-panel {
+  width: 40%;
+  background: var(--card-point);
+  color: var(--back-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+#card-back.template-split .back-info-panel {
+  width: 60%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 35px;
+  text-align: left;
+  gap: 8px;
+}
+
+#card-back.template-split .back-company,
+#card-back.template-split .back-slogan {
+  color: inherit;
+}
+
+#card-back.template-accent .card-content.back-content,
+#card-back.template-bottom .card-content.back-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: left;
+  gap: 10px;
+}
+
+#card-back.template-accent .accent-shape {
+  display: block;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+}
+
+#card-back.template-bottom .accent-shape {
+  display: block;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 20px;
+}
+
+#card-back .back-company {
+  display: block;
   font-size: 18px;
   font-weight: 800;
 }
 
-#card-back.back-face .back-slogan {
+#card-back .back-slogan {
   font-size: 12px;
   opacity: 0.86;
 }
