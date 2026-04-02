@@ -10,7 +10,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-45">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-46">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -65,7 +65,16 @@
 
         <div class="workspace-action-row">
           <button id="btn-export-preset" class="btn btn-outline" type="button">JSON 내보내기</button>
-          <label class="file-label workspace-import-label">JSON 불러오기<input type="file" id="input-import-preset" accept="application/json,.json"></label>
+          <label class="file-label workspace-import-label">JSON 파일 선택<input type="file" id="input-import-preset" accept=".json,application/json,text/json,text/plain,.txt"></label>
+        </div>
+
+        <div class="sub-panel preset-import-fallback">
+          <div class="upload-help">모바일에서 내 파일이 바로 안 뜨면 JSON 내용을 아래에 붙여넣어 불러올 수 있습니다.</div>
+          <label class="field full-span">
+            <span>JSON 붙여넣기</span>
+            <textarea id="input-import-preset-text" rows="5" placeholder='{"preset": {...}}'></textarea>
+          </label>
+          <button id="btn-import-preset-text" class="btn btn-outline" type="button">붙여넣기 불러오기</button>
         </div>
 
         <div class="preset-library">
@@ -632,6 +641,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-45"></script>
+  <script src="./main.js?v=20260403-card-standard-46"></script>
 </body>
 </html>

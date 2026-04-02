@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputs = {
     presetName: document.getElementById('input-preset-name'),
     importPresetFile: document.getElementById('input-import-preset'),
+    importPresetText: document.getElementById('input-import-preset-text'),
     savedPresetSelect: document.getElementById('select-saved-preset'),
     company: document.getElementById('input-company'),
     position: document.getElementById('input-position'),
@@ -104,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     generateFrontQr: document.getElementById('btn-generate-front-qr'),
     generateBackQr: document.getElementById('btn-generate-back-qr'),
     loadPreset: document.getElementById('btn-load-preset'),
+    importPresetText: document.getElementById('btn-import-preset-text'),
     exportPreset: document.getElementById('btn-export-preset'),
     addCard: document.getElementById('btn-add-card'),
     duplicateCard: document.getElementById('btn-duplicate-card'),
@@ -1388,11 +1390,8 @@ document.addEventListener('DOMContentLoaded', () => {
     setStatus(`${record.name} JSON 내보내기 완료`, 'success', 2000);
   }
 
-  async function importPresetFromFile(file) {
-    if (!file) return;
-
+  function importPresetFromText(rawText, options = {}) {
     try {
-      const rawText = await file.text();
       const parsed = JSON.parse(rawText);
       const importedPreset = normalizePreset(parsed, presetLibrary.length);
       if (!importedPreset) throw new Error('INVALID_PRESET');
@@ -1409,9 +1408,21 @@ document.addEventListener('DOMContentLoaded', () => {
       renderPresetLibrary();
       loadPresetById(importedPreset.id, false);
       setStatus(`${importedPreset.name} 업로드 완료`, 'success', 2200);
+      if (inputs.importPresetText && options.clearText !== false) {
+        inputs.importPresetText.value = '';
+      }
     } catch (error) {
       console.error(error);
       setStatus('JSON 프리셋 파일을 읽지 못했습니다.', 'error', 2400);
+    }
+  }
+
+  async function importPresetFromFile(file) {
+    if (!file) return;
+
+    try {
+      const rawText = await file.text();
+      importPresetFromText(rawText, { clearText: false });
     } finally {
       inputs.importPresetFile.value = '';
     }
@@ -2287,6 +2298,17 @@ document.addEventListener('DOMContentLoaded', () => {
   if (inputs.importPresetFile) {
     inputs.importPresetFile.addEventListener('change', (event) => {
       importPresetFromFile(event.target.files[0]);
+    });
+  }
+
+  if (buttons.importPresetText) {
+    buttons.importPresetText.addEventListener('click', () => {
+      const rawText = inputs.importPresetText?.value?.trim();
+      if (!rawText) {
+        setStatus('붙여넣은 JSON 데이터가 없습니다.', 'warning', 2200);
+        return;
+      }
+      importPresetFromText(rawText, { clearText: true });
     });
   }
 

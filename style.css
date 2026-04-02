@@ -130,6 +130,7 @@ button, input, select {
 
 .control-group input[type="text"],
 .control-group input[type="email"],
+.control-group textarea,
 .control-group select {
   width: 100%;
   padding: 11px 12px;
@@ -143,6 +144,7 @@ button, input, select {
 
 .control-group input[type="text"]:focus,
 .control-group input[type="email"]:focus,
+.control-group textarea:focus,
 .control-group select:focus,
 input[type="range"]:focus,
 input[type="color"]:focus,
@@ -1829,6 +1831,19 @@ body {
   min-height: 48px;
 }
 
+.preset-import-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preset-import-fallback textarea {
+  min-height: 110px;
+  resize: vertical;
+  border-radius: 12px;
+  background: #fff;
+}
+
 .preset-library {
   display: flex;
   gap: 10px;
@@ -2622,6 +2637,51 @@ body {
     height: 140px;
     transform: scale(var(--partners-mobile-scale));
     transform-origin: top center;
+  }
+
+  .business-card.template-bottom.front-face .card-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto 1fr;
+    column-gap: calc(10px * var(--card-ui-scale));
+    row-gap: calc(8px * var(--card-ui-scale));
+    padding: calc(18px * var(--card-ui-scale)) calc(18px * var(--card-ui-scale)) calc(42px * var(--card-ui-scale));
+  }
+
+  .business-card.template-bottom.front-face .brand-area {
+    grid-column: 2;
+    grid-row: 1;
+    max-width: calc(92px * var(--card-ui-scale));
+    justify-self: end;
+    align-self: start;
+    text-align: right;
+  }
+
+  .business-card.template-bottom.front-face .preview-company {
+    font-size: calc(11px * var(--card-ui-scale));
+    line-height: 1.12;
+    letter-spacing: 0;
+  }
+
+  .business-card.template-bottom.front-face .info-area {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    max-width: 66%;
+    margin-top: 0;
+    padding-bottom: calc(10px * var(--card-ui-scale));
+  }
+
+  .business-card.template-bottom.front-face .name-wrap {
+    margin-bottom: calc(7px * var(--card-ui-scale));
+  }
+
+  .business-card.template-bottom.front-face .preview-divider {
+    margin: calc(7px * var(--card-ui-scale)) 0;
+  }
+
+  .business-card.template-bottom.front-face .preview-position,
+  .business-card.template-bottom.front-face .info-row {
+    font-size: calc(9.5px * var(--card-ui-scale));
   }
 }
 
