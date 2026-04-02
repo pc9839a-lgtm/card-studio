@@ -4,6 +4,7 @@
   --card-bg: #ffffff;
   --card-text: #333333;
   --card-point: #2a5a43;
+  --company-color: #333333;
   --overlay-color: #000000;
   --overlay-opacity: 0;
   --card-font: 'Pretendard', sans-serif;
@@ -576,7 +577,7 @@ input[type="color"]:focus,
   z-index: -1;
 }
 
-.preview-company { font-size: calc(15px * var(--card-ui-scale)); font-weight: 800; letter-spacing: calc(0.5px * var(--card-ui-scale)); }
+.preview-company { font-size: calc(15px * var(--card-ui-scale)); font-weight: 800; letter-spacing: calc(0.5px * var(--card-ui-scale)); color: var(--company-color); }
 .preview-logo { max-width: calc(120px * var(--card-ui-scale)); max-height: calc(40px * var(--card-ui-scale)); object-fit: contain; margin-bottom: calc(10px * var(--card-ui-scale)); }
 .name-wrap { display: flex; align-items: baseline; gap: calc(8px * var(--card-ui-scale)); margin-bottom: calc(4px * var(--card-ui-scale)); flex-wrap: wrap; }
 .preview-name { font-size: calc(var(--name-size) * var(--card-ui-scale)); font-weight: var(--name-weight); color: var(--card-point); line-height: 1; letter-spacing: calc(1px * var(--card-ui-scale)); }
@@ -666,10 +667,10 @@ input[type="color"]:focus,
 
 .template-transport .preview-company {
   font-size: calc(11px * var(--card-ui-scale));
-  font-weight: 900;
-  letter-spacing: calc(1.8px * var(--card-ui-scale));
+  font-weight: 600;
+  letter-spacing: calc(1.1px * var(--card-ui-scale));
   text-transform: uppercase;
-  color: rgba(109, 40, 217, 0.72);
+  color: var(--company-color);
 }
 
 .template-transport .info-area {
@@ -699,16 +700,15 @@ input[type="color"]:focus,
 }
 
 .template-transport .preview-position {
-  display: inline-flex;
-  align-items: center;
-  min-height: calc(20px * var(--card-ui-scale));
-  padding: 0 calc(9px * var(--card-ui-scale));
-  border-radius: 999px;
-  background: rgba(168, 85, 247, 0.1);
-  color: #7e22ce;
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   font-size: calc(10.5px * var(--card-ui-scale));
-  font-weight: 800;
-  opacity: 1;
+  font-weight: 700;
+  opacity: 0.78;
 }
 
 .template-transport .preview-divider {
@@ -904,14 +904,15 @@ input[type="color"]:focus,
 .template-accent .accent-shape { display: block; left: 0; top: 0; bottom: 0; width: calc(16px * var(--card-ui-scale)); }
 .template-accent .brand-area { position: absolute; top: calc(35px * var(--card-ui-scale)); right: calc(35px * var(--card-ui-scale)); text-align: right; }
 
-.template-bottom .card-content { flex-direction: column; justify-content: flex-start; padding-top: calc(24px * var(--card-ui-scale)); padding-bottom: calc(46px * var(--card-ui-scale)); }
+.template-bottom .card-content { flex-direction: column; justify-content: flex-start; padding-top: calc(36px * var(--card-ui-scale)); padding-bottom: calc(38px * var(--card-ui-scale)); }
 .template-bottom .accent-shape { display: block; left: 0; bottom: 0; right: 0; height: calc(20px * var(--card-ui-scale)); }
-.template-bottom .brand-area { position: static; margin-top: 0; align-self: flex-end; text-align: right; max-width: 52%; }
-.template-bottom .info-area { margin-top: calc(8px * var(--card-ui-scale)); }
+.template-bottom .brand-area { position: static; margin-top: calc(8px * var(--card-ui-scale)); align-self: flex-end; text-align: right; max-width: 52%; }
+.template-bottom .info-area { margin-top: calc(18px * var(--card-ui-scale)); }
 
 .template-dark { background-color: #111 !important; color: #eee !important; }
 .template-dark .preview-name { color: var(--card-point); }
-.template-dark .preview-company, .template-dark .info-row { color: #ccc; }
+.template-dark .preview-company { color: var(--company-color); }
+.template-dark .info-row { color: #ccc; }
 .template-dark .preview-divider { background-color: #333; }
 .template-dark .card-content { flex-direction: column; justify-content: center; align-items: flex-start; }
 .template-dark .brand-area { margin-bottom: calc(20px * var(--card-ui-scale)); }
@@ -1241,11 +1242,29 @@ body {
 
 /* ===== phase 1 editing patch ===== */
 .company-position-card {
-  padding: 14px !important;
-  overflow: visible !important;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid #e5edf5;
+  background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
 }
 
-.company-position-card .media-subhead span {
+.company-position-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.company-position-card__head strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.company-position-card__head span {
   font-size: 12px;
   font-weight: 700;
   color: #64748b;
@@ -1255,10 +1274,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.company-position-card .sub-panel {
-  overflow: visible;
 }
 
 .preview-jump-target {
@@ -1279,25 +1294,7 @@ body {
   --front-company-y: 16%;
 }
 
-.business-card.company-manual-front .brand-area {
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  width: 0 !important;
-  max-width: 0 !important;
-  min-width: 0 !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  flex: 0 0 0 !important;
-  overflow: visible !important;
-  background: transparent !important;
-}
-
-.business-card.company-manual-front .preview-company {
+.business-card.company-manual-front .preview-company-manual {
   position: absolute;
   left: var(--front-company-x);
   top: var(--front-company-y);
@@ -1314,22 +1311,13 @@ body {
   text-align: left;
 }
 
-.business-card.company-manual-front .preview-company.dragging {
+.business-card.company-manual-front .preview-company-manual.dragging {
   cursor: grabbing;
 }
 
-.business-card.company-manual-front.template-split .card-content {
-  display: block;
-  padding: calc(30px * var(--card-ui-scale)) calc(35px * var(--card-ui-scale));
-}
-
-.business-card.company-manual-front.template-split .info-area {
-  width: 100%;
-  padding: 0;
-}
-
-.business-card.company-manual-front.template-split .preview-company {
-  color: var(--card-text);
+.preview-company-manual {
+  pointer-events: auto;
+  color: var(--company-color);
 }
 
 .section-toggle {

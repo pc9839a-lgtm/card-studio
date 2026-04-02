@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
     frontLogo: document.querySelector('#card-front .preview-logo-front'),
     backLogo: document.querySelector('#card-back .preview-logo-back'),
     frontCompany: document.querySelector('#card-front .preview-company'),
+    frontCompanyManual: document.querySelector('#card-front .preview-company-manual'),
     backCompany: document.querySelector('#card-back .back-company'),
     frontName: document.querySelector('#card-front .preview-name'),
     frontPosition: document.querySelector('#card-front .preview-position'),
@@ -570,6 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.cardFront.className = frontClasses.join(' ');
     elements.cardBack.className = backClasses.join(' ');
     elements.templateLabel.textContent = `현재 템플릿: ${getSelectedText(inputs.template)}`;
+    updateCompanyPosition();
   }
 
   function updateText() {
@@ -585,6 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.frontCompany.textContent = company || '\u00A0';
     elements.frontCompany.style.display = 'block';
     elements.frontCompany.style.visibility = company ? 'visible' : 'hidden';
+    if (elements.frontCompanyManual) {
+      elements.frontCompanyManual.textContent = company || '';
+    }
     elements.backCompany.textContent = company || '\u00A0';
     elements.backCompany.style.display = 'block';
     elements.backCompany.style.visibility = company ? 'visible' : 'hidden';
@@ -606,6 +611,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.backSlogan.textContent = slogan;
     elements.backSlogan.style.display = slogan ? 'block' : 'none';
+
+    updateCompanyPosition();
+  }
+
+  function syncManualCompanyStyle() {
+    if (!elements.frontCompanyManual || !elements.frontCompany) return;
+    const computed = window.getComputedStyle(elements.frontCompany);
+    elements.frontCompanyManual.style.color = computed.color;
+    elements.frontCompanyManual.style.fontSize = computed.fontSize;
+    elements.frontCompanyManual.style.fontWeight = computed.fontWeight;
+    elements.frontCompanyManual.style.letterSpacing = computed.letterSpacing;
+    elements.frontCompanyManual.style.textTransform = computed.textTransform;
+    elements.frontCompanyManual.style.lineHeight = computed.lineHeight;
+    elements.frontCompanyManual.style.fontFamily = computed.fontFamily;
   }
 
   function updateColorVars() {
@@ -613,6 +632,7 @@ document.addEventListener('DOMContentLoaded', () => {
     root.style.setProperty('--front-bg', inputs.frontBg.value);
     root.style.setProperty('--back-bg', inputs.backBg.value);
     root.style.setProperty('--card-text', inputs.textColor.value);
+    root.style.setProperty('--company-color', inputs.textColor.value);
     root.style.setProperty('--card-point', inputs.pointColor.value);
     root.style.setProperty('--card-font', inputs.font.value);
     root.style.setProperty('--name-size', `${inputs.rangeSize.value}px`);
@@ -667,14 +687,23 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateCompanyPosition() {
     if (!inputs.frontCompanyMode || !inputs.frontCompanyX || !inputs.frontCompanyY) return;
     const frontManual = inputs.frontCompanyMode?.value === 'manual';
+    const hasCompany = !!inputs.company.value.trim();
 
     elements.cardFront.classList.toggle('company-manual-front', frontManual);
-    elements.frontCompany.classList.toggle('is-draggable', frontManual);
-    elements.cardBack.classList.remove('company-manual-back');
-    elements.backCompany.classList.remove('is-draggable');
+    syncManualCompanyStyle();
+    if (elements.frontCompanyManual) {
+      elements.frontCompanyManual.hidden = !(frontManual && hasCompany);
+      elements.frontCompanyManual.style.display = frontManual && hasCompany ? 'inline-flex' : 'none';
+    }
+    elements.frontCompany.style.display = frontManual ? 'none' : 'block';
+    elements.frontCompany.style.visibility = !frontManual && hasCompany ? 'visible' : 'hidden';
 
     elements.cardFront.style.setProperty('--front-company-x', `${inputs.frontCompanyX.value}%`);
     elements.cardFront.style.setProperty('--front-company-y', `${inputs.frontCompanyY.value}%`);
+    if (elements.frontCompanyManual) {
+      elements.frontCompanyManual.style.left = `${inputs.frontCompanyX.value}%`;
+      elements.frontCompanyManual.style.top = `${inputs.frontCompanyY.value}%`;
+    }
 
     if (elements.frontCompanyManualControls) {
       elements.frontCompanyManualControls.hidden = !frontManual;
@@ -1111,10 +1140,10 @@ document.addEventListener('DOMContentLoaded', () => {
     onMove: updateColorVars
   }));
 
-  bindDrag(elements.frontCompany, () => {
+  bindDrag(elements.frontCompanyManual, () => {
     if (!inputs.frontCompanyMode || inputs.frontCompanyMode.value !== 'manual') return null;
     return {
-      element: elements.frontCompany,
+      element: elements.frontCompanyManual,
       card: elements.cardFront,
       xInput: inputs.frontCompanyX,
       yInput: inputs.frontCompanyY,
@@ -1139,7 +1168,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function focusControlSection(sectionId) {
     const section = document.getElementById(sectionId);
     if (!section) return;
-    setSectionCollapsed(section, false);
+    collapsibleSections.forEach((item) => {
+      setSectionCollapsed(item, item !== section);
+    });
     section.scrollIntoView({ behavior: 'smooth', block: 'center' });
     section.classList.add('is-focus-target');
     window.setTimeout(() => section.classList.remove('is-focus-target'), 1400);
@@ -1159,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   [
     elements.frontCompany,
+    elements.frontCompanyManual,
     elements.frontName,
     elements.frontPosition,
     elements.frontPhone,
@@ -1174,6 +1206,12 @@ document.addEventListener('DOMContentLoaded', () => {
   bindPreviewJump(elements.frontImageLayer, 'section-image', 'dblclick', 'double');
   bindPreviewJump(elements.backImageLayer, 'section-image', 'dblclick', 'double');
 
+  function openSectionExclusive(targetSection) {
+    collapsibleSections.forEach((section) => {
+      setSectionCollapsed(section, section !== targetSection);
+    });
+  }
+
   collapsibleSections.forEach((section, index) => {
     const toggle = getSectionToggle(section);
     if (!toggle) return;
@@ -1181,11 +1219,15 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.classList.add('section-toggle');
     toggle.tabIndex = 0;
     toggle.setAttribute('role', 'button');
-    setSectionCollapsed(section, !section.classList.contains('quick-start-group') && index !== collapsibleSections.length - 1);
+    setSectionCollapsed(section, section !== document.getElementById('section-start'));
 
     const handleToggle = () => {
       const isCollapsed = section.classList.contains('is-collapsed');
-      setSectionCollapsed(section, !isCollapsed);
+      if (isCollapsed) {
+        openSectionExclusive(section);
+      } else {
+        setSectionCollapsed(section, true);
+      }
     };
 
     toggle.addEventListener('click', (event) => {
@@ -1205,6 +1247,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = link.getAttribute('href')?.replace('#', '');
       if (!targetId) return;
       event.preventDefault();
+      const section = document.getElementById(targetId);
+      if (section) openSectionExclusive(section);
       focusControlSection(targetId);
     });
   });
