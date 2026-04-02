@@ -2468,6 +2468,92 @@ body {
     grid-template-columns: 1fr;
   }
 
+  #section-workspace > .workspace-action-row:not(.workspace-action-row--cards),
+  #section-workspace .preset-import-fallback {
+    display: none !important;
+  }
+
+  .media-group,
+  .control-group {
+    overflow: visible;
+  }
+
+  .face-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .face-toggle__btn {
+    min-height: 42px;
+    padding: 10px 8px;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: keep-all;
+  }
+
+  .media-subcard,
+  .unified-media-card {
+    padding: 0;
+    border-radius: 18px;
+  }
+
+  .face-panel {
+    padding: 14px 12px;
+  }
+
+  .media-subhead {
+    margin-bottom: 8px;
+  }
+
+  .media-subhead strong {
+    font-size: 12px;
+  }
+
+  .range-wrap label {
+    gap: 8px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    line-height: 1.35;
+  }
+
+  .image-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    align-items: stretch;
+  }
+
+  .image-action-row .btn,
+  .image-action-row .file-label {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .align-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .align-buttons .btn {
+    min-width: 0;
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+
+  .overlay-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+  }
+
+  #section-qr .upload-help,
+  #section-qr .qr-status {
+    margin-top: 0;
+  }
+
   .preset-library {
     flex-direction: column;
   }
@@ -2666,8 +2752,9 @@ body {
   .business-card.template-bottom.front-face .info-area {
     grid-column: 1 / -1;
     grid-row: 2;
-    max-width: 66%;
+    max-width: calc(66% - (8px * var(--card-ui-scale)));
     margin-top: 0;
+    margin-left: calc(8px * var(--card-ui-scale));
     padding-bottom: calc(10px * var(--card-ui-scale));
   }
 
