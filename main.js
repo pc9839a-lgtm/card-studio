@@ -83,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back'),
     save: document.getElementById('btn-save'),
+    mobileFaceFront: document.getElementById('btn-mobile-face-front'),
+    mobileFaceBack: document.getElementById('btn-mobile-face-back'),
+    mobileSaveShortcut: document.getElementById('btn-mobile-save-shortcut'),
+    mobileScrollTop: document.getElementById('btn-mobile-scroll-top'),
     loadPreset: document.getElementById('btn-load-preset'),
     exportPreset: document.getElementById('btn-export-preset'),
     addCard: document.getElementById('btn-add-card'),
@@ -104,6 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
     partnersDesktop: document.querySelector('.partners-desktop'),
     partnersDesktopInner: document.querySelector('.partners-desktop__inner'),
     partnersDesktopFrame: document.querySelector('.partners-desktop__frame'),
+    cardSectionFront: document.getElementById('card-section-front'),
+    cardSectionBack: document.getElementById('card-section-back'),
     cardFront: document.getElementById('card-front'),
     cardBack: document.getElementById('card-back'),
     frontContent: document.querySelector('#card-front .front-content'),
@@ -159,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isCompareMode = false;
   let activeDrag = null;
   let dragJustEndedAt = 0;
+  let mobilePreviewFace = 'front';
   let statusTimer = null;
   let state = createTransientState();
 
@@ -362,6 +369,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!selectElement) return '';
     const selected = selectElement.options[selectElement.selectedIndex];
     return selected ? selected.text : '';
+  }
+
+  function syncSectionNavState(openSection) {
+    controlNavLinks.forEach((link) => {
+      const targetId = link.getAttribute('href')?.replace('#', '');
+      link.classList.toggle('is-active', !!openSection && openSection.id === targetId);
+    });
+  }
+
+  function setMobilePreviewFace(face) {
+    mobilePreviewFace = face === 'back' ? 'back' : 'front';
+    const showBack = mobilePreviewFace === 'back';
+
+    if (elements.cardSectionFront) {
+      elements.cardSectionFront.classList.toggle('is-mobile-hidden', showBack);
+    }
+    if (elements.cardSectionBack) {
+      elements.cardSectionBack.classList.toggle('is-mobile-hidden', !showBack);
+    }
+    if (buttons.mobileFaceFront) {
+      buttons.mobileFaceFront.classList.toggle('is-active', !showBack);
+    }
+    if (buttons.mobileFaceBack) {
+      buttons.mobileFaceBack.classList.toggle('is-active', showBack);
+    }
   }
 
   function getActiveCard() {
@@ -1163,6 +1195,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toggle) {
       toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     }
+    if (!collapsed) {
+      syncSectionNavState(section);
+    }
   }
 
   function focusControlSection(sectionId) {
@@ -1210,6 +1245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     collapsibleSections.forEach((section) => {
       setSectionCollapsed(section, section !== targetSection);
     });
+    syncSectionNavState(targetSection);
   }
 
   collapsibleSections.forEach((section, index) => {
@@ -1628,6 +1664,10 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.resetAll.addEventListener('click', resetCurrentCard);
   buttons.compare.addEventListener('click', toggleCompare);
   if (buttons.save) buttons.save.addEventListener('click', () => saveCurrentPreset(true));
+  if (buttons.mobileFaceFront) buttons.mobileFaceFront.addEventListener('click', () => setMobilePreviewFace('front'));
+  if (buttons.mobileFaceBack) buttons.mobileFaceBack.addEventListener('click', () => setMobilePreviewFace('back'));
+  if (buttons.mobileSaveShortcut) buttons.mobileSaveShortcut.addEventListener('click', () => buttons.save?.click());
+  if (buttons.mobileScrollTop) buttons.mobileScrollTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, getDownloadFilename('front'), buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, getDownloadFilename('back'), buttons.downloadBack));
   window.addEventListener('resize', updateContextLabels);
@@ -1639,6 +1679,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setActiveFacePanel('image', 'front');
   renderPresetLibrary();
   syncPresetInput();
+  setMobilePreviewFace('front');
   applyCardData(getActiveCard());
   persistWorkspace();
   setStatus('준비 완료');

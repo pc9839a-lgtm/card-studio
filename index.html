@@ -10,7 +10,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260402-card-standard-30">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-33">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -26,18 +26,6 @@
           <span class="hero-badge">자동 저장</span>
         </div>
       </div>
-
-      <nav class="control-nav" aria-label="설정 바로가기">
-        <a class="control-nav__link" href="#section-start">빠른 시작</a>
-        <a class="control-nav__link" href="#section-style">스타일</a>
-        <a class="control-nav__link" href="#section-workspace">작업 세트</a>
-        <a class="control-nav__link" href="#section-info">기본 정보</a>
-        <a class="control-nav__link" href="#section-logo">로고</a>
-        <a class="control-nav__link" href="#section-text">텍스트</a>
-        <a class="control-nav__link" href="#section-image">이미지</a>
-        <a class="control-nav__link" href="#section-export">저장</a>
-      </nav>
-
       <section class="control-group quick-start-group" id="section-start">
         <div class="section-heading">
           <span class="section-kicker">Start</span>
@@ -426,15 +414,21 @@
       </div>
       <div class="preview-stage">
         <div class="preview-toolbar">
-          <div>
+          <div class="preview-toolbar__meta">
             <strong>실시간 미리보기</strong>
             <p id="preview-context-label">프리셋 1 · 명함 1</p>
             <p id="preview-template-label">현재 템플릿: 1. 베이직 모던</p>
           </div>
+          <div class="mobile-preview-actions" aria-label="모바일 미리보기 빠른 작업">
+            <button id="btn-mobile-face-front" class="btn btn-outline btn-sm is-active" type="button">앞면</button>
+            <button id="btn-mobile-face-back" class="btn btn-outline btn-sm" type="button">뒷면</button>
+            <button id="btn-mobile-save-shortcut" class="btn btn-outline btn-sm" type="button">저장</button>
+            <button id="btn-mobile-scroll-top" class="btn btn-outline btn-sm" type="button">맨위</button>
+          </div>
         </div>
 
         <div class="cards-wrapper" id="single-view">
-          <div class="card-section">
+          <div class="card-section" id="card-section-front">
             <div class="card-label">명함 앞면 (Front)</div>
             <div id="card-front" class="business-card template-modern logo-align-center front-face">
               <div class="card-custom-img-layer front-image-layer">
@@ -465,7 +459,7 @@
             </div>
           </div>
 
-          <div class="card-section">
+          <div class="card-section" id="card-section-back">
             <div class="card-label">명함 뒷면 (Back)</div>
             <div id="card-back" class="business-card template-modern back-face">
               <div class="card-custom-img-layer back-image-layer">
@@ -532,6 +526,6 @@
     </div>
   </div>
 
-  <script src="./main.js?v=20260402-card-standard-30"></script>
+  <script src="./main.js?v=20260403-card-standard-33"></script>
 </body>
 </html>
