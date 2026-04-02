@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const CARD_FIELD_KEYS = [
     'company', 'position', 'name', 'phone', 'email', 'address', 'extra', 'slogan',
+    'frontCompanyMode', 'frontCompanyX', 'frontCompanyY', 'backCompanyMode', 'backCompanyX', 'backCompanyY',
     'frontLogoSize', 'frontLogoX', 'frontLogoY', 'backLogoSize', 'backLogoX', 'backLogoY',
     'frontImgSize', 'frontImgX', 'frontImgY', 'backImgSize', 'backImgX', 'backImgY',
     'frontOverlayColor', 'frontOverlayOpacity', 'backOverlayColor', 'backOverlayOpacity',
@@ -36,6 +37,9 @@ document.addEventListener('DOMContentLoaded', () => {
     address: document.getElementById('input-address'),
     extra: document.getElementById('input-extra'),
     slogan: document.getElementById('input-slogan'),
+    frontCompanyMode: document.getElementById('input-front-company-mode'),
+    frontCompanyX: document.getElementById('range-front-company-x'),
+    frontCompanyY: document.getElementById('range-front-company-y'),
     frontLogoFile: document.getElementById('input-front-logo'),
     backLogoFile: document.getElementById('input-back-logo'),
     frontLogoSize: document.getElementById('range-front-logo-size'),
@@ -102,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
     partnersDesktopFrame: document.querySelector('.partners-desktop__frame'),
     cardFront: document.getElementById('card-front'),
     cardBack: document.getElementById('card-back'),
+    frontContent: document.querySelector('#card-front .front-content'),
+    backContent: document.querySelector('#card-back .back-content'),
     frontLogo: document.querySelector('#card-front .preview-logo-front'),
     backLogo: document.querySelector('#card-back .preview-logo-back'),
     frontCompany: document.querySelector('#card-front .preview-company'),
@@ -121,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
     backOverlay: document.querySelector('#card-back .back-overlay-layer'),
     valSize: document.getElementById('val-size'),
     valWeight: document.getElementById('val-weight'),
+    valFrontCompanyX: document.getElementById('val-front-company-x'),
+    valFrontCompanyY: document.getElementById('val-front-company-y'),
+    frontCompanyManualControls: document.getElementById('front-company-manual-controls'),
     valFrontLogoSize: document.getElementById('val-front-logo-size'),
     valFrontLogoX: document.getElementById('val-front-logo-x'),
     valFrontLogoY: document.getElementById('val-front-logo-y'),
@@ -141,11 +150,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const alignButtons = document.querySelectorAll('.align-buttons button');
   const faceToggleButtons = document.querySelectorAll('.face-toggle__btn');
   const facePanels = document.querySelectorAll('.face-panel');
+  const controlNavLinks = document.querySelectorAll('.control-nav__link');
+  const collapsibleSections = Array.from(document.querySelectorAll('.control-group, .actions'));
 
   let presetLibrary = [];
   let workspace = null;
   let isCompareMode = false;
   let activeDrag = null;
+  let dragJustEndedAt = 0;
   let statusTimer = null;
   let state = createTransientState();
 
@@ -178,6 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
       address: '',
       extra: '',
       slogan: '',
+      frontCompanyMode: 'auto',
+      frontCompanyX: '18',
+      frontCompanyY: '16',
+      backCompanyMode: 'auto',
+      backCompanyX: '50',
+      backCompanyY: '42',
       frontLogoSize: '110',
       frontLogoX: '50',
       frontLogoY: '18',
@@ -624,6 +642,8 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.backOverlay.style.backgroundColor = inputs.backOverlayColor.value;
     elements.backOverlay.style.opacity = inputs.backOverlayOpacity.value;
 
+    updateCompanyPosition();
+
     elements.valSize.textContent = `${inputs.rangeSize.value}px`;
     elements.valWeight.textContent = inputs.rangeWeight.value;
     elements.valFrontLogoSize.textContent = `${inputs.frontLogoSize.value}px`;
@@ -642,6 +662,26 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.valBackOverlay.textContent = `${Math.round(parseFloat(inputs.backOverlayOpacity.value) * 100)}%`;
 
     updateContextLabels();
+  }
+
+  function updateCompanyPosition() {
+    if (!inputs.frontCompanyMode || !inputs.frontCompanyX || !inputs.frontCompanyY) return;
+    const frontManual = inputs.frontCompanyMode?.value === 'manual';
+
+    elements.cardFront.classList.toggle('company-manual-front', frontManual);
+    elements.frontCompany.classList.toggle('is-draggable', frontManual);
+    elements.cardBack.classList.remove('company-manual-back');
+    elements.backCompany.classList.remove('is-draggable');
+
+    elements.cardFront.style.setProperty('--front-company-x', `${inputs.frontCompanyX.value}%`);
+    elements.cardFront.style.setProperty('--front-company-y', `${inputs.frontCompanyY.value}%`);
+
+    if (elements.frontCompanyManualControls) {
+      elements.frontCompanyManualControls.hidden = !frontManual;
+    }
+
+    if (elements.valFrontCompanyX) elements.valFrontCompanyX.textContent = `${inputs.frontCompanyX.value}%`;
+    if (elements.valFrontCompanyY) elements.valFrontCompanyY.textContent = `${inputs.frontCompanyY.value}%`;
   }
 
   function applyLogo(face, dataUrl) {
@@ -954,6 +994,14 @@ document.addEventListener('DOMContentLoaded', () => {
     persistWorkspace();
   }
 
+  function setCompanyAlign(face, align) {
+    const value = ({ left: '14', center: '50', right: '86' }[align] || '50');
+    if (face !== 'front' || !inputs.frontCompanyX) return;
+    inputs.frontCompanyX.value = value;
+    updateColorVars();
+    persistWorkspace();
+  }
+
   function setImageAlign(face, align) {
     const value = ({ left: '14', center: '50', right: '86' }[align] || '50');
     if (face === 'front') inputs.frontImgX.value = value;
@@ -993,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!activeDrag) return;
     activeDrag.config.element.classList.remove('dragging');
     activeDrag = null;
+    dragJustEndedAt = Date.now();
     persistWorkspace();
   }
 
@@ -1061,6 +1110,104 @@ document.addEventListener('DOMContentLoaded', () => {
     yInput: inputs.backImgY,
     onMove: updateColorVars
   }));
+
+  bindDrag(elements.frontCompany, () => {
+    if (!inputs.frontCompanyMode || inputs.frontCompanyMode.value !== 'manual') return null;
+    return {
+      element: elements.frontCompany,
+      card: elements.cardFront,
+      xInput: inputs.frontCompanyX,
+      yInput: inputs.frontCompanyY,
+      onMove: updateColorVars
+    };
+  });
+
+  function getSectionToggle(section) {
+    if (!section) return null;
+    return section.querySelector('.section-heading, .actions-copy');
+  }
+
+  function setSectionCollapsed(section, collapsed) {
+    if (!section) return;
+    const toggle = getSectionToggle(section);
+    section.classList.toggle('is-collapsed', collapsed);
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    }
+  }
+
+  function focusControlSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    setSectionCollapsed(section, false);
+    section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    section.classList.add('is-focus-target');
+    window.setTimeout(() => section.classList.remove('is-focus-target'), 1400);
+  }
+
+  function bindPreviewJump(element, sectionId, eventName = 'click', jumpMode = 'single') {
+    if (!element) return;
+    element.classList.add('preview-jump-target');
+    element.dataset.jumpMode = jumpMode;
+    element.addEventListener(eventName, (event) => {
+      if (Date.now() - dragJustEndedAt < 220) return;
+      event.preventDefault();
+      event.stopPropagation();
+      focusControlSection(sectionId);
+    });
+  }
+
+  [
+    elements.frontCompany,
+    elements.frontName,
+    elements.frontPosition,
+    elements.frontPhone,
+    elements.frontEmail,
+    elements.frontAddress,
+    elements.frontExtra,
+    elements.backCompany,
+    elements.backSlogan
+  ].forEach((element) => bindPreviewJump(element, 'section-info'));
+
+  bindPreviewJump(elements.frontLogo, 'section-logo', 'dblclick', 'double');
+  bindPreviewJump(elements.backLogo, 'section-logo', 'dblclick', 'double');
+  bindPreviewJump(elements.frontImageLayer, 'section-image', 'dblclick', 'double');
+  bindPreviewJump(elements.backImageLayer, 'section-image', 'dblclick', 'double');
+
+  collapsibleSections.forEach((section, index) => {
+    const toggle = getSectionToggle(section);
+    if (!toggle) return;
+
+    toggle.classList.add('section-toggle');
+    toggle.tabIndex = 0;
+    toggle.setAttribute('role', 'button');
+    setSectionCollapsed(section, !section.classList.contains('quick-start-group') && index !== collapsibleSections.length - 1);
+
+    const handleToggle = () => {
+      const isCollapsed = section.classList.contains('is-collapsed');
+      setSectionCollapsed(section, !isCollapsed);
+    };
+
+    toggle.addEventListener('click', (event) => {
+      if (event.target.closest('a, button, input, select, label')) return;
+      handleToggle();
+    });
+
+    toggle.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      handleToggle();
+    });
+  });
+
+  controlNavLinks.forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const targetId = link.getAttribute('href')?.replace('#', '');
+      if (!targetId) return;
+      event.preventDefault();
+      focusControlSection(targetId);
+    });
+  });
 
   function renderCompareGrid() {
     elements.compareGrid.innerHTML = '';
@@ -1273,6 +1420,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const { target, align } = button.dataset;
       if (target === 'front-logo') setFrontLogoAlign(align);
       if (target === 'back-logo') setBackLogoAlign(align);
+      if (target === 'front-company') setCompanyAlign('front', align);
+      if (target === 'back-company') setCompanyAlign('back', align);
       if (target === 'front-image') setImageAlign('front', align);
       if (target === 'back-image') setImageAlign('back', align);
     });
@@ -1376,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', () => {
   [
     inputs.presetName,
     inputs.company, inputs.position, inputs.name, inputs.phone, inputs.email, inputs.address, inputs.extra, inputs.slogan
-  ].forEach((input) => {
+  ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
       updateText();
       persistWorkspace();
@@ -1385,11 +1534,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   [
     inputs.rangeSize, inputs.rangeWeight, inputs.frontLogoSize, inputs.frontLogoX, inputs.frontLogoY,
+    inputs.frontCompanyMode, inputs.frontCompanyX, inputs.frontCompanyY,
     inputs.backLogoSize, inputs.backLogoX, inputs.backLogoY, inputs.frontImgSize, inputs.frontImgX,
-    inputs.frontImgY, inputs.backImgSize, inputs.backImgX, inputs.backImgY, inputs.frontOverlayColor,
+    inputs.frontImgY,
+    inputs.backImgSize, inputs.backImgX, inputs.backImgY, inputs.frontOverlayColor,
     inputs.frontOverlayOpacity, inputs.backOverlayColor, inputs.backOverlayOpacity, inputs.frontBg,
     inputs.backBg, inputs.textColor, inputs.pointColor, inputs.font
-  ].forEach((input) => {
+  ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
       updateColorVars();
       persistWorkspace();

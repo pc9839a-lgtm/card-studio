@@ -10,7 +10,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260402-card-standard-22">
+  <link rel="stylesheet" href="./style.css?v=20260402-card-standard-26">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -224,6 +224,36 @@
           <label>이름 굵기 <span id="val-weight">700</span></label>
           <input type="range" id="range-weight" min="300" max="900" step="100" value="700">
         </div>
+        <section class="media-subcard unified-media-card company-position-card">
+          <div class="media-subhead">
+            <strong>회사명 위치</strong>
+            <span>앞면 전용</span>
+          </div>
+          <div class="company-position-panel">
+            <div class="range-wrap">
+              <label>배치 방식</label>
+              <select id="input-front-company-mode">
+                <option value="auto">자동 배치</option>
+                <option value="manual">수동 배치</option>
+              </select>
+            </div>
+            <div id="front-company-manual-controls" class="sub-panel" hidden>
+              <div class="range-wrap">
+                <label>가로 위치 <span id="val-front-company-x">18%</span></label>
+                <input type="range" id="range-front-company-x" min="0" max="100" value="18">
+              </div>
+              <div class="range-wrap">
+                <label>세로 위치 <span id="val-front-company-y">16%</span></label>
+                <input type="range" id="range-front-company-y" min="0" max="100" value="16">
+              </div>
+              <div class="align-buttons">
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-company" data-align="left">좌측</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-company" data-align="center">가운데</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-company" data-align="right">우측</button>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="control-group media-group" id="section-image">
@@ -501,6 +531,6 @@
     </div>
   </div>
 
-  <script src="./main.js?v=20260402-card-standard-22"></script>
+  <script src="./main.js?v=20260402-card-standard-26"></script>
 </body>
 </html>
