@@ -1,6 +1,7 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
 :root {
+  color-scheme: light dark;
   --card-bg: #ffffff;
   --card-text: #333333;
   --card-point: #2a5a43;
@@ -42,6 +43,10 @@ body {
 }
 
 button, input, select {
+  font: inherit;
+}
+
+textarea {
   font: inherit;
 }
 
@@ -2502,6 +2507,12 @@ body {
     padding: 14px 12px;
   }
 
+  .face-panel.is-active {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
   .media-subhead {
     margin-bottom: 8px;
   }
@@ -2515,6 +2526,32 @@ body {
     align-items: flex-start;
     flex-wrap: wrap;
     line-height: 1.35;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .field > span,
+  .range-wrap > label {
+    display: flex;
+    min-width: 0;
+  }
+
+  .face-panel .sub-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 0;
+    padding: 12px;
+  }
+
+  .upload-help,
+  .qr-status {
+    padding: 11px 12px;
+    line-height: 1.5;
   }
 
   .image-action-row {
@@ -2550,7 +2587,9 @@ body {
   }
 
   #section-qr .upload-help,
-  #section-qr .qr-status {
+  #section-qr .qr-status,
+  #section-qr .range-wrap,
+  #section-qr .field {
     margin-top: 0;
   }
 
@@ -2752,10 +2791,10 @@ body {
   .business-card.template-bottom.front-face .info-area {
     grid-column: 1 / -1;
     grid-row: 2;
-    max-width: calc(66% - (8px * var(--card-ui-scale)));
+    max-width: calc(68% - (12px * var(--card-ui-scale)));
     margin-top: 0;
-    margin-left: calc(8px * var(--card-ui-scale));
-    padding-bottom: calc(10px * var(--card-ui-scale));
+    margin-left: calc(12px * var(--card-ui-scale));
+    padding-bottom: calc(12px * var(--card-ui-scale));
   }
 
   .business-card.template-bottom.front-face .name-wrap {
@@ -2769,6 +2808,96 @@ body {
   .business-card.template-bottom.front-face .preview-position,
   .business-card.template-bottom.front-face .info-row {
     font-size: calc(9.5px * var(--card-ui-scale));
+  }
+
+  .business-card.template-bottom.front-face .contact-info {
+    gap: calc(4px * var(--card-ui-scale));
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ui-bg: #0f172a;
+    --ui-surface: rgba(15, 23, 42, 0.94);
+    --ui-border: rgba(71, 85, 105, 0.72);
+    --ui-text: #e5eefb;
+    --ui-muted: #94a3b8;
+    --shadow-soft: 0 12px 36px rgba(2, 6, 23, 0.42);
+    --shadow-strong: 0 20px 50px rgba(2, 6, 23, 0.5);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 26%),
+      #0f172a;
+  }
+
+  .controls,
+  .control-group,
+  .actions-card,
+  .preview-toolbar,
+  .preview-notice,
+  .media-subcard,
+  .site-footer__inner,
+  .partners-mobile__inner,
+  .partners-desktop__inner {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: rgba(71, 85, 105, 0.72);
+    color: #e5eefb;
+  }
+
+  .control-group input[type="text"],
+  .control-group input[type="email"],
+  .control-group textarea,
+  .control-group select,
+  .file-label,
+  .sub-panel,
+  .upload-help,
+  .qr-status,
+  .btn-outline,
+  .status-box {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(71, 85, 105, 0.76);
+    color: #e5eefb;
+  }
+
+  .section-heading h3,
+  .media-subhead strong,
+  .actions-copy strong,
+  .preview-toolbar strong,
+  #preview-context-label,
+  .site-footer__brand strong,
+  .site-footer__contact a {
+    color: #f8fbff;
+  }
+
+  .section-heading p,
+  .upload-help,
+  .qr-status,
+  .site-footer__brand p,
+  .site-footer__contact p,
+  #preview-template-label,
+  .preview-notice {
+    color: #c2d0e4;
+  }
+
+  .btn-outline {
+    color: #e5eefb;
+  }
+
+  .btn-outline:not(.is-active):not(.btn-danger) {
+    background: rgba(51, 65, 85, 0.92);
+  }
+
+  .file-label.bg-label {
+    background: rgba(22, 101, 52, 0.22);
+    border-color: rgba(74, 222, 128, 0.4);
+    color: #d1fae5;
+  }
+
+  .preview-area {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px);
   }
 }
 

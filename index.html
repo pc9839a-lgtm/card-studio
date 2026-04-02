@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
   <title>Business Card Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +12,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-48">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-50">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -156,7 +158,7 @@
               <strong>앞면 로고</strong>
             </div>
             <div class="flex-row image-action-row">
-              <label class="file-label flex-grow">로고 업로드<input type="file" id="input-front-logo" accept="image/*"></label>
+              <label class="file-label flex-grow">로고 업로드<input type="file" id="input-front-logo" accept=".png,.jpg,.jpeg,.webp,.gif,.svg,image/png,image/jpeg,image/webp,image/gif,image/svg+xml"></label>
               <button id="btn-delete-front-logo" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
             <div class="upload-help">권장 2MB 이하 · PNG 권장 · 큰 이미지는 자동 최적화됩니다.</div>
@@ -185,7 +187,7 @@
               <strong>뒷면 로고</strong>
             </div>
             <div class="flex-row image-action-row">
-              <label class="file-label flex-grow">로고 업로드<input type="file" id="input-back-logo" accept="image/*"></label>
+              <label class="file-label flex-grow">로고 업로드<input type="file" id="input-back-logo" accept=".png,.jpg,.jpeg,.webp,.gif,.svg,image/png,image/jpeg,image/webp,image/gif,image/svg+xml"></label>
               <button id="btn-delete-back-logo" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
             <div class="upload-help">권장 2MB 이하 · PNG 권장 · 큰 이미지는 자동 최적화됩니다.</div>
@@ -274,7 +276,7 @@
               <strong>앞면 이미지</strong>
             </div>
             <div class="flex-row image-action-row">
-              <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-front-image" accept="image/*"></label>
+              <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-front-image" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"></label>
               <button id="btn-delete-front-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
             <div class="upload-help">권장 2MB 이하 · JPG/PNG 가능 · 큰 이미지는 자동 최적화됩니다.</div>
@@ -310,7 +312,7 @@
               <strong>뒷면 이미지</strong>
             </div>
             <div class="flex-row image-action-row">
-              <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-back-image" accept="image/*"></label>
+              <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-back-image" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"></label>
               <button id="btn-delete-back-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
             <div class="upload-help">권장 2MB 이하 · JPG/PNG 가능 · 큰 이미지는 자동 최적화됩니다.</div>
@@ -641,6 +643,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-48"></script>
+  <script src="./main.js?v=20260403-card-standard-50"></script>
 </body>
 </html>
