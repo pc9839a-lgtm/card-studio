@@ -97,6 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
     singleView: document.getElementById('single-view'),
     compareView: document.getElementById('compare-view'),
     compareGrid: document.getElementById('compare-grid'),
+    partnersDesktop: document.querySelector('.partners-desktop'),
+    partnersDesktopInner: document.querySelector('.partners-desktop__inner'),
+    partnersDesktopFrame: document.querySelector('.partners-desktop__frame'),
     cardFront: document.getElementById('card-front'),
     cardBack: document.getElementById('card-back'),
     frontLogo: document.querySelector('#card-front .preview-logo-front'),
@@ -368,6 +371,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${Math.round(width)} x ${Math.round(height)}px`;
   }
 
+  function updateDesktopPartnerScale() {
+    if (!elements.partnersDesktopInner || !elements.partnersDesktopFrame) return;
+
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      elements.partnersDesktopInner.style.setProperty('--partners-desktop-scale', '1');
+      return;
+    }
+
+    const scaleHost = elements.partnersDesktop || elements.partnersDesktopInner;
+    const computedStyle = window.getComputedStyle(scaleHost);
+    const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
+    const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
+    const availableWidth = Math.max(scaleHost.clientWidth - paddingLeft - paddingRight, 760);
+    const scale = availableWidth / 2000;
+
+    elements.partnersDesktopInner.style.setProperty('--partners-desktop-scale', scale.toFixed(3));
+  }
+
   function sanitizeFileName(name) {
     return String(name || '')
       .trim()
@@ -386,6 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewUiScale = clamp(width / PREVIEW_REFERENCE_WIDTH, 0.82, 1);
 
     document.documentElement.style.setProperty('--card-ui-scale', previewUiScale.toFixed(3));
+    updateDesktopPartnerScale();
 
     if (elements.previewContextLabel) {
       elements.previewContextLabel.textContent = `${presetName} · ${cardName}`;
@@ -542,10 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const extra = inputs.extra.value.trim();
     const slogan = inputs.slogan.value.trim();
 
-    elements.frontCompany.textContent = company || '';
+    elements.frontCompany.textContent = company || '\u00A0';
     elements.frontCompany.style.display = 'block';
     elements.frontCompany.style.visibility = company ? 'visible' : 'hidden';
-    elements.backCompany.textContent = company || '';
+    elements.backCompany.textContent = company || '\u00A0';
     elements.backCompany.style.display = 'block';
     elements.backCompany.style.visibility = company ? 'visible' : 'hidden';
 
@@ -644,6 +666,7 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.frontImage.src = state.frontImageDataUrl;
       elements.frontImageLayer.style.display = dataUrl ? 'block' : 'none';
       elements.frontImageLayer.classList.toggle('is-draggable', !!dataUrl);
+      elements.cardFront.classList.toggle('has-front-image', !!dataUrl);
       inputs.frontImageControls.style.display = dataUrl ? 'block' : 'none';
       inputs.deleteFrontImage.style.display = dataUrl ? 'inline-flex' : 'none';
     } else {
@@ -651,6 +674,7 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.backImage.src = state.backImageDataUrl;
       elements.backImageLayer.style.display = dataUrl ? 'block' : 'none';
       elements.backImageLayer.classList.toggle('is-draggable', !!dataUrl);
+      elements.cardBack.classList.toggle('has-back-image', !!dataUrl);
       inputs.backImageControls.style.display = dataUrl ? 'block' : 'none';
       inputs.deleteBackImage.style.display = dataUrl ? 'inline-flex' : 'none';
     }
@@ -1412,6 +1436,7 @@ document.addEventListener('DOMContentLoaded', () => {
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, getDownloadFilename('front'), buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, getDownloadFilename('back'), buttons.downloadBack));
   window.addEventListener('resize', updateContextLabels);
+  window.addEventListener('load', updateDesktopPartnerScale);
 
   presetLibrary = loadPresetLibrary();
   workspace = loadWorkspace();

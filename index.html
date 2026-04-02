@@ -10,7 +10,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260402-card-standard-10">
+  <link rel="stylesheet" href="./style.css?v=20260402-card-standard-22">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -29,11 +29,12 @@
 
       <nav class="control-nav" aria-label="설정 바로가기">
         <a class="control-nav__link" href="#section-start">빠른 시작</a>
+        <a class="control-nav__link" href="#section-style">스타일</a>
         <a class="control-nav__link" href="#section-workspace">작업 세트</a>
         <a class="control-nav__link" href="#section-info">기본 정보</a>
         <a class="control-nav__link" href="#section-logo">로고</a>
+        <a class="control-nav__link" href="#section-text">텍스트</a>
         <a class="control-nav__link" href="#section-image">이미지</a>
-        <a class="control-nav__link" href="#section-style">스타일</a>
         <a class="control-nav__link" href="#section-export">저장</a>
       </nav>
 
@@ -70,7 +71,6 @@
         </div>
 
         <div class="workspace-action-row">
-          <button id="btn-save" class="btn btn-outline btn-save" type="button">프리셋 저장</button>
           <button id="btn-export-preset" class="btn btn-outline" type="button">JSON 내보내기</button>
           <label class="file-label workspace-import-label">JSON 불러오기<input type="file" id="input-import-preset" accept="application/json,.json"></label>
         </div>
@@ -380,6 +380,7 @@
             <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
           </div>
           <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
+          <button id="btn-save" class="btn btn-primary btn-save btn-save-bottom" type="button">저장하기</button>
         </div>
       </div>
     </aside>
@@ -459,14 +460,19 @@
       </div>
     </main>
 
-    <aside class="partners-rail" aria-label="쿠팡 파트너스">
-      <div class="partners-rail__inner">
+  </div>
+
+  <div class="partners-desktop" aria-label="쿠팡 파트너스 PC">
+    <div class="partners-desktop__inner">
+      <div class="partners-desktop__frame">
         <script src="https://ads-partners.coupang.com/g.js"></script>
         <script>
-          new PartnersCoupang.G({"id":977250,"template":"carousel","trackingCode":"AF2690138","width":"180","height":"900","tsource":""});
+          if (window.matchMedia('(min-width: 768px)').matches) {
+            new PartnersCoupang.G({"id":977255,"template":"carousel","trackingCode":"AF2358798","width":"2000","height":"140","tsource":""});
+          }
         </script>
       </div>
-    </aside>
+    </div>
   </div>
 
   <footer class="site-footer">
@@ -483,6 +489,18 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260402-card-standard-10"></script>
+  <div class="partners-mobile" aria-label="쿠팡 파트너스 모바일">
+    <div class="partners-mobile__inner">
+      <div class="partners-mobile__frame">
+        <script>
+          if (window.matchMedia('(max-width: 767px)').matches) {
+            new PartnersCoupang.G({"id":977255,"template":"carousel","trackingCode":"AF2358798","width":"680","height":"140","tsource":""});
+          }
+        </script>
+      </div>
+    </div>
+  </div>
+
+  <script src="./main.js?v=20260402-card-standard-22"></script>
 </body>
 </html>
