@@ -1295,6 +1295,11 @@ document.addEventListener('DOMContentLoaded', () => {
       .map((option) => option.value)
       .filter(Boolean);
     const { width, height } = getCardDimensions(elements.cardFront);
+    const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
+    const compareWidth = isMobileViewport
+      ? Math.min(width, Math.max(window.innerWidth - 88, 220))
+      : width;
+    const compareHeight = Math.round((height / Math.max(width, 1)) * compareWidth);
 
     Array.from(inputs.template.options).forEach((option) => {
       const item = document.createElement('button');
@@ -1306,13 +1311,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const stage = document.createElement('div');
       stage.className = 'compare-preview-stage';
-      stage.style.minHeight = `${Math.round(height)}px`;
+      stage.style.minHeight = `${Math.round(compareHeight)}px`;
 
       const clone = elements.cardFront.cloneNode(true);
       clone.removeAttribute('id');
       templateValues.forEach((templateClass) => clone.classList.remove(templateClass));
       clone.classList.add(option.value, 'is-compare-card');
-      clone.style.width = `${width}px`;
+      clone.classList.remove('company-manual-front');
+      clone.style.width = `${compareWidth}px`;
       clone.style.maxWidth = 'none';
       clone.style.minWidth = '0';
       clone.style.position = 'relative';
@@ -1320,6 +1326,17 @@ document.addEventListener('DOMContentLoaded', () => {
       clone.style.top = 'auto';
       clone.style.transformOrigin = 'center center';
       clone.style.transform = 'none';
+
+      const cloneFrontCompany = clone.querySelector('.preview-company');
+      const cloneManualCompany = clone.querySelector('.preview-company-manual');
+      if (cloneFrontCompany) {
+        cloneFrontCompany.style.display = 'block';
+        cloneFrontCompany.style.visibility = inputs.company.value.trim() ? 'visible' : 'hidden';
+      }
+      if (cloneManualCompany) {
+        cloneManualCompany.hidden = true;
+        cloneManualCompany.style.display = 'none';
+      }
 
       stage.appendChild(clone);
       item.appendChild(title);
@@ -1341,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function toggleCompare() {
     isCompareMode = !isCompareMode;
+    document.body.classList.toggle('is-compare-mode', isCompareMode);
     if (isCompareMode) {
       renderCompareGrid();
       elements.singleView.style.display = 'none';
@@ -1394,6 +1412,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  async function triggerImageSave(blob, filename, fallbackDataUrl) {
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    if (blob && isMobile && typeof File !== 'undefined' && navigator.share) {
+      try {
+        const file = new File([blob], filename, { type: 'image/png' });
+        const sharePayload = {
+          title: filename,
+          files: [file]
+        };
+        const canShareFiles = typeof navigator.canShare !== 'function' || navigator.canShare({ files: [file] });
+        if (canShareFiles) {
+          await navigator.share({
+            ...sharePayload
+          });
+          return 'shared';
+        }
+      } catch (error) {
+        if (error && error.name === 'AbortError') {
+          return 'cancelled';
+        }
+      }
+    }
+
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = blob ? URL.createObjectURL(blob) : fallbackDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    if (blob) {
+      setTimeout(() => URL.revokeObjectURL(link.href), 0);
+    }
+    return 'downloaded';
+  }
+
   function getDownloadFilename(face) {
     const presetName = sanitizeFileName(workspace.presetName || 'preset');
     const activeCard = getActiveCard();
@@ -1420,14 +1473,14 @@ document.addEventListener('DOMContentLoaded', () => {
         removeContainer: true
       });
       const blob = await canvasToBlob(canvas);
-      const link = document.createElement('a');
-      link.download = filename;
-      link.href = blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png');
-      link.click();
-      if (blob) {
-        setTimeout(() => URL.revokeObjectURL(link.href), 0);
+      const result = await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
+      if (result === 'shared') {
+        setStatus(`공유/저장 창을 열었습니다. (${formatExportSize(canvas.width, canvas.height)})`, 'success', 2400);
+      } else if (result === 'cancelled') {
+        setStatus('저장을 취소했습니다.', 'warning', 1800);
+      } else {
+        setStatus(`저장을 시작했습니다. (${formatExportSize(canvas.width, canvas.height)})`, 'success', 2200);
       }
-      setStatus(`저장을 시작했습니다. (${formatExportSize(canvas.width, canvas.height)})`, 'success', 2200);
     } catch (error) {
       console.error(error);
       setStatus('저장 중 문제가 발생했습니다.', 'error', 2200);
@@ -1666,7 +1719,15 @@ document.addEventListener('DOMContentLoaded', () => {
   if (buttons.save) buttons.save.addEventListener('click', () => saveCurrentPreset(true));
   if (buttons.mobileFaceFront) buttons.mobileFaceFront.addEventListener('click', () => setMobilePreviewFace('front'));
   if (buttons.mobileFaceBack) buttons.mobileFaceBack.addEventListener('click', () => setMobilePreviewFace('back'));
-  if (buttons.mobileSaveShortcut) buttons.mobileSaveShortcut.addEventListener('click', () => buttons.save?.click());
+  if (buttons.mobileSaveShortcut) {
+    buttons.mobileSaveShortcut.addEventListener('click', () => {
+      if (mobilePreviewFace === 'back') {
+        buttons.downloadBack?.click();
+        return;
+      }
+      buttons.downloadFront?.click();
+    });
+  }
   if (buttons.mobileScrollTop) buttons.mobileScrollTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, getDownloadFilename('front'), buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, getDownloadFilename('back'), buttons.downloadBack));
