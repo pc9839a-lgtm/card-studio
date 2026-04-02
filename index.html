@@ -10,7 +10,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-35">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-45">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
@@ -47,8 +48,8 @@
       <section class="control-group" id="section-workspace">
         <div class="section-heading">
           <span class="section-kicker">Workspace</span>
-          <h3>작업 세트</h3>
-          <p>프리셋 이름으로 저장하고, 여러 명함을 복제해서 개인정보만 바꿔 대량 작업할 수 있습니다.</p>
+          <h3>프리셋 관리</h3>
+          <p>현재 명함 묶음을 프리셋으로 저장하고, 여러 명함을 복제해서 개인정보만 바꿔 작업할 수 있습니다.</p>
         </div>
 
         <div class="field-grid">
@@ -56,6 +57,10 @@
             <span>프리셋 이름</span>
             <input type="text" id="input-preset-name" placeholder="프리셋 1">
           </label>
+        </div>
+
+        <div class="workspace-primary-row">
+          <button id="btn-save" class="btn btn-primary" type="button">프리셋 저장</button>
         </div>
 
         <div class="workspace-action-row">
@@ -201,8 +206,8 @@
       <section class="control-group" id="section-text">
         <div class="section-heading">
           <span class="section-kicker">Type</span>
-          <h3>텍스트 설정</h3>
-          <p>이름의 존재감을 조절해 전체 인상을 빠르게 바꿀 수 있습니다.</p>
+          <h3>이름, 회사명 설정</h3>
+          <p>이름과 회사명의 크기, 배치감을 빠르게 조정합니다.</p>
         </div>
         <div class="range-wrap">
           <label>이름 크기 <span id="val-size">24px</span></label>
@@ -330,6 +335,102 @@
         </section>
       </section>
 
+      <section class="control-group media-group" id="section-qr">
+        <div class="section-heading">
+          <span class="section-kicker">QR</span>
+          <h3>QR 생성</h3>
+          <p>링크 또는 vCard 연락처로 QR을 만든 뒤 명함에 삽입하고, 위치와 크기를 직접 조정합니다.</p>
+        </div>
+        <div class="face-toggle" data-toggle-group="qr">
+          <button type="button" class="face-toggle__btn is-active" data-section="qr" data-face="front">앞면 QR</button>
+          <button type="button" class="face-toggle__btn" data-section="qr" data-face="back">뒷면 QR</button>
+        </div>
+        <section class="media-subcard unified-media-card">
+          <div class="face-panel is-active" data-panel-section="qr" data-face="front">
+            <div class="media-subhead">
+              <strong>앞면 QR</strong>
+            </div>
+            <div class="range-wrap">
+              <label>생성 방식</label>
+              <select id="input-front-qr-mode">
+                <option value="link">링크</option>
+                <option value="vcard">vCard 연락처</option>
+              </select>
+            </div>
+            <label class="field qr-link-field" id="front-qr-link-field">
+              <span>링크 주소</span>
+              <input type="text" id="input-front-qr-value" placeholder="https://example.com">
+            </label>
+            <div class="upload-help" id="front-qr-help">링크 주소를 QR로 생성합니다.</div>
+            <div id="front-qr-status" class="qr-status" hidden>QR 생성 대기</div>
+            <div class="flex-row image-action-row">
+              <button id="btn-generate-front-qr" class="btn btn-outline flex-grow" type="button">QR 생성</button>
+              <button id="btn-delete-front-qr" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+            </div>
+            <div id="front-qr-controls" class="sub-panel" style="display:none;">
+              <div class="range-wrap">
+                <label>QR 크기 <span id="val-front-qr-size">96px</span></label>
+                <input type="range" id="range-front-qr-size" min="48" max="200" value="96">
+              </div>
+              <div class="range-wrap">
+                <label>가로 위치 <span id="val-front-qr-x">80%</span></label>
+                <input type="range" id="range-front-qr-x" min="0" max="100" value="80">
+              </div>
+              <div class="range-wrap">
+                <label>세로 위치 <span id="val-front-qr-y">68%</span></label>
+                <input type="range" id="range-front-qr-y" min="0" max="100" value="68">
+              </div>
+              <div class="align-buttons">
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-qr" data-align="left">좌측</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-qr" data-align="center">가운데</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="front-qr" data-align="right">우측</button>
+              </div>
+            </div>
+          </div>
+          <div class="face-panel" data-panel-section="qr" data-face="back" hidden>
+            <div class="media-subhead">
+              <strong>뒷면 QR</strong>
+            </div>
+            <div class="range-wrap">
+              <label>생성 방식</label>
+              <select id="input-back-qr-mode">
+                <option value="link">링크</option>
+                <option value="vcard">vCard 연락처</option>
+              </select>
+            </div>
+            <label class="field qr-link-field" id="back-qr-link-field">
+              <span>링크 주소</span>
+              <input type="text" id="input-back-qr-value" placeholder="https://example.com">
+            </label>
+            <div class="upload-help" id="back-qr-help">링크 주소를 QR로 생성합니다.</div>
+            <div id="back-qr-status" class="qr-status" hidden>QR 생성 대기</div>
+            <div class="flex-row image-action-row">
+              <button id="btn-generate-back-qr" class="btn btn-outline flex-grow" type="button">QR 생성</button>
+              <button id="btn-delete-back-qr" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
+            </div>
+            <div id="back-qr-controls" class="sub-panel" style="display:none;">
+              <div class="range-wrap">
+                <label>QR 크기 <span id="val-back-qr-size">96px</span></label>
+                <input type="range" id="range-back-qr-size" min="48" max="200" value="96">
+              </div>
+              <div class="range-wrap">
+                <label>가로 위치 <span id="val-back-qr-x">80%</span></label>
+                <input type="range" id="range-back-qr-x" min="0" max="100" value="80">
+              </div>
+              <div class="range-wrap">
+                <label>세로 위치 <span id="val-back-qr-y">68%</span></label>
+                <input type="range" id="range-back-qr-y" min="0" max="100" value="68">
+              </div>
+              <div class="align-buttons">
+                <button type="button" class="btn btn-outline btn-sm" data-target="back-qr" data-align="left">좌측</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="back-qr" data-align="center">가운데</button>
+                <button type="button" class="btn btn-outline btn-sm" data-target="back-qr" data-align="right">우측</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+
       <section class="control-group" id="section-style">
         <div class="section-heading">
           <span class="section-kicker">Style</span>
@@ -398,7 +499,6 @@
             <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
           </div>
           <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
-          <button id="btn-save" class="btn btn-primary btn-save btn-save-bottom" type="button">저장하기</button>
         </div>
       </div>
     </aside>
@@ -422,8 +522,8 @@
           <div class="mobile-preview-actions" aria-label="모바일 미리보기 빠른 작업">
             <button id="btn-mobile-face-front" class="btn btn-outline btn-sm is-active" type="button">앞면</button>
             <button id="btn-mobile-face-back" class="btn btn-outline btn-sm" type="button">뒷면</button>
-            <button id="btn-mobile-save-shortcut" class="btn btn-outline btn-sm" type="button">저장</button>
-            <button id="btn-mobile-scroll-top" class="btn btn-outline btn-sm" type="button">맨위</button>
+            <button id="btn-mobile-save-shortcut" class="btn btn-outline btn-sm" type="button">공유</button>
+            <button id="btn-mobile-toggle-preview" class="btn btn-outline btn-sm" type="button">숨기기</button>
           </div>
         </div>
 
@@ -433,6 +533,9 @@
             <div id="card-front" class="business-card template-modern logo-align-center front-face">
               <div class="card-custom-img-layer front-image-layer">
                 <img class="inserted-img front-inserted-img" src="" alt="">
+              </div>
+              <div class="card-custom-qr-layer front-qr-layer">
+                <img class="inserted-qr front-qr-image" src="" alt="앞면 QR" style="display:none;">
               </div>
               <div class="card-overlay-layer front-overlay-layer"></div>
               <div class="card-content front-content">
@@ -464,6 +567,9 @@
             <div id="card-back" class="business-card template-modern back-face">
               <div class="card-custom-img-layer back-image-layer">
                 <img class="inserted-img back-inserted-img" src="" alt="">
+              </div>
+              <div class="card-custom-qr-layer back-qr-layer">
+                <img class="inserted-qr back-qr-image" src="" alt="뒷면 QR" style="display:none;">
               </div>
               <div class="card-overlay-layer back-overlay-layer"></div>
               <div class="card-content back-content">
@@ -526,6 +632,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-35"></script>
+  <script src="./main.js?v=20260403-card-standard-45"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const MAX_IMAGE_SIDE = 2400;
   const CARD_WIDTH_MM = 90;
   const CARD_HEIGHT_MM = 50;
-  const EXPORT_DPI = 300;
+  const EXPORT_DPI = 600;
   const EXPORT_STANDARD_WIDTH = Math.round((CARD_WIDTH_MM / 25.4) * EXPORT_DPI);
   const EXPORT_STANDARD_HEIGHT = Math.round((CARD_HEIGHT_MM / 25.4) * EXPORT_DPI);
   const EXPORT_STANDARD_LABEL = `${CARD_WIDTH_MM} x ${CARD_HEIGHT_MM}mm / ${EXPORT_DPI}dpi`;
@@ -21,6 +21,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'frontCompanyMode', 'frontCompanyX', 'frontCompanyY', 'backCompanyMode', 'backCompanyX', 'backCompanyY',
     'frontLogoSize', 'frontLogoX', 'frontLogoY', 'backLogoSize', 'backLogoX', 'backLogoY',
     'frontImgSize', 'frontImgX', 'frontImgY', 'backImgSize', 'backImgX', 'backImgY',
+    'frontQrMode', 'frontQrValue', 'frontQrSize', 'frontQrX', 'frontQrY',
+    'backQrMode', 'backQrValue', 'backQrSize', 'backQrX', 'backQrY',
     'frontOverlayColor', 'frontOverlayOpacity', 'backOverlayColor', 'backOverlayOpacity',
     'rangeSize', 'rangeWeight', 'template', 'font', 'frontBg', 'backBg', 'textColor', 'pointColor'
   ];
@@ -56,6 +58,16 @@ document.addEventListener('DOMContentLoaded', () => {
     backImgSize: document.getElementById('range-back-img-size'),
     backImgX: document.getElementById('range-back-img-x'),
     backImgY: document.getElementById('range-back-img-y'),
+    frontQrMode: document.getElementById('input-front-qr-mode'),
+    frontQrValue: document.getElementById('input-front-qr-value'),
+    frontQrSize: document.getElementById('range-front-qr-size'),
+    frontQrX: document.getElementById('range-front-qr-x'),
+    frontQrY: document.getElementById('range-front-qr-y'),
+    backQrMode: document.getElementById('input-back-qr-mode'),
+    backQrValue: document.getElementById('input-back-qr-value'),
+    backQrSize: document.getElementById('range-back-qr-size'),
+    backQrX: document.getElementById('range-back-qr-x'),
+    backQrY: document.getElementById('range-back-qr-y'),
     frontOverlayColor: document.getElementById('color-front-overlay'),
     frontOverlayOpacity: document.getElementById('range-front-overlay'),
     backOverlayColor: document.getElementById('color-back-overlay'),
@@ -72,6 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
     backImageControls: document.getElementById('back-image-controls'),
     deleteFrontLogo: document.getElementById('btn-delete-front-logo'),
     deleteBackLogo: document.getElementById('btn-delete-back-logo'),
+    deleteFrontQr: document.getElementById('btn-delete-front-qr'),
+    deleteBackQr: document.getElementById('btn-delete-back-qr'),
     deleteFrontImage: document.getElementById('btn-delete-front-image'),
     deleteBackImage: document.getElementById('btn-delete-back-image')
   };
@@ -86,7 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileFaceFront: document.getElementById('btn-mobile-face-front'),
     mobileFaceBack: document.getElementById('btn-mobile-face-back'),
     mobileSaveShortcut: document.getElementById('btn-mobile-save-shortcut'),
-    mobileScrollTop: document.getElementById('btn-mobile-scroll-top'),
+    mobileTogglePreview: document.getElementById('btn-mobile-toggle-preview'),
+    generateFrontQr: document.getElementById('btn-generate-front-qr'),
+    generateBackQr: document.getElementById('btn-generate-back-qr'),
     loadPreset: document.getElementById('btn-load-preset'),
     exportPreset: document.getElementById('btn-export-preset'),
     addCard: document.getElementById('btn-add-card'),
@@ -102,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     previewExportNote: document.getElementById('preview-export-note'),
     cardTabs: document.getElementById('card-tabs'),
     cardCountLabel: document.getElementById('card-count-label'),
+    previewArea: document.getElementById('preview-area'),
     singleView: document.getElementById('single-view'),
     compareView: document.getElementById('compare-view'),
     compareGrid: document.getElementById('compare-grid'),
@@ -130,6 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
     backImageLayer: document.querySelector('#card-back .back-image-layer'),
     frontImage: document.querySelector('#card-front .front-inserted-img'),
     backImage: document.querySelector('#card-back .back-inserted-img'),
+    frontQrLayer: document.querySelector('#card-front .front-qr-layer'),
+    backQrLayer: document.querySelector('#card-back .back-qr-layer'),
+    frontQrImage: document.querySelector('#card-front .front-qr-image'),
+    backQrImage: document.querySelector('#card-back .back-qr-image'),
     frontOverlay: document.querySelector('#card-front .front-overlay-layer'),
     backOverlay: document.querySelector('#card-back .back-overlay-layer'),
     valSize: document.getElementById('val-size'),
@@ -149,6 +170,20 @@ document.addEventListener('DOMContentLoaded', () => {
     valBackImgSize: document.getElementById('val-back-img-size'),
     valBackImgX: document.getElementById('val-back-img-x'),
     valBackImgY: document.getElementById('val-back-img-y'),
+    valFrontQrSize: document.getElementById('val-front-qr-size'),
+    valFrontQrX: document.getElementById('val-front-qr-x'),
+    valFrontQrY: document.getElementById('val-front-qr-y'),
+    valBackQrSize: document.getElementById('val-back-qr-size'),
+    valBackQrX: document.getElementById('val-back-qr-x'),
+    valBackQrY: document.getElementById('val-back-qr-y'),
+    frontQrControls: document.getElementById('front-qr-controls'),
+    backQrControls: document.getElementById('back-qr-controls'),
+    frontQrHelp: document.getElementById('front-qr-help'),
+    backQrHelp: document.getElementById('back-qr-help'),
+    frontQrLinkField: document.getElementById('front-qr-link-field'),
+    backQrLinkField: document.getElementById('back-qr-link-field'),
+    frontQrStatus: document.getElementById('front-qr-status'),
+    backQrStatus: document.getElementById('back-qr-status'),
     valFrontOverlay: document.getElementById('val-front-overlay'),
     valBackOverlay: document.getElementById('val-back-overlay')
   };
@@ -166,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeDrag = null;
   let dragJustEndedAt = 0;
   let mobilePreviewFace = 'front';
+  let mobilePreviewCollapsed = false;
   let statusTimer = null;
   let state = createTransientState();
 
@@ -175,6 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
       backLogoAlign: 'center',
       frontLogoDataUrl: '',
       backLogoDataUrl: '',
+      frontQrDataUrl: '',
+      backQrDataUrl: '',
       frontImageDataUrl: '',
       backImageDataUrl: ''
     };
@@ -216,6 +254,16 @@ document.addEventListener('DOMContentLoaded', () => {
       backImgSize: '100',
       backImgX: '50',
       backImgY: '50',
+      frontQrMode: 'link',
+      frontQrValue: '',
+      frontQrSize: '96',
+      frontQrX: '80',
+      frontQrY: '68',
+      backQrMode: 'link',
+      backQrValue: '',
+      backQrSize: '96',
+      backQrX: '80',
+      backQrY: '68',
       frontOverlayColor: '#000000',
       frontOverlayOpacity: '0',
       backOverlayColor: '#000000',
@@ -232,6 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
       backLogoAlign: 'center',
       frontLogoDataUrl: '',
       backLogoDataUrl: '',
+      frontQrDataUrl: '',
+      backQrDataUrl: '',
       frontImageDataUrl: '',
       backImageDataUrl: ''
     };
@@ -344,6 +394,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function hexToRgb(hexColor) {
+    const normalized = String(hexColor || '').trim().replace('#', '');
+    if (!/^[0-9a-fA-F]{3,8}$/.test(normalized)) return null;
+    const hex = normalized.length === 3
+      ? normalized.split('').map((char) => char + char).join('')
+      : normalized.slice(0, 6);
+    return {
+      r: parseInt(hex.slice(0, 2), 16),
+      g: parseInt(hex.slice(2, 4), 16),
+      b: parseInt(hex.slice(4, 6), 16)
+    };
+  }
+
+  function rgbToHex({ r, g, b }) {
+    const clampChannel = (value) => Math.max(0, Math.min(255, Math.round(value)));
+    return `#${[clampChannel(r), clampChannel(g), clampChannel(b)]
+      .map((value) => value.toString(16).padStart(2, '0'))
+      .join('')}`;
+  }
+
+  function mixHexColors(baseColor, targetColor, ratio) {
+    const base = hexToRgb(baseColor);
+    const target = hexToRgb(targetColor);
+    if (!base || !target) return baseColor;
+    const weight = Math.max(0, Math.min(1, ratio));
+    return rgbToHex({
+      r: base.r + ((target.r - base.r) * weight),
+      g: base.g + ((target.g - base.g) * weight),
+      b: base.b + ((target.b - base.b) * weight)
+    });
+  }
+
+  function setQrInlineStatus(face, message = '', type = 'info') {
+    const statusElement = face === 'front' ? elements.frontQrStatus : elements.backQrStatus;
+    if (!statusElement) return;
+    if (!message) {
+      statusElement.hidden = true;
+      statusElement.textContent = '';
+      statusElement.className = 'qr-status';
+      return;
+    }
+    statusElement.hidden = false;
+    statusElement.textContent = message;
+    statusElement.className = `qr-status ${type}`.trim();
+  }
+
   function savePresetLibrary() {
     try {
       localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presetLibrary));
@@ -376,6 +472,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = link.getAttribute('href')?.replace('#', '');
       link.classList.toggle('is-active', !!openSection && openSection.id === targetId);
     });
+  }
+
+  function isMobileViewport() {
+    return window.matchMedia('(max-width: 767px)').matches;
+  }
+
+  function setMobilePreviewCollapsed(collapsed) {
+    mobilePreviewCollapsed = isMobileViewport() ? !!collapsed : false;
+    if (elements.previewArea) {
+      elements.previewArea.classList.toggle('is-collapsed', mobilePreviewCollapsed);
+    }
+    if (buttons.mobileTogglePreview) {
+      buttons.mobileTogglePreview.textContent = mobilePreviewCollapsed ? '보기' : '숨기기';
+    }
+  }
+
+  function syncMobileActionLabels() {
+    const isMobile = isMobileViewport();
+    if (buttons.mobileSaveShortcut) {
+      buttons.mobileSaveShortcut.textContent = isMobile ? '공유' : '저장';
+    }
+    if (buttons.downloadFront) {
+      buttons.downloadFront.textContent = isMobile ? '앞면 공유' : '앞면 다운로드';
+    }
+    if (buttons.downloadBack) {
+      buttons.downloadBack.textContent = isMobile ? '뒷면 공유' : '뒷면 다운로드';
+    }
+    if (buttons.compare) {
+      buttons.compare.disabled = isMobile;
+      buttons.compare.title = isMobile ? '모바일에서는 전체 템플릿 비교를 숨겼습니다.' : '';
+    }
+    if (!isMobile) {
+      setMobilePreviewCollapsed(false);
+    }
   }
 
   function setMobilePreviewFace(face) {
@@ -455,7 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardName = activeCard ? activeCard.label : '명함 1';
     const exportLabel = `미리보기 그대로 · ${EXPORT_STANDARD_LABEL} · ${formatExportSize(EXPORT_STANDARD_WIDTH, EXPORT_STANDARD_HEIGHT)}`;
     const { width } = getCardDimensions(elements.cardFront);
-    const previewUiScale = clamp(width / PREVIEW_REFERENCE_WIDTH, 0.82, 1);
+    const minPreviewUiScale = isMobileViewport() ? 0.7 : 0.82;
+    const maxPreviewUiScale = isMobileViewport() ? 1 : 1.34;
+    const previewUiScale = clamp(width / PREVIEW_REFERENCE_WIDTH, minPreviewUiScale, maxPreviewUiScale);
 
     document.documentElement.style.setProperty('--card-ui-scale', previewUiScale.toFixed(3));
     updateDesktopPartnerScale();
@@ -567,6 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
     collected.backLogoAlign = state.backLogoAlign;
     collected.frontLogoDataUrl = state.frontLogoDataUrl;
     collected.backLogoDataUrl = state.backLogoDataUrl;
+    collected.frontQrDataUrl = state.frontQrDataUrl;
+    collected.backQrDataUrl = state.backQrDataUrl;
     collected.frontImageDataUrl = state.frontImageDataUrl;
     collected.backImageDataUrl = state.backImageDataUrl;
 
@@ -599,7 +733,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const backClasses = ['business-card', templateValue, 'back-face'];
     if (state.frontLogoDataUrl) frontClasses.push('has-logo');
     if (state.frontLogoAlign) frontClasses.push(`logo-align-${state.frontLogoAlign}`);
+    if (state.frontImageDataUrl) frontClasses.push('has-front-image');
+    if (state.frontQrDataUrl) frontClasses.push('has-front-qr');
     if (state.backLogoDataUrl) backClasses.push('has-back-logo');
+    if (state.backImageDataUrl) backClasses.push('has-back-image');
+    if (state.backQrDataUrl) backClasses.push('has-back-qr');
     elements.cardFront.className = frontClasses.join(' ');
     elements.cardBack.className = backClasses.join(' ');
     elements.templateLabel.textContent = `현재 템플릿: ${getSelectedText(inputs.template)}`;
@@ -645,6 +783,318 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.backSlogan.style.display = slogan ? 'block' : 'none';
 
     updateCompanyPosition();
+    void refreshGeneratedVCardQrs();
+  }
+
+  function escapeVCardValue(value) {
+    return String(value || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/\n/g, '\\n')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,');
+  }
+
+  function buildVCardPayload() {
+    const name = inputs.name.value.trim();
+    const company = inputs.company.value.trim();
+    const position = inputs.position.value.trim();
+    const phone = inputs.phone.value.trim();
+    const email = inputs.email.value.trim();
+    const address = inputs.address.value.trim();
+    const extra = inputs.extra.value.trim();
+
+    if (![name, company, position, phone, email, address, extra].some(Boolean)) {
+      return '';
+    }
+
+    const lines = [
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `N:;${escapeVCardValue(name)};;;`,
+      `FN:${escapeVCardValue(name || company || 'Business Card')}`
+    ];
+
+    if (company) lines.push(`ORG:${escapeVCardValue(company)}`);
+    if (position) lines.push(`TITLE:${escapeVCardValue(position)}`);
+    if (phone) lines.push(`TEL;TYPE=CELL:${escapeVCardValue(phone)}`);
+    if (email) lines.push(`EMAIL;TYPE=INTERNET:${escapeVCardValue(email)}`);
+    if (address) lines.push(`ADR;TYPE=WORK:;;${escapeVCardValue(address)};;;;`);
+    if (extra) lines.push(`NOTE:${escapeVCardValue(extra)}`);
+    lines.push('END:VCARD');
+    return lines.join('\n');
+  }
+
+  function getQrPayload(face) {
+    if (face === 'front') {
+      return inputs.frontQrMode.value === 'vcard'
+        ? buildVCardPayload()
+        : inputs.frontQrValue.value.trim();
+    }
+
+    return inputs.backQrMode.value === 'vcard'
+      ? buildVCardPayload()
+      : inputs.backQrValue.value.trim();
+  }
+
+  function syncQrModeUI(face) {
+    const isFront = face === 'front';
+    const modeInput = isFront ? inputs.frontQrMode : inputs.backQrMode;
+    const helpElement = isFront ? elements.frontQrHelp : elements.backQrHelp;
+    const linkField = isFront ? elements.frontQrLinkField : elements.backQrLinkField;
+    const isVCard = modeInput?.value === 'vcard';
+
+    if (linkField) {
+      linkField.hidden = isVCard;
+      linkField.style.display = isVCard ? 'none' : '';
+    }
+    if (helpElement) {
+      helpElement.textContent = isVCard
+        ? '현재 기본 정보 입력값으로 vCard 연락처 QR을 생성합니다.'
+        : '링크 주소를 QR로 생성합니다.';
+    }
+    setQrInlineStatus(face, '');
+  }
+
+  function createQrDataUrlWithDirectApi(payload) {
+    return new Promise((resolve, reject) => {
+      window.QRCode.toDataURL(payload, {
+        width: 640,
+        margin: 1,
+        color: {
+          dark: '#111827',
+          light: '#ffffff'
+        }
+      }, (error, url) => {
+        if (error || !url) {
+          reject(error || new Error('QR_FAILED'));
+          return;
+        }
+        resolve(url);
+      });
+    });
+  }
+
+  function createQrDataUrlWithCanvasApi(payload) {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement('canvas');
+      window.QRCode.toCanvas(canvas, payload, {
+        width: 640,
+        margin: 1,
+        color: {
+          dark: '#111827',
+          light: '#ffffff'
+        }
+      }, (error) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        try {
+          resolve(canvas.toDataURL('image/png'));
+        } catch (canvasError) {
+          reject(canvasError);
+        }
+      });
+    });
+  }
+
+  function createQrDataUrlWithConstructorApi(payload) {
+    return new Promise((resolve, reject) => {
+      const host = document.createElement('div');
+      host.style.position = 'fixed';
+      host.style.left = '-9999px';
+      host.style.top = '-9999px';
+      host.style.opacity = '0';
+      host.style.pointerEvents = 'none';
+      document.body.appendChild(host);
+
+      try {
+        new window.QRCode(host, {
+          text: payload,
+          width: 640,
+          height: 640,
+          colorDark: '#111827',
+          colorLight: '#ffffff',
+          correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : undefined
+        });
+      } catch (error) {
+        host.remove();
+        reject(error);
+        return;
+      }
+
+      window.setTimeout(() => {
+        try {
+          const canvas = host.querySelector('canvas');
+          const image = host.querySelector('img');
+          if (canvas) {
+            resolve(canvas.toDataURL('image/png'));
+          } else if (image?.src) {
+            resolve(image.src);
+          } else {
+            reject(new Error('QR_FAILED'));
+          }
+        } catch (error) {
+          reject(error);
+        } finally {
+          host.remove();
+        }
+      }, 80);
+    });
+  }
+
+  function createRemoteQrUrl(payload) {
+    return `https://api.qrserver.com/v1/create-qr-code/?size=640x640&margin=0&data=${encodeURIComponent(payload)}`;
+  }
+
+  async function createQrDataUrl(payload) {
+    if (!payload) {
+      throw new Error('QR_EMPTY');
+    }
+
+    if (!window.QRCode) {
+      return createRemoteQrUrl(payload);
+    }
+
+    const attempts = [];
+
+    if (typeof window.QRCode.toDataURL === 'function') {
+      attempts.push(() => createQrDataUrlWithDirectApi(payload));
+    }
+    if (typeof window.QRCode.toCanvas === 'function') {
+      attempts.push(() => createQrDataUrlWithCanvasApi(payload));
+    }
+    if (typeof window.QRCode === 'function') {
+      attempts.push(() => createQrDataUrlWithConstructorApi(payload));
+    }
+
+    if (!attempts.length) {
+      return createRemoteQrUrl(payload);
+    }
+
+    let lastError = null;
+    for (const attempt of attempts) {
+      try {
+        return await attempt();
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    return createRemoteQrUrl(payload);
+  }
+
+  function applyQr(face, dataUrl) {
+    if (face === 'front') {
+      state.frontQrDataUrl = dataUrl || '';
+      elements.frontQrImage.crossOrigin = 'anonymous';
+      elements.frontQrImage.referrerPolicy = 'no-referrer';
+      elements.frontQrImage.onload = () => setQrInlineStatus('front', '앞면 QR이 생성되었습니다.', 'success');
+      elements.frontQrImage.onerror = () => setQrInlineStatus('front', '앞면 QR 이미지를 불러오지 못했습니다.', 'error');
+      elements.frontQrImage.src = state.frontQrDataUrl;
+      elements.frontQrImage.style.display = dataUrl ? 'block' : 'none';
+      elements.frontQrLayer.style.display = dataUrl ? 'block' : 'none';
+      elements.frontQrLayer.classList.toggle('is-draggable', !!dataUrl);
+      elements.cardFront.classList.toggle('has-front-qr', !!dataUrl);
+      if (elements.frontQrControls) elements.frontQrControls.style.display = dataUrl ? 'block' : 'none';
+      if (inputs.deleteFrontQr) inputs.deleteFrontQr.style.display = dataUrl ? 'inline-flex' : 'none';
+      if (!dataUrl) setQrInlineStatus('front', '');
+      return;
+    }
+
+    state.backQrDataUrl = dataUrl || '';
+    elements.backQrImage.crossOrigin = 'anonymous';
+    elements.backQrImage.referrerPolicy = 'no-referrer';
+    elements.backQrImage.onload = () => setQrInlineStatus('back', '뒷면 QR이 생성되었습니다.', 'success');
+    elements.backQrImage.onerror = () => setQrInlineStatus('back', '뒷면 QR 이미지를 불러오지 못했습니다.', 'error');
+    elements.backQrImage.src = state.backQrDataUrl;
+    elements.backQrImage.style.display = dataUrl ? 'block' : 'none';
+    elements.backQrLayer.style.display = dataUrl ? 'block' : 'none';
+    elements.backQrLayer.classList.toggle('is-draggable', !!dataUrl);
+    elements.cardBack.classList.toggle('has-back-qr', !!dataUrl);
+    if (elements.backQrControls) elements.backQrControls.style.display = dataUrl ? 'block' : 'none';
+    if (inputs.deleteBackQr) inputs.deleteBackQr.style.display = dataUrl ? 'inline-flex' : 'none';
+    if (!dataUrl) setQrInlineStatus('back', '');
+  }
+
+  async function generateQrForFace(face, options = {}) {
+    const payload = getQrPayload(face);
+    const modeInput = face === 'front' ? inputs.frontQrMode : inputs.backQrMode;
+    const triggerButton = face === 'front' ? buttons.generateFrontQr : buttons.generateBackQr;
+    const originalLabel = triggerButton?.textContent || 'QR 생성';
+    const hasExistingQr = face === 'front' ? !!state.frontQrDataUrl : !!state.backQrDataUrl;
+
+    if (hasExistingQr && !options.silent && !options.forceReplace) {
+      setQrInlineStatus(face, '기존 QR은 삭제 후 다시 생성해주세요.', 'warning');
+      setStatus('기존 QR은 삭제 후 다시 생성해주세요.', 'warning', 2200);
+      return;
+    }
+
+    if (!payload) {
+      setQrInlineStatus(
+        face,
+        modeInput?.value === 'vcard'
+          ? '기본 정보가 부족해서 vCard QR을 만들 수 없습니다.'
+          : '링크 주소를 먼저 입력해주세요.',
+        'warning'
+      );
+      setStatus(
+        modeInput?.value === 'vcard'
+          ? 'vCard에 넣을 기본 정보가 부족합니다.'
+          : 'QR에 넣을 링크를 입력해주세요.',
+        'warning',
+        2200
+      );
+      return;
+    }
+
+    if (triggerButton) {
+      triggerButton.disabled = true;
+      triggerButton.textContent = 'QR 생성 중...';
+    }
+    setQrInlineStatus(face, 'QR을 생성하는 중입니다...', 'info');
+
+    try {
+      const dataUrl = await createQrDataUrl(payload);
+      applyQr(face, dataUrl);
+      setQrInlineStatus(face, `${face === 'front' ? '앞면' : '뒷면'} QR이 생성되었습니다.`, 'success');
+      if (!options.silent) {
+        setStatus(`${face === 'front' ? '앞면' : '뒷면'} QR을 생성했습니다.`, 'success', 1800);
+      }
+      persistWorkspace();
+    } catch (error) {
+      console.error(error);
+      setQrInlineStatus(
+        face,
+        error && error.message === 'QR_UNAVAILABLE'
+          ? 'QR 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'
+          : 'QR 생성에 실패했습니다. 다시 시도해주세요.',
+        'error'
+      );
+      if (!options.silent) {
+        setStatus(
+          error && error.message === 'QR_UNAVAILABLE'
+            ? 'QR 생성 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'
+            : 'QR 생성 중 문제가 발생했습니다.',
+          'error',
+          2600
+        );
+      }
+    } finally {
+      if (triggerButton) {
+        triggerButton.disabled = false;
+        triggerButton.textContent = originalLabel;
+      }
+    }
+  }
+
+  async function refreshGeneratedVCardQrs() {
+    if (inputs.frontQrMode?.value === 'vcard' && state.frontQrDataUrl) {
+      await generateQrForFace('front', { silent: true });
+    }
+    if (inputs.backQrMode?.value === 'vcard' && state.backQrDataUrl) {
+      await generateQrForFace('back', { silent: true });
+    }
   }
 
   function syncManualCompanyStyle() {
@@ -661,11 +1111,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateColorVars() {
     const root = document.documentElement;
+    const transportBackStart = mixHexColors(inputs.pointColor.value, '#ffffff', 0.94);
+    const transportBackEnd = mixHexColors(inputs.pointColor.value, '#ffffff', 0.82);
+    const transportAccentStart = mixHexColors(inputs.pointColor.value, '#ffffff', 0.42);
+    const transportAccentEnd = mixHexColors(inputs.pointColor.value, '#0f172a', 0.14);
     root.style.setProperty('--front-bg', inputs.frontBg.value);
     root.style.setProperty('--back-bg', inputs.backBg.value);
     root.style.setProperty('--card-text', inputs.textColor.value);
     root.style.setProperty('--company-color', inputs.textColor.value);
     root.style.setProperty('--card-point', inputs.pointColor.value);
+    root.style.setProperty('--transport-back-gradient-start', transportBackStart);
+    root.style.setProperty('--transport-back-gradient-end', transportBackEnd);
+    root.style.setProperty('--transport-back-accent-start', transportAccentStart);
+    root.style.setProperty('--transport-back-accent-end', transportAccentEnd);
     root.style.setProperty('--card-font', inputs.font.value);
     root.style.setProperty('--name-size', `${inputs.rangeSize.value}px`);
     root.style.setProperty('--name-weight', inputs.rangeWeight.value);
@@ -688,6 +1146,12 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.backImage.style.width = `${inputs.backImgSize.value}%`;
     elements.backImage.style.left = `${inputs.backImgX.value}%`;
     elements.backImage.style.top = `${inputs.backImgY.value}%`;
+    elements.frontQrImage.style.width = `${inputs.frontQrSize.value}px`;
+    elements.frontQrImage.style.left = `${inputs.frontQrX.value}%`;
+    elements.frontQrImage.style.top = `${inputs.frontQrY.value}%`;
+    elements.backQrImage.style.width = `${inputs.backQrSize.value}px`;
+    elements.backQrImage.style.left = `${inputs.backQrX.value}%`;
+    elements.backQrImage.style.top = `${inputs.backQrY.value}%`;
 
     elements.frontOverlay.style.backgroundColor = inputs.frontOverlayColor.value;
     elements.frontOverlay.style.opacity = inputs.frontOverlayOpacity.value;
@@ -710,6 +1174,12 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.valBackImgSize.textContent = `${inputs.backImgSize.value}%`;
     elements.valBackImgX.textContent = `${inputs.backImgX.value}%`;
     elements.valBackImgY.textContent = `${inputs.backImgY.value}%`;
+    elements.valFrontQrSize.textContent = `${inputs.frontQrSize.value}px`;
+    elements.valFrontQrX.textContent = `${inputs.frontQrX.value}%`;
+    elements.valFrontQrY.textContent = `${inputs.frontQrY.value}%`;
+    elements.valBackQrSize.textContent = `${inputs.backQrSize.value}px`;
+    elements.valBackQrX.textContent = `${inputs.backQrX.value}%`;
+    elements.valBackQrY.textContent = `${inputs.backQrY.value}%`;
     elements.valFrontOverlay.textContent = `${Math.round(parseFloat(inputs.frontOverlayOpacity.value) * 100)}%`;
     elements.valBackOverlay.textContent = `${Math.round(parseFloat(inputs.backOverlayOpacity.value) * 100)}%`;
 
@@ -795,6 +1265,8 @@ document.addEventListener('DOMContentLoaded', () => {
       backLogoAlign: card.backLogoAlign || 'center',
       frontLogoDataUrl: card.frontLogoDataUrl || '',
       backLogoDataUrl: card.backLogoDataUrl || '',
+      frontQrDataUrl: card.frontQrDataUrl || '',
+      backQrDataUrl: card.backQrDataUrl || '',
       frontImageDataUrl: card.frontImageDataUrl || '',
       backImageDataUrl: card.backImageDataUrl || ''
     };
@@ -809,8 +1281,12 @@ document.addEventListener('DOMContentLoaded', () => {
     updateColorVars();
     applyLogo('front', state.frontLogoDataUrl);
     applyLogo('back', state.backLogoDataUrl);
+    applyQr('front', state.frontQrDataUrl);
+    applyQr('back', state.backQrDataUrl);
     applyImage('front', state.frontImageDataUrl);
     applyImage('back', state.backImageDataUrl);
+    syncQrModeUI('front');
+    syncQrModeUI('back');
     syncPresetInput();
     renderCardTabs();
   }
@@ -1071,6 +1547,14 @@ document.addEventListener('DOMContentLoaded', () => {
     persistWorkspace();
   }
 
+  function setQrAlign(face, align) {
+    const value = ({ left: '14', center: '50', right: '86' }[align] || '50');
+    if (face === 'front') inputs.frontQrX.value = value;
+    if (face === 'back') inputs.backQrX.value = value;
+    updateColorVars();
+    persistWorkspace();
+  }
+
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
   }
@@ -1172,6 +1656,28 @@ document.addEventListener('DOMContentLoaded', () => {
     onMove: updateColorVars
   }));
 
+  bindDrag(elements.frontQrImage, () => {
+    if (!state.frontQrDataUrl) return null;
+    return {
+      element: elements.frontQrImage,
+      card: elements.cardFront,
+      xInput: inputs.frontQrX,
+      yInput: inputs.frontQrY,
+      onMove: updateColorVars
+    };
+  });
+
+  bindDrag(elements.backQrImage, () => {
+    if (!state.backQrDataUrl) return null;
+    return {
+      element: elements.backQrImage,
+      card: elements.cardBack,
+      xInput: inputs.backQrX,
+      yInput: inputs.backQrY,
+      onMove: updateColorVars
+    };
+  });
+
   bindDrag(elements.frontCompanyManual, () => {
     if (!inputs.frontCompanyMode || inputs.frontCompanyMode.value !== 'manual') return null;
     return {
@@ -1206,6 +1712,9 @@ document.addEventListener('DOMContentLoaded', () => {
     collapsibleSections.forEach((item) => {
       setSectionCollapsed(item, item !== section);
     });
+    if (section.id === 'section-info') {
+      setMobilePreviewCollapsed(true);
+    }
     section.scrollIntoView({ behavior: 'smooth', block: 'center' });
     section.classList.add('is-focus-target');
     window.setTimeout(() => section.classList.remove('is-focus-target'), 1400);
@@ -1240,12 +1749,17 @@ document.addEventListener('DOMContentLoaded', () => {
   bindPreviewJump(elements.backLogo, 'section-logo', 'dblclick', 'double');
   bindPreviewJump(elements.frontImageLayer, 'section-image', 'dblclick', 'double');
   bindPreviewJump(elements.backImageLayer, 'section-image', 'dblclick', 'double');
+  bindPreviewJump(elements.frontQrLayer, 'section-qr', 'dblclick', 'double');
+  bindPreviewJump(elements.backQrLayer, 'section-qr', 'dblclick', 'double');
 
   function openSectionExclusive(targetSection) {
     collapsibleSections.forEach((section) => {
       setSectionCollapsed(section, section !== targetSection);
     });
     syncSectionNavState(targetSection);
+    if (targetSection?.id === 'section-info') {
+      setMobilePreviewCollapsed(true);
+    }
   }
 
   collapsibleSections.forEach((section, index) => {
@@ -1356,8 +1870,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function toggleCompare() {
-    isCompareMode = !isCompareMode;
+  function toggleCompare(forceState) {
+    const nextState = typeof forceState === 'boolean' ? forceState : !isCompareMode;
+    if (nextState && isMobileViewport()) {
+      isCompareMode = false;
+      document.body.classList.remove('is-compare-mode');
+      elements.compareView.style.display = 'none';
+      elements.singleView.style.display = 'flex';
+      buttons.compare.textContent = '?쒕늿??鍮꾧탳';
+      setStatus('모바일에서는 전체 템플릿 비교를 숨겼습니다.', 'warning', 1800);
+      return;
+    }
+
+    isCompareMode = nextState;
     document.body.classList.toggle('is-compare-mode', isCompareMode);
     if (isCompareMode) {
       renderCompareGrid();
@@ -1452,6 +1977,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeCard = getActiveCard();
     const cardName = sanitizeFileName(activeCard ? activeCard.label : '명함-1');
     return `${presetName}-${cardName}-${face}.png`;
+  }
+
+  async function requestCardDownload(face, button) {
+    const targetFace = face === 'back' ? 'back' : 'front';
+    if (isMobileViewport() && mobilePreviewFace !== targetFace) {
+      setStatus(`미리보기에서 ${targetFace === 'back' ? '뒷면' : '앞면'}을 선택해주세요.`, 'warning', 2200);
+      return;
+    }
+
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+
+    try {
+      await downloadCard(
+        targetFace === 'back' ? elements.cardBack : elements.cardFront,
+        getDownloadFilename(targetFace),
+        button
+      );
+    } finally {
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+    }
   }
 
   async function downloadCard(cardElement, filename, button) {
@@ -1557,6 +2107,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (target === 'back-company') setCompanyAlign('back', align);
       if (target === 'front-image') setImageAlign('front', align);
       if (target === 'back-image') setImageAlign('back', align);
+      if (target === 'front-qr') setQrAlign('front', align);
+      if (target === 'back-qr') setQrAlign('back', align);
     });
   });
 
@@ -1654,6 +2206,30 @@ document.addEventListener('DOMContentLoaded', () => {
     applyImage('back', '');
     persistWorkspace();
   });
+  if (inputs.deleteFrontQr) {
+    inputs.deleteFrontQr.addEventListener('click', () => {
+      applyQr('front', '');
+      setQrInlineStatus('front', '앞면 QR을 삭제했습니다.', 'info');
+      persistWorkspace();
+    });
+  }
+  if (inputs.deleteBackQr) {
+    inputs.deleteBackQr.addEventListener('click', () => {
+      applyQr('back', '');
+      setQrInlineStatus('back', '뒷면 QR을 삭제했습니다.', 'info');
+      persistWorkspace();
+    });
+  }
+  if (buttons.generateFrontQr) {
+    buttons.generateFrontQr.addEventListener('click', () => {
+      generateQrForFace('front');
+    });
+  }
+  if (buttons.generateBackQr) {
+    buttons.generateBackQr.addEventListener('click', () => {
+      generateQrForFace('back');
+    });
+  }
 
   [
     inputs.presetName,
@@ -1669,13 +2245,26 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.rangeSize, inputs.rangeWeight, inputs.frontLogoSize, inputs.frontLogoX, inputs.frontLogoY,
     inputs.frontCompanyMode, inputs.frontCompanyX, inputs.frontCompanyY,
     inputs.backLogoSize, inputs.backLogoX, inputs.backLogoY, inputs.frontImgSize, inputs.frontImgX,
-    inputs.frontImgY,
-    inputs.backImgSize, inputs.backImgX, inputs.backImgY, inputs.frontOverlayColor,
+    inputs.frontImgY, inputs.frontQrSize, inputs.frontQrX, inputs.frontQrY,
+    inputs.backImgSize, inputs.backImgX, inputs.backImgY, inputs.backQrSize, inputs.backQrX, inputs.backQrY, inputs.frontOverlayColor,
     inputs.frontOverlayOpacity, inputs.backOverlayColor, inputs.backOverlayOpacity, inputs.frontBg,
     inputs.backBg, inputs.textColor, inputs.pointColor, inputs.font
   ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
       updateColorVars();
+      persistWorkspace();
+    });
+  });
+
+  [inputs.frontQrMode, inputs.backQrMode].filter(Boolean).forEach((input) => {
+    input.addEventListener('change', () => {
+      syncQrModeUI(input === inputs.frontQrMode ? 'front' : 'back');
+      persistWorkspace();
+    });
+  });
+
+  [inputs.frontQrValue, inputs.backQrValue].filter(Boolean).forEach((input) => {
+    input.addEventListener('input', () => {
       persistWorkspace();
     });
   });
@@ -1721,26 +2310,35 @@ document.addEventListener('DOMContentLoaded', () => {
   if (buttons.mobileFaceBack) buttons.mobileFaceBack.addEventListener('click', () => setMobilePreviewFace('back'));
   if (buttons.mobileSaveShortcut) {
     buttons.mobileSaveShortcut.addEventListener('click', () => {
-      if (mobilePreviewFace === 'back') {
-        buttons.downloadBack?.click();
-        return;
-      }
-      buttons.downloadFront?.click();
+      requestCardDownload(mobilePreviewFace, buttons.mobileSaveShortcut);
     });
   }
-  if (buttons.mobileScrollTop) buttons.mobileScrollTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  buttons.downloadFront.addEventListener('click', () => downloadCard(elements.cardFront, getDownloadFilename('front'), buttons.downloadFront));
-  buttons.downloadBack.addEventListener('click', () => downloadCard(elements.cardBack, getDownloadFilename('back'), buttons.downloadBack));
-  window.addEventListener('resize', updateContextLabels);
+  if (buttons.mobileTogglePreview) {
+    buttons.mobileTogglePreview.addEventListener('click', () => {
+      setMobilePreviewCollapsed(!mobilePreviewCollapsed);
+    });
+  }
+  buttons.downloadFront.addEventListener('click', () => requestCardDownload('front', buttons.downloadFront));
+  buttons.downloadBack.addEventListener('click', () => requestCardDownload('back', buttons.downloadBack));
+  window.addEventListener('resize', () => {
+    updateContextLabels();
+    syncMobileActionLabels();
+    if (isMobileViewport() && isCompareMode) {
+      toggleCompare(false);
+    }
+  });
   window.addEventListener('load', updateDesktopPartnerScale);
 
   presetLibrary = loadPresetLibrary();
   workspace = loadWorkspace();
   setActiveFacePanel('logo', 'front');
   setActiveFacePanel('image', 'front');
+  setActiveFacePanel('qr', 'front');
   renderPresetLibrary();
   syncPresetInput();
+  syncMobileActionLabels();
   setMobilePreviewFace('front');
+  setMobilePreviewCollapsed(false);
   applyCardData(getActiveCard());
   persistWorkspace();
   setStatus('준비 완료');
