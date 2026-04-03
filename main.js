@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragJustEndedAt = 0;
   let mobilePreviewFace = 'front';
   let mobilePreviewCollapsed = false;
+  let lastPreviewCardWidth = PREVIEW_REFERENCE_WIDTH;
   let statusTimer = null;
   let state = createTransientState();
 
@@ -488,6 +489,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buttons.mobileTogglePreview) {
       buttons.mobileTogglePreview.textContent = mobilePreviewCollapsed ? '보기' : '숨기기';
     }
+    if (workspace) {
+      updateContextLabels();
+    }
   }
 
   function syncMobileActionLabels() {
@@ -526,6 +530,36 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buttons.mobileFaceBack) {
       buttons.mobileFaceBack.classList.toggle('is-active', showBack);
     }
+    if (workspace) {
+      updateContextLabels();
+    }
+  }
+
+  function getVisiblePreviewCard() {
+    if (isMobileViewport() && mobilePreviewFace === 'back') {
+      return elements.cardBack;
+    }
+    return elements.cardFront;
+  }
+
+  function getStablePreviewCardWidth() {
+    const primaryCard = getVisiblePreviewCard();
+    const primaryWidth = primaryCard ? primaryCard.getBoundingClientRect().width : 0;
+
+    if (primaryWidth > 0) {
+      lastPreviewCardWidth = primaryWidth;
+      return primaryWidth;
+    }
+
+    const secondaryCard = primaryCard === elements.cardFront ? elements.cardBack : elements.cardFront;
+    const secondaryWidth = secondaryCard ? secondaryCard.getBoundingClientRect().width : 0;
+
+    if (secondaryWidth > 0) {
+      lastPreviewCardWidth = secondaryWidth;
+      return secondaryWidth;
+    }
+
+    return lastPreviewCardWidth || PREVIEW_REFERENCE_WIDTH;
   }
 
   function getActiveCard() {
@@ -586,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const presetName = workspace.presetName || getDefaultPresetName();
     const cardName = activeCard ? activeCard.label : '명함 1';
     const exportLabel = `미리보기 그대로 · ${EXPORT_STANDARD_LABEL} · ${formatExportSize(EXPORT_STANDARD_WIDTH, EXPORT_STANDARD_HEIGHT)}`;
-    const { width } = getCardDimensions(elements.cardFront);
+    const width = getStablePreviewCardWidth();
     const minPreviewUiScale = isMobileViewport() ? 0.7 : 0.82;
     const maxPreviewUiScale = isMobileViewport() ? 1 : 1.34;
     const previewUiScale = clamp(width / PREVIEW_REFERENCE_WIDTH, minPreviewUiScale, maxPreviewUiScale);
