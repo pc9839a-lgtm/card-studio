@@ -6,15 +6,57 @@ document.addEventListener('DOMContentLoaded', () => {
   const RECOMMENDED_UPLOAD_BYTES = 2 * 1024 * 1024;
   const HARD_UPLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
   const MAX_IMAGE_SIDE = 2400;
+  const MAX_CARD_COUNT = 30;
+  const MAX_BULK_IMPORT_ROWS = 30;
   const CARD_WIDTH_MM = 90;
   const CARD_HEIGHT_MM = 50;
   const EXPORT_DPI = 600;
   const EXPORT_STANDARD_WIDTH = Math.round((CARD_WIDTH_MM / 25.4) * EXPORT_DPI);
   const EXPORT_STANDARD_HEIGHT = Math.round((CARD_HEIGHT_MM / 25.4) * EXPORT_DPI);
   const EXPORT_STANDARD_LABEL = `${CARD_WIDTH_MM} x ${CARD_HEIGHT_MM}mm / ${EXPORT_DPI}dpi`;
-  const PREVIEW_REFERENCE_WIDTH = 405;
+  const PREVIEW_REFERENCE_WIDTH = 380;
   const FALLBACK_CARD_WIDTH = 450;
   const FALLBACK_CARD_HEIGHT = 250;
+  const IMAGE_READY_TIMEOUT_MS = 4000;
+  const EXPORT_RENDER_TIMEOUT_MS = 15000;
+  const storageState = {
+    available: true,
+    warned: false
+  };
+
+  const downloadGrid = document.querySelector('.download-grid');
+  if (downloadGrid && !document.getElementById('export-card-selection')) {
+    const panel = document.createElement('div');
+    panel.className = 'sub-panel export-selection-panel';
+    panel.innerHTML = `
+      <div class="export-selection-panel__head">
+        <strong>다운로드 대상 명함</strong>
+        <div class="export-selection-panel__actions">
+          <button id="btn-export-select-current" class="btn btn-outline btn-sm" type="button">현재만</button>
+          <button id="btn-export-select-all" class="btn btn-outline btn-sm" type="button">전체</button>
+        </div>
+      </div>
+      <div id="export-card-selection" class="export-card-selection"></div>
+    `;
+    downloadGrid.insertAdjacentElement('afterend', panel);
+    const exportSelectionHead = panel.querySelector('.export-selection-panel__head');
+    if (exportSelectionHead) {
+      exportSelectionHead.innerHTML = `
+        <strong>\uB2E4\uC6B4\uB85C\uB4DC \uB300\uC0C1 \uBA85\uD568</strong>
+        <div class="export-selection-panel__actions">
+          <button id="btn-export-select-current" class="btn btn-outline btn-sm" type="button">\uD604\uC7AC\uB9CC</button>
+          <button id="btn-export-select-all" class="btn btn-outline btn-sm" type="button">\uC804\uCCB4</button>
+        </div>
+      `;
+    }
+    /*
+    if (exportSelectionTitle) exportSelectionTitle.textContent = '다운로드 대상 명함';
+    if (exportSelectCurrentButton) exportSelectCurrentButton.textContent = '현재만';
+    if (exportSelectAllButton) exportSelectAllButton.textContent = '전체';
+  }
+
+  */
+  }
 
   const CARD_FIELD_KEYS = [
     'company', 'position', 'name', 'phone', 'email', 'address', 'extra', 'slogan',
@@ -30,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputs = {
     presetName: document.getElementById('input-preset-name'),
     importPresetFile: document.getElementById('input-import-preset'),
+    importCsvFile: document.getElementById('input-import-csv'),
     importPresetText: document.getElementById('input-import-preset-text'),
     savedPresetSelect: document.getElementById('select-saved-preset'),
     company: document.getElementById('input-company'),
@@ -97,6 +140,9 @@ document.addEventListener('DOMContentLoaded', () => {
     compare: document.getElementById('btn-compare'),
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back'),
+    downloadPdf: document.getElementById('btn-download-pdf'),
+    exportSelectCurrent: document.getElementById('btn-export-select-current'),
+    exportSelectAll: document.getElementById('btn-export-select-all'),
     save: document.getElementById('btn-save'),
     mobileFaceFront: document.getElementById('btn-mobile-face-front'),
     mobileFaceBack: document.getElementById('btn-mobile-face-back'),
@@ -107,9 +153,18 @@ document.addEventListener('DOMContentLoaded', () => {
     loadPreset: document.getElementById('btn-load-preset'),
     importPresetText: document.getElementById('btn-import-preset-text'),
     exportPreset: document.getElementById('btn-export-preset'),
+    downloadCsvSample: document.getElementById('btn-download-csv-sample'),
     addCard: document.getElementById('btn-add-card'),
     duplicateCard: document.getElementById('btn-duplicate-card'),
-    deleteCard: document.getElementById('btn-delete-card')
+    deleteCard: document.getElementById('btn-delete-card'),
+    wizardPrev: document.getElementById('btn-wizard-prev'),
+    wizardNext: document.getElementById('btn-wizard-next'),
+    wizardSecondary: document.getElementById('btn-wizard-secondary'),
+    refreshRecommendations: document.getElementById('btn-refresh-recommendations'),
+    quickStart: document.getElementById('btn-quick-start'),
+    toggleAdvanced: document.getElementById('btn-toggle-advanced'),
+    saveInline: document.getElementById('btn-save-inline'),
+    wizardFillSample: document.getElementById('btn-wizard-fill-sample')
   };
 
   const elements = {
@@ -120,6 +175,14 @@ document.addEventListener('DOMContentLoaded', () => {
     previewExportNote: document.getElementById('preview-export-note'),
     cardTabs: document.getElementById('card-tabs'),
     cardCountLabel: document.getElementById('card-count-label'),
+    wizardFlow: document.getElementById('wizard-flow'),
+    wizardStepCount: document.getElementById('wizard-step-count'),
+    wizardStepLabel: document.getElementById('wizard-step-label'),
+    wizardStepTitle: document.getElementById('wizard-step-title'),
+    wizardStepDescription: document.getElementById('wizard-step-description'),
+    wizardRecommendGrid: document.getElementById('wizard-recommend-grid'),
+    wizardFooter: document.getElementById('wizard-footer'),
+    exportCardSelection: document.getElementById('export-card-selection'),
     previewArea: document.getElementById('preview-area'),
     singleView: document.getElementById('single-view'),
     compareView: document.getElementById('compare-view'),
@@ -187,7 +250,18 @@ document.addEventListener('DOMContentLoaded', () => {
     frontQrStatus: document.getElementById('front-qr-status'),
     backQrStatus: document.getElementById('back-qr-status'),
     valFrontOverlay: document.getElementById('val-front-overlay'),
-    valBackOverlay: document.getElementById('val-back-overlay')
+    valBackOverlay: document.getElementById('val-back-overlay'),
+    sectionStart: document.getElementById('section-start'),
+    sectionEntry: document.getElementById('section-entry'),
+    sectionRecommend: document.getElementById('section-recommend'),
+    sectionWorkspace: document.getElementById('section-workspace'),
+    sectionInfo: document.getElementById('section-info'),
+    sectionLogo: document.getElementById('section-logo'),
+    sectionText: document.getElementById('section-text'),
+    sectionImage: document.getElementById('section-image'),
+    sectionQr: document.getElementById('section-qr'),
+    sectionStyle: document.getElementById('section-style'),
+    sectionExport: document.getElementById('section-export')
   };
 
   const paletteButtons = document.querySelectorAll('.palette-btn');
@@ -196,6 +270,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const facePanels = document.querySelectorAll('.face-panel');
   const controlNavLinks = document.querySelectorAll('.control-nav__link');
   const collapsibleSections = Array.from(document.querySelectorAll('.control-group, .actions'));
+  const infoCoreFields = [inputs.name, inputs.phone]
+    .map((input) => input?.closest('.field'))
+    .filter(Boolean);
+  const infoDetailFields = [inputs.company, inputs.position, inputs.email, inputs.address, inputs.extra, inputs.slogan]
+    .map((input) => input?.closest('.field'))
+    .filter(Boolean);
+  const advancedSectionIds = ['section-logo', 'section-text', 'section-image', 'section-qr'];
+  const templateRecommendationMeta = {
+    'template-modern': { tag: '기본형', description: '처음 시작할 때 가장 깔끔한 기본 명함입니다.' },
+    'template-pet': { tag: '정돈형', description: '정보를 안정적으로 정리해 보여주기 좋습니다.' },
+    'template-transport': { tag: '포인트형', description: '제품 이미지나 강조 포인트를 빠르게 살릴 수 있습니다.' },
+    'template-clinic': { tag: '브랜드형', description: '로고와 브랜드 문구를 차분하게 살릴 수 있습니다.' },
+    'template-classic': { tag: '센터형', description: '이름과 연락처를 단정하게 보여주는 구성입니다.' },
+    'template-split': { tag: '분할형', description: '브랜드 영역과 정보 영역이 확실히 나뉘는 템플릿입니다.' },
+    'template-accent': { tag: '사이드형', description: '측면 포인트가 있어 존재감을 주기 좋습니다.' },
+    'template-bottom': { tag: '바텀형', description: '하단 포인트로 시선을 잡아주는 안정적인 구성입니다.' },
+    'template-dark': { tag: '다크형', description: '강한 대비와 고급스러운 톤이 필요한 경우에 맞습니다.' },
+    'template-creative': { tag: '라인형', description: '프레임과 선으로 개성을 주고 싶을 때 어울립니다.' }
+  };
+
+  const CSV_FIELD_ALIASES = {
+    name: ['name', '이름', '성명'],
+    phone: ['phone', 'mobile', 'tel', 'contact', '연락처', '휴대폰', '전화번호'],
+    email: ['email', 'e-mail', 'mail', '이메일'],
+    company: ['company', 'brand', 'business', '회사명', '브랜드', '상호'],
+    position: ['position', 'title', 'role', '직책', '직위'],
+    address: ['address', 'addr', '주소'],
+    extra: ['extra', 'info', 'memo', '추가정보', '메모'],
+    slogan: ['slogan', 'tagline', 'message', '슬로건', '소개문구']
+  };
 
   let presetLibrary = [];
   let workspace = null;
@@ -205,8 +309,38 @@ document.addEventListener('DOMContentLoaded', () => {
   let mobilePreviewFace = 'front';
   let mobilePreviewCollapsed = false;
   let lastPreviewCardWidth = PREVIEW_REFERENCE_WIDTH;
+  let wizardStep = 1;
+  let advancedEditing = false;
+  let wizardRecommendedTemplates = [];
   let statusTimer = null;
   let state = createTransientState();
+
+  function appendExportDebugLog(message, detail = '') {
+    return;
+  }
+
+  const wizardStepMeta = {
+    1: {
+      label: '입력 시작',
+      title: '이름과 연락처만 먼저 입력하세요',
+      description: '필수 정보만 먼저 넣고, 다음 단계에서 템플릿과 상세 내용을 이어서 정리합니다.'
+    },
+    2: {
+      label: '추천 템플릿',
+      title: '랜덤 추천 템플릿 3개를 골라봤어요',
+      description: '원하는 분위기에 가까운 템플릿을 고르고 바로 시작할 수 있습니다.'
+    },
+    3: {
+      label: '상세정보',
+      title: '회사명과 상세정보를 더 입력하세요',
+      description: '이 단계부터 앞면과 뒷면 미리보기를 보면서 내용을 채울 수 있습니다.'
+    },
+    4: {
+      label: '스타일 & 저장',
+      title: '템플릿, 컬러, 폰트를 정리하고 저장하세요',
+      description: '필요하면 고급편집을 열어 로고, 이미지, QR, 위치까지 세밀하게 조정할 수 있습니다.'
+    }
+  };
 
   function createTransientState() {
     return {
@@ -351,7 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
         presetName: getDefaultPresetName(),
         activePresetId: '',
         activeCardId: card.id,
-        cards: [card]
+        cards: [card],
+        wizardStep: 1,
+        advancedEditing: false
       };
     }
 
@@ -362,7 +498,9 @@ document.addEventListener('DOMContentLoaded', () => {
         presetName: getDefaultPresetName(),
         activePresetId: '',
         activeCardId: legacyCard.id,
-        cards: [legacyCard]
+        cards: [legacyCard],
+        wizardStep: 1,
+        advancedEditing: false
       };
     }
 
@@ -378,7 +516,9 @@ document.addEventListener('DOMContentLoaded', () => {
       presetName: String(rawWorkspace.presetName || '').trim() || getDefaultPresetName(),
       activePresetId: rawWorkspace.activePresetId || '',
       activeCardId,
-      cards
+      cards,
+      wizardStep: clamp(Number(rawWorkspace.wizardStep) || 1, 1, 4),
+      advancedEditing: !!rawWorkspace.advancedEditing
     };
   }
 
@@ -446,9 +586,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function savePresetLibrary() {
     try {
       localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presetLibrary));
+      return true;
     } catch (error) {
       console.warn('프리셋 저장 실패:', error);
       setStatus('프리셋 라이브러리를 저장하지 못했습니다.', 'warning', 2400);
+      return false;
     }
   }
 
@@ -475,6 +617,514 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = link.getAttribute('href')?.replace('#', '');
       link.classList.toggle('is-active', !!openSection && openSection.id === targetId);
     });
+  }
+
+  function shuffleArray(items) {
+    const nextItems = [...items];
+    for (let index = nextItems.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [nextItems[index], nextItems[swapIndex]] = [nextItems[swapIndex], nextItems[index]];
+    }
+    return nextItems;
+  }
+
+  function getTemplateOptions() {
+    return Array.from(inputs.template?.options || [])
+      .map((option) => ({
+        value: option.value,
+        label: option.textContent.trim()
+      }))
+      .filter((option) => option.value);
+  }
+
+  function generateWizardRecommendations() {
+    const buckets = [
+      ['template-modern', 'template-pet', 'template-classic'],
+      ['template-split', 'template-accent', 'template-bottom'],
+      ['template-transport', 'template-clinic', 'template-dark', 'template-creative']
+    ];
+
+    const available = new Set(getTemplateOptions().map((option) => option.value));
+    const picks = buckets
+      .map((bucket) => shuffleArray(bucket.filter((value) => available.has(value)))[0])
+      .filter(Boolean);
+
+    wizardRecommendedTemplates = picks.length === 3
+      ? picks
+      : shuffleArray(Array.from(available)).slice(0, 3);
+
+    renderWizardRecommendations();
+  }
+
+  function cardHasMeaningfulContent(card) {
+    if (!card) return false;
+    return [
+      card.name,
+      card.phone,
+      card.email,
+      card.company,
+      card.position,
+      card.address,
+      card.extra,
+      card.slogan,
+      card.frontLogoDataUrl,
+      card.backLogoDataUrl,
+      card.frontImageDataUrl,
+      card.backImageDataUrl,
+      card.frontQrDataUrl,
+      card.backQrDataUrl
+    ].some((value) => String(value || '').trim());
+  }
+
+  function workspaceHasMeaningfulContent(targetWorkspace = workspace) {
+    return Array.isArray(targetWorkspace?.cards) && targetWorkspace.cards.some(cardHasMeaningfulContent);
+  }
+
+  function isGuidedWizardEnabled() {
+    return true;
+  }
+
+  function getLatestPresetRecord() {
+    if (!Array.isArray(presetLibrary) || presetLibrary.length === 0) return null;
+    return [...presetLibrary].sort((a, b) => new Date(b.savedAt || 0) - new Date(a.savedAt || 0))[0] || null;
+  }
+
+  function restoreWorkspaceFromPresetRecord(preset, options = {}) {
+    if (!preset) return;
+    workspace = normalizeWorkspace({
+      version: WORKSPACE_VERSION,
+      presetName: preset.name,
+      activePresetId: preset.id,
+      activeCardId: preset.activeCardId,
+      cards: deepClone(preset.cards),
+      wizardStep: options.wizardStep ?? 4,
+      advancedEditing: options.advancedEditing ?? false
+    });
+    workspace.cards = workspace.cards.slice(0, MAX_CARD_COUNT);
+  }
+
+  function buildWizardRecommendationPreview(templateValue) {
+    const currentNameSize = 24;
+    const currentFrontLogoSize = 96;
+    const currentBackLogoSize = 96;
+    const previewWidth = 220;
+    const previewScale = clamp(previewWidth / PREVIEW_REFERENCE_WIDTH, 0.58, 0.58);
+    const clone = elements.cardFront.cloneNode(true);
+    const templateValues = getTemplateOptions().map((option) => option.value);
+    clone.removeAttribute('id');
+    templateValues.forEach((templateClass) => clone.classList.remove(templateClass));
+    clone.classList.add(templateValue, 'is-wizard-recommend-card');
+    clone.classList.remove('company-manual-front');
+    clone.style.width = `${previewWidth}px`;
+    clone.style.maxWidth = `${previewWidth}px`;
+    clone.style.minWidth = `${previewWidth}px`;
+    clone.style.position = 'relative';
+    clone.style.left = 'auto';
+    clone.style.top = 'auto';
+    clone.style.margin = '0';
+    clone.style.transform = 'none';
+    clone.style.transformOrigin = 'center center';
+    clone.style.pointerEvents = 'none';
+    clone.style.setProperty('--card-ui-scale', previewScale.toFixed(3));
+    clone.style.setProperty('--name-size', `${Math.max(18, Math.round(currentNameSize))}px`);
+    clone.style.setProperty('--front-logo-size', `${Math.max(52, Math.round(currentFrontLogoSize))}px`);
+    clone.style.setProperty('--back-logo-size', `${Math.max(52, Math.round(currentBackLogoSize))}px`);
+
+    const manualCompany = clone.querySelector('.preview-company-manual');
+    if (manualCompany) manualCompany.remove();
+
+    const infoArea = clone.querySelector('.info-area');
+    if (infoArea) {
+      infoArea.style.maxWidth = 'none';
+    }
+
+    clone.querySelectorAll('.preview-logo, .inserted-img, .inserted-qr').forEach((element) => {
+      element.remove();
+    });
+
+    clone.classList.remove('company-empty');
+    const previewCompany = clone.querySelector('.preview-company');
+    const previewName = clone.querySelector('.preview-name');
+    const previewPosition = clone.querySelector('.preview-position');
+    const previewPhone = clone.querySelector('.preview-phone');
+    const previewEmail = clone.querySelector('.preview-email');
+    const previewAddress = clone.querySelector('.preview-address');
+    const previewExtra = clone.querySelector('.preview-extra');
+    const backCompany = clone.querySelector('.back-company');
+    const backSlogan = clone.querySelector('.back-slogan');
+
+    if (previewCompany) previewCompany.textContent = 'MORNING STUDIO';
+    if (previewName) previewName.textContent = (inputs.name?.value || '').trim() || '홍지현';
+    if (previewPosition) previewPosition.textContent = 'Creative Director';
+    if (previewPhone) previewPhone.textContent = (inputs.phone?.value || '').trim() || '010-1234-5678';
+    if (previewEmail) previewEmail.textContent = 'hello@morningstudio.kr';
+    if (previewAddress) previewAddress.textContent = '서울특별시 강남구 테헤란로 123';
+    if (previewExtra) previewExtra.textContent = '평일 09:00 - 18:00';
+    if (backCompany) backCompany.textContent = 'MORNING STUDIO';
+    if (backSlogan) backSlogan.textContent = '당신의 브랜드를 더 선명하게 만듭니다';
+
+    clone.querySelectorAll('.preview-email, .preview-address, .preview-extra').forEach((element) => {
+      const row = element.closest('.info-row');
+      if (row) row.remove();
+    });
+
+    return clone;
+  }
+
+  function selectRecommendedTemplate(templateValue, options = {}) {
+    if (!templateValue) return;
+    inputs.template.value = templateValue;
+    applyTemplate(templateValue);
+    if (options.advance) {
+      setWizardStep(3);
+    } else {
+      renderWizardRecommendations();
+      persistWorkspace();
+    }
+  }
+
+  function renderWizardRecommendations() {
+    if (!elements.wizardRecommendGrid) return;
+
+    elements.wizardRecommendGrid.innerHTML = '';
+    const selectedTemplate = inputs.template?.value;
+
+    wizardRecommendedTemplates.forEach((templateValue) => {
+      const option = getTemplateOptions().find((item) => item.value === templateValue);
+      if (!option) return;
+
+      const meta = templateRecommendationMeta[templateValue] || { tag: '추천', description: '빠르게 시작하기 좋은 템플릿입니다.' };
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'wizard-recommend-card';
+      card.classList.toggle('is-active', selectedTemplate === templateValue);
+
+      const preview = document.createElement('div');
+      preview.className = 'wizard-recommend-card__preview';
+      preview.appendChild(buildWizardRecommendationPreview(templateValue));
+
+      const copy = document.createElement('div');
+      copy.className = 'wizard-recommend-card__copy';
+      copy.innerHTML = `
+        <div class="wizard-recommend-card__eyebrow">${meta.tag}</div>
+        <strong>${option.label}</strong>
+      `;
+
+      card.append(preview, copy);
+      card.addEventListener('click', () => {
+        selectRecommendedTemplate(templateValue);
+      });
+
+      elements.wizardRecommendGrid.appendChild(card);
+    });
+  }
+
+  function syncInfoFieldVisibility() {
+    const showDetails = !isGuidedWizardEnabled() || wizardStep >= 3;
+    infoCoreFields.forEach((field) => {
+      if (field) field.hidden = false;
+    });
+    infoDetailFields.forEach((field) => {
+      if (field) field.hidden = !showDetails;
+    });
+  }
+
+  function setWizardSectionVisibility(section, visible) {
+    if (!section) return;
+    section.hidden = !visible;
+    section.style.display = visible ? '' : 'none';
+  }
+
+  function syncWizardStateToWorkspace() {
+    if (!workspace) return;
+    workspace.wizardStep = wizardStep;
+    workspace.advancedEditing = advancedEditing;
+  }
+
+  function setAdvancedEditing(nextState, options = {}) {
+    advancedEditing = !!nextState;
+    updateWizardUI();
+    if (wizardStep === 4) {
+      openSectionExclusive(advancedEditing ? elements.sectionLogo : elements.sectionStyle);
+    }
+    if (options.persist !== false) {
+      persistWorkspace();
+    }
+  }
+
+  function updateWizardHeader() {
+    const meta = wizardStepMeta[wizardStep] || wizardStepMeta[1];
+    if (elements.wizardStepCount) elements.wizardStepCount.textContent = `${wizardStep} / 4`;
+    if (elements.wizardStepLabel) elements.wizardStepLabel.textContent = meta.label;
+    if (elements.wizardStepTitle) elements.wizardStepTitle.textContent = meta.title;
+    if (elements.wizardStepDescription) elements.wizardStepDescription.textContent = meta.description;
+  }
+
+  function applySectionCopyUpdates() {
+    const workspaceHeading = elements.sectionWorkspace?.querySelector('.section-heading h3');
+    const workspaceDescription = elements.sectionWorkspace?.querySelector('.section-heading p');
+    if (workspaceHeading) workspaceHeading.textContent = '브랜드키트 및 대량관리';
+    if (workspaceDescription) {
+      workspaceDescription.textContent = '기본 로고와 스타일을 유지한 채 CSV로 여러 명함을 한 번에 생성하고, 저장된 프리셋을 함께 관리합니다.';
+    }
+  }
+
+  function updateWizardFooter() {
+    if (!buttons.wizardPrev || !buttons.wizardNext || !buttons.wizardSecondary) return;
+
+    buttons.wizardPrev.hidden = wizardStep === 1;
+    buttons.wizardPrev.disabled = wizardStep === 1;
+
+    buttons.wizardSecondary.hidden = true;
+    buttons.wizardSecondary.disabled = false;
+    buttons.wizardNext.disabled = false;
+
+    if (buttons.quickStart) {
+      buttons.quickStart.hidden = wizardStep !== 2;
+    }
+
+    if (buttons.toggleAdvanced) {
+      buttons.toggleAdvanced.textContent = advancedEditing ? '고급편집 닫기' : '고급편집 열기';
+    }
+
+    switch (wizardStep) {
+      case 1:
+        buttons.wizardNext.textContent = '명함 만들기';
+        break;
+      case 2:
+        buttons.wizardSecondary.hidden = false;
+        buttons.wizardSecondary.textContent = '다른 추천 보기';
+        buttons.wizardNext.textContent = '시작';
+        break;
+      case 3:
+        buttons.wizardNext.textContent = '다음';
+        break;
+      case 4:
+        buttons.wizardSecondary.hidden = false;
+        buttons.wizardSecondary.textContent = advancedEditing ? '기본 편집으로 돌아가기' : '고급편집 열기';
+        buttons.wizardNext.textContent = '작업 저장';
+        break;
+      default:
+        buttons.wizardNext.textContent = '다음';
+        break;
+    }
+  }
+
+  function updateWizardUI() {
+    const isGuidedWizard = isGuidedWizardEnabled();
+    const isPreviewVisible = isGuidedWizard ? wizardStep >= 3 : true;
+    const advancedToggleWrap = buttons.toggleAdvanced?.closest('.wizard-advanced-toggle');
+    const appContainer = document.querySelector('.app-container');
+    const controlsPanel = document.querySelector('.controls');
+    const entryHeading = elements.sectionEntry?.querySelector('.section-heading');
+
+    updateWizardHeader();
+    syncInfoFieldVisibility();
+    syncWizardStateToWorkspace();
+
+    document.body.classList.toggle('is-wizard-preview-hidden', isGuidedWizard && !isPreviewVisible);
+    document.body.classList.toggle('is-wizard-advanced-open', isGuidedWizard && advancedEditing);
+    document.body.classList.toggle('is-guided-wizard', isGuidedWizard);
+    document.body.classList.toggle('is-wizard-step-1', isGuidedWizard && wizardStep === 1);
+    document.body.classList.toggle('is-wizard-step-2', isGuidedWizard && wizardStep === 2);
+    document.body.classList.toggle('is-wizard-step-3', isGuidedWizard && wizardStep === 3);
+    document.body.classList.toggle('is-wizard-step-4', isGuidedWizard && wizardStep === 4);
+
+    if (elements.wizardFlow) elements.wizardFlow.hidden = !isGuidedWizard;
+    if (elements.wizardFooter) elements.wizardFooter.hidden = !isGuidedWizard;
+
+    if (appContainer) {
+      appContainer.style.display = '';
+      appContainer.style.width = '';
+      appContainer.style.justifyContent = '';
+      appContainer.style.alignItems = '';
+      appContainer.style.justifyItems = '';
+      appContainer.style.alignContent = '';
+      appContainer.style.minHeight = '';
+      appContainer.style.padding = '';
+    }
+    if (controlsPanel) {
+      controlsPanel.style.flex = '';
+      controlsPanel.style.width = '';
+      controlsPanel.style.maxWidth = '';
+      controlsPanel.style.margin = '';
+      controlsPanel.style.borderRight = '';
+      controlsPanel.style.position = '';
+      controlsPanel.style.maxHeight = '';
+      controlsPanel.style.overflow = '';
+      controlsPanel.style.paddingTop = '';
+    }
+    if (entryHeading) {
+      entryHeading.style.display = '';
+    }
+
+    if (!isGuidedWizard) {
+      setWizardSectionVisibility(elements.sectionRecommend, false);
+      setWizardSectionVisibility(elements.sectionEntry, false);
+      setWizardSectionVisibility(elements.sectionStart, true);
+      setWizardSectionVisibility(elements.sectionInfo, true);
+      setWizardSectionVisibility(elements.sectionStyle, true);
+      setWizardSectionVisibility(elements.sectionWorkspace, true);
+      setWizardSectionVisibility(elements.sectionExport, true);
+      [elements.sectionLogo, elements.sectionText, elements.sectionImage, elements.sectionQr]
+        .forEach((section) => setWizardSectionVisibility(section, true));
+      if (advancedToggleWrap) {
+        advancedToggleWrap.hidden = true;
+      }
+    } else {
+      if (appContainer && (wizardStep === 1 || wizardStep === 2)) {
+        appContainer.style.display = 'grid';
+        appContainer.style.width = '100%';
+        appContainer.style.justifyItems = 'center';
+        appContainer.style.alignContent = 'center';
+        appContainer.style.minHeight = '100vh';
+        appContainer.style.padding = '28px 24px';
+      }
+      if (controlsPanel && wizardStep === 1) {
+        controlsPanel.style.flex = '0 0 auto';
+        controlsPanel.style.width = 'min(100%, 520px)';
+        controlsPanel.style.maxWidth = '520px';
+        controlsPanel.style.margin = '0 auto';
+        controlsPanel.style.borderRight = '0';
+        controlsPanel.style.position = 'static';
+        controlsPanel.style.maxHeight = 'none';
+        controlsPanel.style.overflow = 'visible';
+        controlsPanel.style.paddingTop = '24px';
+      }
+      if (controlsPanel && wizardStep === 2) {
+        controlsPanel.style.flex = '0 0 auto';
+        controlsPanel.style.width = 'min(100%, 860px)';
+        controlsPanel.style.maxWidth = '860px';
+        controlsPanel.style.margin = '0 auto';
+        controlsPanel.style.borderRight = '0';
+        controlsPanel.style.position = 'static';
+        controlsPanel.style.maxHeight = 'none';
+        controlsPanel.style.overflow = 'visible';
+      }
+      setWizardSectionVisibility(elements.sectionEntry, wizardStep === 1);
+      setWizardSectionVisibility(elements.sectionRecommend, wizardStep === 2);
+      setWizardSectionVisibility(elements.sectionInfo, wizardStep === 3);
+      const showAdvanced = wizardStep === 4 && advancedEditing;
+      setWizardSectionVisibility(elements.sectionStyle, wizardStep === 4 && !showAdvanced);
+      setWizardSectionVisibility(elements.sectionWorkspace, wizardStep === 4 && !showAdvanced);
+      setWizardSectionVisibility(elements.sectionExport, wizardStep === 4);
+      setWizardSectionVisibility(elements.sectionStart, false);
+      [elements.sectionLogo, elements.sectionText, elements.sectionImage, elements.sectionQr]
+        .forEach((section) => setWizardSectionVisibility(section, showAdvanced));
+      if (advancedToggleWrap) {
+        advancedToggleWrap.hidden = false;
+      }
+
+      [
+        elements.sectionStart,
+        elements.sectionEntry,
+        elements.sectionRecommend,
+        elements.sectionInfo,
+        elements.sectionStyle,
+        elements.sectionWorkspace,
+        elements.sectionExport,
+        elements.sectionLogo,
+        elements.sectionText,
+        elements.sectionImage,
+        elements.sectionQr
+      ].forEach((section) => {
+        if (!section) return;
+        setSectionCollapsed(section, true);
+      });
+
+      if (wizardStep === 1) {
+        if (elements.sectionInfo) {
+          elements.sectionInfo.hidden = true;
+          elements.sectionInfo.style.display = 'none';
+        }
+        setSectionCollapsed(elements.sectionEntry, false);
+        elements.sectionEntry?.classList.remove('is-collapsed');
+        if (entryHeading) entryHeading.style.display = 'none';
+      }
+      if (wizardStep === 3) {
+        setSectionCollapsed(elements.sectionInfo, false);
+        elements.sectionInfo?.classList.remove('is-collapsed');
+      }
+      if (wizardStep === 2) {
+        setSectionCollapsed(elements.sectionRecommend, false);
+      }
+      if (wizardStep === 4 && !showAdvanced) {
+        setSectionCollapsed(elements.sectionStyle, false);
+        setSectionCollapsed(elements.sectionExport, false);
+      }
+      if (showAdvanced) {
+        setSectionCollapsed(elements.sectionLogo, false);
+        setSectionCollapsed(elements.sectionExport, false);
+      }
+    }
+
+    if (elements.previewArea) {
+      elements.previewArea.hidden = !isPreviewVisible;
+      elements.previewArea.style.display = isPreviewVisible ? '' : 'none';
+    }
+
+    if (!isPreviewVisible && isCompareMode) {
+      toggleCompare(false);
+    }
+
+    updateWizardFooter();
+  }
+
+  function setWizardStep(nextStep, options = {}) {
+    const forceRecommendations = !!options.forceRecommendations;
+    wizardStep = clamp(Number(nextStep) || 1, 1, 4);
+
+    if (wizardStep !== 4) {
+      advancedEditing = false;
+    }
+
+    if (wizardStep === 2 && (forceRecommendations || wizardRecommendedTemplates.length === 0)) {
+      generateWizardRecommendations();
+    }
+
+    updateWizardUI();
+
+    const defaultSection = wizardStep === 2
+      ? elements.sectionRecommend
+      : wizardStep === 4
+        ? (advancedEditing ? elements.sectionLogo : elements.sectionStyle)
+        : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo);
+
+    if (!options.skipOpen && defaultSection && !defaultSection.hidden) {
+      openSectionExclusive(defaultSection);
+    }
+
+    if (options.persist !== false) {
+      persistWorkspace();
+    }
+  }
+
+  function goToWizardStepFromSection(sectionId) {
+    if (!isGuidedWizardEnabled()) return;
+
+    if (sectionId === 'section-entry' && wizardStep !== 1) {
+      setWizardStep(1);
+      return;
+    }
+
+    if (sectionId === 'section-info' && wizardStep < 3) {
+      setWizardStep(3);
+      return;
+    }
+
+    if (advancedSectionIds.includes(sectionId)) {
+      if (wizardStep !== 4) {
+        setWizardStep(4);
+      }
+      if (!advancedEditing) {
+        setAdvancedEditing(true);
+      }
+      return;
+    }
+
+    if (['section-style', 'section-workspace', 'section-export'].includes(sectionId) && wizardStep !== 4) {
+      setWizardStep(4);
+    }
   }
 
   function isMobileViewport() {
@@ -621,9 +1271,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardName = activeCard ? activeCard.label : '명함 1';
     const exportLabel = `미리보기 그대로 · ${EXPORT_STANDARD_LABEL} · ${formatExportSize(EXPORT_STANDARD_WIDTH, EXPORT_STANDARD_HEIGHT)}`;
     const width = getStablePreviewCardWidth();
-    const minPreviewUiScale = isMobileViewport() ? 0.7 : 0.82;
-    const maxPreviewUiScale = isMobileViewport() ? 1 : 1.34;
-    const previewUiScale = clamp(width / PREVIEW_REFERENCE_WIDTH, minPreviewUiScale, maxPreviewUiScale);
+    const previewUiScale = isMobileViewport()
+      ? clamp(width / PREVIEW_REFERENCE_WIDTH, 0.78, 0.96)
+      : clamp(width / PREVIEW_REFERENCE_WIDTH, 1, 1.18);
 
     document.documentElement.style.setProperty('--card-ui-scale', previewUiScale.toFixed(3));
     updateDesktopPartnerScale();
@@ -694,6 +1344,80 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateContextLabels();
+    renderExportCardSelection();
+  }
+
+  function syncActiveCardSnapshot() {
+    const activeCard = getActiveCard();
+    if (activeCard) Object.assign(activeCard, collectCardFromUI(activeCard));
+  }
+
+  function getSelectedExportCardIds() {
+    if (!elements.exportCardSelection) {
+      return workspace.cards.map((card) => card.id);
+    }
+
+    const checkedIds = Array.from(elements.exportCardSelection.querySelectorAll('input[type="checkbox"]:checked'))
+      .map((input) => input.value)
+      .filter(Boolean);
+
+    if (!checkedIds.length) {
+      return [workspace.activeCardId];
+    }
+
+    return checkedIds;
+  }
+
+  function getSelectedExportCards() {
+    const selectedIds = new Set(getSelectedExportCardIds());
+    return workspace.cards.filter((card) => selectedIds.has(card.id));
+  }
+
+  function renderExportCardSelection() {
+    if (!elements.exportCardSelection) return;
+    const panel = elements.exportCardSelection.closest('.export-selection-panel');
+    if (panel) {
+      panel.hidden = workspace.cards.length <= 1;
+    }
+    const selectionMode = elements.exportCardSelection.dataset.selectionMode || 'current';
+    const selectedIds = new Set(getSelectedExportCardIds());
+    elements.exportCardSelection.innerHTML = '';
+
+    workspace.cards.forEach((card) => {
+      const label = document.createElement('label');
+      label.className = 'export-card-chip';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = card.id;
+      checkbox.checked = selectionMode === 'current'
+        ? card.id === workspace.activeCardId
+        : (selectedIds.size ? selectedIds.has(card.id) : true);
+      checkbox.addEventListener('change', () => {
+        if (!elements.exportCardSelection.querySelector('input[type="checkbox"]:checked')) {
+          checkbox.checked = true;
+          setStatus('다운로드할 명함은 최소 1개 이상 선택해야 합니다.', 'warning', 1800);
+        }
+      });
+
+      const text = document.createElement('span');
+      text.textContent = card.label;
+
+      label.append(checkbox, text);
+      elements.exportCardSelection.appendChild(label);
+    });
+  }
+
+  function setExportSelectionMode(mode = 'all') {
+    if (!elements.exportCardSelection) return;
+    elements.exportCardSelection.dataset.selectionMode = mode;
+    const checkboxes = Array.from(elements.exportCardSelection.querySelectorAll('input[type="checkbox"]'));
+    const activeId = workspace.activeCardId;
+    checkboxes.forEach((checkbox) => {
+      checkbox.checked = mode === 'current' ? checkbox.value === activeId : true;
+    });
+    buttons.exportSelectCurrent?.classList.toggle('is-active', mode === 'current');
+    buttons.exportSelectAll?.classList.toggle('is-active', mode !== 'current');
   }
 
   function setActiveFacePanel(section, face) {
@@ -714,6 +1438,7 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.statusBox.textContent = message;
     elements.statusBox.className = 'status-box';
     if (type !== 'info') elements.statusBox.classList.add(type);
+    appendExportDebugLog(`status:${type}`, message);
     if (statusTimer) clearTimeout(statusTimer);
     if (resetAfter > 0) {
       statusTimer = setTimeout(() => {
@@ -744,9 +1469,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function persistWorkspace() {
+    if (!storageState.available) return;
     const activeCard = getActiveCard();
     if (activeCard) Object.assign(activeCard, collectCardFromUI(activeCard));
     workspace.presetName = String(inputs.presetName?.value || workspace.presetName || '').trim() || getDefaultPresetName();
+    syncWizardStateToWorkspace();
     syncPresetInput();
     updateContextLabels();
 
@@ -756,11 +1483,17 @@ document.addEventListener('DOMContentLoaded', () => {
         presetName: workspace.presetName,
         activePresetId: workspace.activePresetId,
         activeCardId: workspace.activeCardId,
-        cards: workspace.cards
+        cards: workspace.cards,
+        wizardStep,
+        advancedEditing
       }));
     } catch (error) {
       console.warn('워크스페이스 저장 실패:', error);
-      setStatus('브라우저 저장 공간이 부족합니다. JSON 내보내기를 권장합니다.', 'warning', 2600);
+      storageState.available = false;
+      if (!storageState.warned) {
+        storageState.warned = true;
+        setStatus('브라우저 저장 공간이 부족해 자동 저장을 중단했습니다. JSON 내보내기로 백업해주세요.', 'warning', 3200);
+      }
     }
   }
 
@@ -1171,10 +1904,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.frontLogo.style.left = `${inputs.frontLogoX.value}%`;
     elements.frontLogo.style.top = `${inputs.frontLogoY.value}%`;
-    elements.frontLogo.style.width = `${inputs.frontLogoSize.value}px`;
-    elements.backLogo.style.width = `${inputs.backLogoSize.value}px`;
+    fitFrontLogoBox();
     elements.backLogo.style.left = `${inputs.backLogoX.value}%`;
     elements.backLogo.style.top = `${inputs.backLogoY.value}%`;
+    fitBackLogoBox();
 
     elements.frontImage.style.width = `${inputs.frontImgSize.value}%`;
     elements.frontImage.style.left = `${inputs.frontImgX.value}%`;
@@ -1251,19 +1984,65 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.valFrontCompanyY) elements.valFrontCompanyY.textContent = `${inputs.frontCompanyY.value}%`;
   }
 
+  function fitBackLogoBox() {
+    if (!elements.backLogo || !state.backLogoDataUrl) return;
+    const naturalWidth = elements.backLogo.naturalWidth || 0;
+    const naturalHeight = elements.backLogo.naturalHeight || 0;
+    const boxWidth = Number(inputs.backLogoSize?.value || 110);
+    const boxHeight = Math.min(boxWidth, 120);
+
+    if (!naturalWidth || !naturalHeight) {
+      elements.backLogo.style.width = `${boxWidth}px`;
+      elements.backLogo.style.height = '';
+      return;
+    }
+
+    const scale = Math.min(boxWidth / naturalWidth, boxHeight / naturalHeight);
+    elements.backLogo.style.width = `${Math.max(1, Math.round(naturalWidth * scale))}px`;
+    elements.backLogo.style.height = `${Math.max(1, Math.round(naturalHeight * scale))}px`;
+  }
+
+  function fitFrontLogoBox() {
+    if (!elements.frontLogo || !state.frontLogoDataUrl) return;
+    const naturalWidth = elements.frontLogo.naturalWidth || 0;
+    const naturalHeight = elements.frontLogo.naturalHeight || 0;
+    const boxWidth = Number(inputs.frontLogoSize?.value || 110);
+    const boxHeight = Math.min(boxWidth, 120);
+
+    if (!naturalWidth || !naturalHeight) {
+      elements.frontLogo.style.width = `${boxWidth}px`;
+      elements.frontLogo.style.height = '';
+      return;
+    }
+
+    const scale = Math.min(boxWidth / naturalWidth, boxHeight / naturalHeight);
+    elements.frontLogo.style.width = `${Math.max(1, Math.round(naturalWidth * scale))}px`;
+    elements.frontLogo.style.height = `${Math.max(1, Math.round(naturalHeight * scale))}px`;
+  }
+
   function applyLogo(face, dataUrl) {
     if (face === 'front') {
       state.frontLogoDataUrl = dataUrl || '';
+      elements.frontLogo.onload = () => fitFrontLogoBox();
       elements.frontLogo.src = state.frontLogoDataUrl;
       elements.frontLogo.style.display = dataUrl ? 'block' : 'none';
+      elements.frontLogo.style.height = '';
       elements.cardFront.classList.toggle('has-logo', !!dataUrl);
       inputs.deleteFrontLogo.style.display = dataUrl ? 'inline-flex' : 'none';
+      if (dataUrl && elements.frontLogo.complete) {
+        fitFrontLogoBox();
+      }
     } else {
       state.backLogoDataUrl = dataUrl || '';
+      elements.backLogo.onload = () => fitBackLogoBox();
       elements.backLogo.src = state.backLogoDataUrl;
       elements.backLogo.style.display = dataUrl ? 'block' : 'none';
+      elements.backLogo.style.height = '';
       elements.cardBack.classList.toggle('has-back-logo', !!dataUrl);
       inputs.deleteBackLogo.style.display = dataUrl ? 'inline-flex' : 'none';
+      if (dataUrl && elements.backLogo.complete) {
+        fitBackLogoBox();
+      }
     }
   }
 
@@ -1324,6 +2103,8 @@ document.addEventListener('DOMContentLoaded', () => {
     syncQrModeUI('front');
     syncQrModeUI('back');
     syncPresetInput();
+    renderWizardRecommendations();
+    updateWizardUI();
     renderCardTabs();
   }
 
@@ -1332,6 +2113,9 @@ document.addEventListener('DOMContentLoaded', () => {
     persistWorkspace();
     workspace.activeCardId = cardId;
     applyCardData(getActiveCard());
+    if (elements.exportCardSelection?.dataset.selectionMode === 'current') {
+      setExportSelectionMode('current');
+    }
     persistWorkspace();
   }
 
@@ -1365,7 +2149,10 @@ document.addEventListener('DOMContentLoaded', () => {
       presetLibrary.push(record);
     }
 
-    savePresetLibrary();
+    const saved = savePresetLibrary();
+    if (!saved) {
+      return null;
+    }
     renderPresetLibrary();
     inputs.savedPresetSelect.value = record.id;
     persistWorkspace();
@@ -1389,8 +2176,13 @@ document.addEventListener('DOMContentLoaded', () => {
       presetName: preset.name,
       activePresetId: preset.id,
       activeCardId: preset.activeCardId,
-      cards: deepClone(preset.cards)
+      cards: deepClone(preset.cards),
+      wizardStep: 1,
+      advancedEditing: false
     });
+    workspace.cards = workspace.cards.slice(0, MAX_CARD_COUNT);
+    wizardStep = 1;
+    advancedEditing = false;
 
     syncPresetInput();
     renderPresetLibrary();
@@ -1462,7 +2254,191 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function normalizeCsvHeader(header) {
+    return String(header || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\uFEFF/g, '')
+      .replace(/[\s_-]+/g, '');
+  }
+
+  function parseCsvText(rawText) {
+    const rows = [];
+    let current = '';
+    let row = [];
+    let inQuotes = false;
+
+    for (let index = 0; index < rawText.length; index += 1) {
+      const char = rawText[index];
+      const nextChar = rawText[index + 1];
+
+      if (char === '"') {
+        if (inQuotes && nextChar === '"') {
+          current += '"';
+          index += 1;
+        } else {
+          inQuotes = !inQuotes;
+        }
+        continue;
+      }
+
+      if (!inQuotes && char === ',') {
+        row.push(current);
+        current = '';
+        continue;
+      }
+
+      if (!inQuotes && (char === '\n' || char === '\r')) {
+        if (char === '\r' && nextChar === '\n') index += 1;
+        row.push(current);
+        current = '';
+        if (row.some((value) => String(value || '').trim() !== '')) {
+          rows.push(row);
+        }
+        row = [];
+        continue;
+      }
+
+      current += char;
+    }
+
+    if (current.length || row.length) {
+      row.push(current);
+      if (row.some((value) => String(value || '').trim() !== '')) {
+        rows.push(row);
+      }
+    }
+
+    return rows;
+  }
+
+  function buildCsvColumnMap(headers) {
+    const normalizedHeaders = headers.map(normalizeCsvHeader);
+    const columnMap = {};
+
+    Object.entries(CSV_FIELD_ALIASES).forEach(([field, aliases]) => {
+      const aliasSet = new Set(aliases.map(normalizeCsvHeader));
+      const matchIndex = normalizedHeaders.findIndex((header) => aliasSet.has(header));
+      if (matchIndex >= 0) {
+        columnMap[field] = matchIndex;
+      }
+    });
+
+    return columnMap;
+  }
+
+  function extractCsvRows(rawText) {
+    const rows = parseCsvText(rawText);
+    if (rows.length < 2) {
+      throw new Error('CSV_EMPTY');
+    }
+
+    const headers = rows[0].map((value) => String(value || '').trim());
+    const columnMap = buildCsvColumnMap(headers);
+    if (!Object.keys(columnMap).length) {
+      throw new Error('CSV_HEADER');
+    }
+
+    const dataRows = rows
+      .slice(1)
+      .map((row) => {
+        const entry = {};
+        Object.entries(columnMap).forEach(([field, columnIndex]) => {
+          entry[field] = String(row[columnIndex] || '').trim();
+        });
+        return entry;
+      })
+      .filter((entry) => Object.values(entry).some((value) => String(value || '').trim() !== ''));
+
+    if (!dataRows.length) {
+      throw new Error('CSV_EMPTY');
+    }
+
+    if (dataRows.length > MAX_BULK_IMPORT_ROWS) {
+      throw new Error('CSV_LIMIT');
+    }
+
+    return dataRows;
+  }
+
+  function createBulkCard(baseCard, row, index) {
+    return normalizeCard({
+      ...deepClone(baseCard),
+      id: generateId('card'),
+      label: `명함 ${index + 1}`,
+      company: row.company || '',
+      position: row.position || '',
+      name: row.name || '',
+      phone: row.phone || '',
+      email: row.email || '',
+      address: row.address || '',
+      extra: row.extra || '',
+      slogan: row.slogan || ''
+    }, `명함 ${index + 1}`);
+  }
+
+  function importCardsFromCsvText(rawText) {
+    const rows = extractCsvRows(rawText);
+    persistWorkspace();
+
+    const baseCard = deepClone(getActiveCard() || createCard('명함 1'));
+    const importedCards = rows
+      .slice(0, MAX_BULK_IMPORT_ROWS)
+      .map((row, index) => createBulkCard(baseCard, row, index));
+
+    workspace.cards = importedCards.slice(0, MAX_CARD_COUNT);
+    workspace.activeCardId = workspace.cards[0].id;
+    workspace.activePresetId = '';
+    applyCardData(getActiveCard());
+    renderPresetLibrary();
+    syncPresetInput();
+    persistWorkspace();
+
+    setStatus(`CSV 기준 ${workspace.cards.length}개 명함을 생성했습니다.`, 'success', 2600);
+  }
+
+  async function importCardsFromCsvFile(file) {
+    if (!file) return;
+    try {
+      const rawText = await file.text();
+      importCardsFromCsvText(rawText);
+    } catch (error) {
+      console.error(error);
+      if (error && error.message === 'CSV_LIMIT') {
+        setStatus(`CSV는 한 번에 최대 ${MAX_BULK_IMPORT_ROWS}명까지 불러올 수 있습니다.`, 'warning', 2600);
+      } else if (error && error.message === 'CSV_HEADER') {
+        setStatus('CSV 헤더를 확인해주세요. 이름, 연락처, 이메일, 회사명, 직책 같은 열이 필요합니다.', 'error', 3200);
+      } else {
+        setStatus('CSV 파일을 읽지 못했습니다. 형식을 다시 확인해주세요.', 'error', 2600);
+      }
+    } finally {
+      if (inputs.importCsvFile) inputs.importCsvFile.value = '';
+    }
+  }
+
+  function downloadCsvSample() {
+    const sampleRows = [
+      ['이름', '연락처', '이메일', '회사명', '직책', '주소', '추가정보', '슬로건'],
+      ['홍길동', '010-1234-5678', 'hello@example.com', 'WAYZI', 'Creative Director', '서울특별시 강남구 테헤란로 123', '평일 09:00 - 18:00', '당신의 브랜드를 더 선명하게 만듭니다'],
+      ['김웨이지', '010-9876-5432', 'team@example.com', 'WAYZI', 'Brand Manager', '서울특별시 마포구 월드컵북로 12', '카카오톡 상담 가능', '브랜드 경험을 명함으로 연결합니다']
+    ];
+    const csvText = `\uFEFF${sampleRows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n')}`;
+    const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'business-card-sample.csv';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+    setStatus('샘플 CSV를 저장했습니다.', 'success', 1800);
+  }
+
   function createCardFromCurrent(duplicate = false) {
+    if (workspace.cards.length >= MAX_CARD_COUNT) {
+      setStatus(`명함은 최대 ${MAX_CARD_COUNT}개까지 만들 수 있습니다.`, 'warning', 2400);
+      return;
+    }
+
     persistWorkspace();
     const source = duplicate ? deepClone(getActiveCard()) : getDefaultCardData();
     const nextLabel = getNextCardLabel(workspace.cards);
@@ -1752,8 +2728,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function focusControlSection(sectionId) {
+    goToWizardStepFromSection(sectionId);
     const section = document.getElementById(sectionId);
-    if (!section) return;
+    if (!section || section.hidden) return;
     collapsibleSections.forEach((item) => {
       setSectionCollapsed(item, item !== section);
     });
@@ -1798,6 +2775,7 @@ document.addEventListener('DOMContentLoaded', () => {
   bindPreviewJump(elements.backQrLayer, 'section-qr', 'dblclick', 'double');
 
   function openSectionExclusive(targetSection) {
+    if (!targetSection || targetSection.hidden) return;
     collapsibleSections.forEach((section) => {
       setSectionCollapsed(section, section !== targetSection);
     });
@@ -1814,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.classList.add('section-toggle');
     toggle.tabIndex = 0;
     toggle.setAttribute('role', 'button');
-    setSectionCollapsed(section, section !== document.getElementById('section-start'));
+    setSectionCollapsed(section, section !== (elements.sectionEntry || document.getElementById('section-start')));
 
     const handleToggle = () => {
       const isCollapsed = section.classList.contains('is-collapsed');
@@ -1943,36 +2921,154 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setImageReady(img) {
     if (!img) return Promise.resolve();
-    if (typeof img.decode === 'function') {
-      return img.decode().catch(() => undefined);
-    }
     if (img.complete && img.naturalWidth > 0) return Promise.resolve();
     return new Promise((resolve) => {
-      const done = () => resolve();
+      let settled = false;
+      let timeoutId = 0;
+      const done = () => {
+        if (settled) return;
+        settled = true;
+        if (timeoutId) window.clearTimeout(timeoutId);
+        img.removeEventListener('load', done);
+        img.removeEventListener('error', done);
+        resolve();
+      };
+
+      timeoutId = window.setTimeout(done, IMAGE_READY_TIMEOUT_MS);
       img.addEventListener('load', done, { once: true });
       img.addEventListener('error', done, { once: true });
+
+      if (typeof img.decode === 'function') {
+        img.decode().then(done).catch(done);
+      }
     });
   }
 
   async function waitForRenderStability() {
     if (document.fonts && document.fonts.ready) {
-      await document.fonts.ready;
+      await Promise.race([
+        document.fonts.ready.catch(() => undefined),
+        new Promise((resolve) => window.setTimeout(resolve, 2000))
+      ]);
     }
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }
 
+  function revealCardForCapture(cardElement) {
+    const cardSection = cardElement?.closest('.card-section');
+    const wasMobileHidden = !!cardSection?.classList.contains('is-mobile-hidden');
+    if (wasMobileHidden) {
+      cardSection.classList.remove('is-mobile-hidden');
+    }
+    return () => {
+      if (wasMobileHidden) {
+        cardSection.classList.add('is-mobile-hidden');
+      }
+    };
+  }
+
+  function freezeExportLayers(cardElement) {
+    const restorers = [];
+    const cardRect = cardElement?.getBoundingClientRect();
+    const targetElements = cardElement
+      ? Array.from(cardElement.querySelectorAll('.preview-logo, .inserted-img, .inserted-qr'))
+      : [];
+
+    targetElements.forEach((element) => {
+      const computed = window.getComputedStyle(element);
+      if (computed.display === 'none' || computed.visibility === 'hidden') return;
+
+      const rect = element.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+
+      const snapshot = {
+        position: element.style.position,
+        left: element.style.left,
+        top: element.style.top,
+        right: element.style.right,
+        bottom: element.style.bottom,
+        transform: element.style.transform,
+        width: element.style.width,
+        height: element.style.height,
+        maxWidth: element.style.maxWidth,
+        maxHeight: element.style.maxHeight
+      };
+
+      if (cardRect) {
+        element.style.position = 'absolute';
+        element.style.left = `${rect.left - cardRect.left}px`;
+        element.style.top = `${rect.top - cardRect.top}px`;
+        element.style.right = 'auto';
+        element.style.bottom = 'auto';
+        element.style.transform = 'none';
+      }
+      element.style.width = `${rect.width}px`;
+      element.style.height = `${rect.height}px`;
+      element.style.maxWidth = `${rect.width}px`;
+      element.style.maxHeight = `${rect.height}px`;
+
+      restorers.push(() => {
+        element.style.position = snapshot.position;
+        element.style.left = snapshot.left;
+        element.style.top = snapshot.top;
+        element.style.right = snapshot.right;
+        element.style.bottom = snapshot.bottom;
+        element.style.transform = snapshot.transform;
+        element.style.width = snapshot.width;
+        element.style.height = snapshot.height;
+        element.style.maxWidth = snapshot.maxWidth;
+        element.style.maxHeight = snapshot.maxHeight;
+      });
+    });
+
+    return () => {
+      restorers.reverse().forEach((restore) => restore());
+    };
+  }
+
   async function prepareExportCapture(cardElement) {
+    const restoreCardVisibility = revealCardForCapture(cardElement);
     await waitForRenderStability();
     const { width, height } = getCardDimensions(cardElement);
-    const images = Array.from(cardElement.querySelectorAll('img'));
+    const stage = document.createElement('div');
+    stage.style.position = 'fixed';
+    stage.style.left = '-20000px';
+    stage.style.top = '0';
+    stage.style.width = `${Math.round(width)}px`;
+    stage.style.height = `${Math.round(height)}px`;
+    stage.style.pointerEvents = 'none';
+    stage.style.opacity = '1';
+    stage.style.zIndex = '-1';
+
+    const clone = cardElement.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.style.width = `${Math.round(width)}px`;
+    clone.style.maxWidth = `${Math.round(width)}px`;
+    clone.style.minWidth = `${Math.round(width)}px`;
+    clone.style.margin = '0';
+    clone.style.transform = 'none';
+    clone.style.left = 'auto';
+    clone.style.top = 'auto';
+    clone.style.position = 'relative';
+
+    stage.appendChild(clone);
+    document.body.appendChild(stage);
+
+    const images = Array.from(clone.querySelectorAll('img'));
     await Promise.all(images.map(setImageReady));
     await waitForRenderStability();
+    const restoreFrozenLayers = freezeExportLayers(clone);
 
     return {
-      element: cardElement,
+      element: clone,
       width,
       height,
-      scale: getExportScale(width, height)
+      scale: getExportScale(width, height),
+      cleanup: () => {
+        restoreFrozenLayers();
+        stage.remove();
+        restoreCardVisibility();
+      }
     };
   }
 
@@ -2017,32 +3113,123 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'downloaded';
   }
 
-  function getDownloadFilename(face) {
+  function triggerBlobDownload(blob, filename) {
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = URL.createObjectURL(blob);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 0);
+  }
+
+  function getDownloadFilename(face, card = getActiveCard()) {
     const presetName = sanitizeFileName(workspace.presetName || 'preset');
     const activeCard = getActiveCard();
     const cardName = sanitizeFileName(activeCard ? activeCard.label : '명함-1');
     return `${presetName}-${cardName}-${face}.png`;
   }
 
+  function getPdfFilename(cards = workspace.cards) {
+    const presetName = sanitizeFileName(workspace.presetName || 'preset');
+    if (cards.length <= 1) {
+      const activeCard = cards[0] || getActiveCard();
+      const cardName = sanitizeFileName(activeCard ? activeCard.label : '명함-1');
+      return `${presetName}-${cardName}-front-back.pdf`;
+    }
+    return `${presetName}-${cards.length}cards-front-back.pdf`;
+  }
+
+  async function renderCardCanvas(cardElement) {
+    const exportResult = await prepareExportCapture(cardElement);
+    try {
+      return await Promise.race([
+        html2canvas(exportResult.element, {
+          scale: exportResult.scale,
+          useCORS: true,
+          backgroundColor: null,
+          logging: false,
+          width: exportResult.width,
+          height: exportResult.height,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: Math.round(exportResult.width),
+          windowHeight: Math.round(exportResult.height),
+          removeContainer: true
+        }),
+        new Promise((_, reject) => {
+          window.setTimeout(() => reject(new Error('Export render timeout')), EXPORT_RENDER_TIMEOUT_MS);
+        })
+      ]);
+    } finally {
+      exportResult.cleanup?.();
+    }
+  }
+
+  async function saveCardImage(cardElement, filename) {
+    const canvas = await renderCardCanvas(cardElement);
+    const blob = await canvasToBlob(canvas);
+    const result = await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
+    return { canvas, result };
+  }
+
   async function requestCardDownload(face, button) {
     const targetFace = face === 'back' ? 'back' : 'front';
+    const selectedCards = getSelectedExportCards();
+    const exportCards = isMobileViewport() && selectedCards.length > 1
+      ? [getActiveCard()].filter(Boolean)
+      : selectedCards;
     if (isMobileViewport() && mobilePreviewFace !== targetFace) {
       setStatus(`미리보기에서 ${targetFace === 'back' ? '뒷면' : '앞면'}을 선택해주세요.`, 'warning', 2200);
       return;
     }
 
+    if (isMobileViewport() && selectedCards.length > 1) {
+      setStatus('모바일에서는 현재 명함 한 장만 공유할 수 있습니다.', 'warning', 2200);
+    }
+
+    syncActiveCardSnapshot();
+    const originalCardId = workspace.activeCardId;
     const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
     if (previewWasCollapsed) {
       setMobilePreviewCollapsed(false);
     }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
 
     try {
-      await downloadCard(
-        targetFace === 'back' ? elements.cardBack : elements.cardFront,
-        getDownloadFilename(targetFace),
-        button
+      const originalLabel = button.textContent;
+      button.disabled = true;
+      button.textContent = exportCards.length > 1 ? '일괄 저장 중..' : '?대?吏 ???以?..';
+
+      for (const card of exportCards) {
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await saveCardImage(
+          targetFace === 'back' ? elements.cardBack : elements.cardFront,
+          getDownloadFilename(targetFace)
+        );
+      }
+
+      setStatus(
+        exportCards.length > 1
+          ? `${exportCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 저장을 시작했습니다.`
+          : `${targetFace === 'back' ? '뒷면' : '앞면'} 저장을 시작했습니다.`,
+        'success',
+        2200
       );
+      button.textContent = originalLabel;
+      button.disabled = false;
     } finally {
+      workspace.activeCardId = originalCardId;
+      applyCardData(getActiveCard());
       if (previewWasCollapsed) {
         setMobilePreviewCollapsed(true);
       }
@@ -2055,18 +3242,7 @@ document.addEventListener('DOMContentLoaded', () => {
     button.textContent = '이미지 저장 중...';
 
     try {
-      const exportResult = await prepareExportCapture(cardElement);
-      const canvas = await html2canvas(exportResult.element, {
-        scale: exportResult.scale,
-        useCORS: true,
-        backgroundColor: null,
-        logging: false,
-        width: exportResult.width,
-        height: exportResult.height,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        removeContainer: true
-      });
+      const canvas = await renderCardCanvas(cardElement);
       const blob = await canvasToBlob(canvas);
       const result = await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
       if (result === 'shared') {
@@ -2082,6 +3258,383 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       button.disabled = false;
       button.textContent = original;
+    }
+  }
+
+  async function downloadCombinedPdf(button) {
+    const jsPdfNs = window.jspdf;
+    if (!jsPdfNs || typeof jsPdfNs.jsPDF !== 'function') {
+      setStatus('PDF 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error', 2600);
+      return;
+    }
+
+    persistWorkspace();
+    const originalCardId = workspace.activeCardId;
+    const cardsToExport = workspace.cards.slice(0, MAX_CARD_COUNT);
+    const originalLabel = button.textContent;
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
+
+    button.disabled = true;
+    button.textContent = 'PDF 저장 중..';
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+
+    try {
+      const pdf = new jsPdfNs.jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [CARD_WIDTH_MM, CARD_HEIGHT_MM]
+      });
+
+      for (let index = 0; index < cardsToExport.length; index += 1) {
+        const card = cardsToExport[index];
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await waitForRenderStability();
+
+        const frontCanvas = await renderCardCanvas(elements.cardFront);
+        if (index > 0) {
+          pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        }
+        pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+
+        const backCanvas = await renderCardCanvas(elements.cardBack);
+        pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+      }
+
+      pdf.save(getPdfFilename());
+      setStatus(`양면 PDF 저장을 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
+    } catch (error) {
+      console.error(error);
+      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
+    } finally {
+      workspace.activeCardId = originalCardId;
+      applyCardData(getActiveCard());
+      persistWorkspace();
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+      if (previewWasHidden && elements.previewArea) {
+        elements.previewArea.hidden = true;
+        elements.previewArea.style.display = 'none';
+      }
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  async function requestCardDownload(face, button) {
+    const targetFace = face === 'back' ? 'back' : 'front';
+    const selectedCards = getSelectedExportCards();
+    const exportCards = isMobileViewport() && selectedCards.length > 1
+      ? [getActiveCard()].filter(Boolean)
+      : selectedCards;
+
+    if (isMobileViewport() && mobilePreviewFace !== targetFace) {
+      setStatus(`미리보기에서 ${targetFace === 'back' ? '뒷면' : '앞면'}을 선택해주세요.`, 'warning', 2200);
+      return;
+    }
+
+    if (isMobileViewport() && selectedCards.length > 1) {
+      setStatus('모바일에서는 현재 명함 한 장만 공유할 수 있습니다.', 'warning', 2200);
+    }
+
+    syncActiveCardSnapshot();
+    const originalCardId = workspace.activeCardId;
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
+    const originalLabel = button.textContent;
+
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+
+    try {
+      button.disabled = true;
+      button.textContent = exportCards.length > 1 ? '일괄 다운로드 중...' : '다운로드 중...';
+
+      for (const card of exportCards) {
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await waitForRenderStability();
+        await saveCardImage(
+          targetFace === 'back' ? elements.cardBack : elements.cardFront,
+          getDownloadFilename(targetFace, card)
+        );
+      }
+
+      setStatus(
+        exportCards.length > 1
+          ? `${exportCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`
+          : `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`,
+        'success',
+        2200
+      );
+    } catch (error) {
+      console.error(error);
+      setStatus(`${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`, 'error', 2200);
+    } finally {
+      workspace.activeCardId = originalCardId;
+      const activeCard = getActiveCard();
+      if (activeCard) {
+        applyCardData(activeCard);
+      }
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+      if (previewWasHidden && elements.previewArea) {
+        elements.previewArea.hidden = true;
+        elements.previewArea.style.display = 'none';
+      }
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  async function downloadCombinedPdf(button) {
+    const jsPdfNs = window.jspdf;
+    if (!jsPdfNs || typeof jsPdfNs.jsPDF !== 'function') {
+      setStatus('PDF 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error', 2600);
+      return;
+    }
+
+    syncActiveCardSnapshot();
+    const originalCardId = workspace.activeCardId;
+    const cardsToExport = getSelectedExportCards().slice(0, MAX_CARD_COUNT);
+    const originalLabel = button.textContent;
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
+
+    if (!cardsToExport.length) {
+      setStatus('PDF로 저장할 명함을 먼저 선택해주세요.', 'warning', 2200);
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = 'PDF 생성 중...';
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+
+    try {
+      const pdf = new jsPdfNs.jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [CARD_WIDTH_MM, CARD_HEIGHT_MM]
+      });
+
+      for (let index = 0; index < cardsToExport.length; index += 1) {
+        const card = cardsToExport[index];
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await waitForRenderStability();
+
+        const frontCanvas = await renderCardCanvas(elements.cardFront);
+        if (index > 0) {
+          pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        }
+        pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+
+        const backCanvas = await renderCardCanvas(elements.cardBack);
+        pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+      }
+
+      const pdfBlob = pdf.output('blob');
+      triggerBlobDownload(pdfBlob, getPdfFilename(cardsToExport));
+      setStatus(`양면 PDF 다운로드를 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
+    } catch (error) {
+      console.error(error);
+      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
+    } finally {
+      workspace.activeCardId = originalCardId;
+      const activeCard = getActiveCard();
+      if (activeCard) {
+        applyCardData(activeCard);
+      }
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+      if (previewWasHidden && elements.previewArea) {
+        elements.previewArea.hidden = true;
+        elements.previewArea.style.display = 'none';
+      }
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  async function exportSelectedCardsAsPng(face, button) {
+    const targetFace = face === 'back' ? 'back' : 'front';
+    const selectedCards = getSelectedExportCards().slice(0, MAX_CARD_COUNT);
+    appendExportDebugLog('png:start', `face=${targetFace}, cards=${selectedCards.map((card) => card.label).join(', ')}`);
+
+    if (!selectedCards.length) {
+      setStatus('다운로드할 명함을 먼저 선택해주세요.', 'warning', 2200);
+      return;
+    }
+
+    if (isMobileViewport() && mobilePreviewFace !== targetFace) {
+      setStatus(`미리보기에서 ${targetFace === 'back' ? '뒷면' : '앞면'}을 선택해주세요.`, 'warning', 2200);
+      return;
+    }
+
+    syncActiveCardSnapshot();
+    const originalCardId = workspace.activeCardId;
+    const originalLabel = button.textContent;
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
+
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+
+    try {
+      button.disabled = true;
+      button.textContent = selectedCards.length > 1 ? '일괄 다운로드 중...' : '다운로드 중...';
+
+      for (const card of selectedCards) {
+        appendExportDebugLog('png:card', `${card.label} ${targetFace}`);
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await waitForRenderStability();
+
+        const canvas = await renderCardCanvas(targetFace === 'back' ? elements.cardBack : elements.cardFront);
+        const blob = await canvasToBlob(canvas);
+        const filename = getDownloadFilename(targetFace, card);
+        await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
+      }
+
+      setStatus(
+        selectedCards.length > 1
+          ? `${selectedCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`
+          : `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`,
+        'success',
+        2200
+      );
+    } catch (error) {
+      console.error(error);
+      appendExportDebugLog('png:error', error?.stack || String(error));
+      setStatus(`${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`, 'error', 2600);
+    } finally {
+      workspace.activeCardId = originalCardId;
+      const activeCard = getActiveCard();
+      if (activeCard) {
+        applyCardData(activeCard);
+      }
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+      if (previewWasHidden && elements.previewArea) {
+        elements.previewArea.hidden = true;
+        elements.previewArea.style.display = 'none';
+      }
+      button.disabled = false;
+      button.textContent = originalLabel;
+    }
+  }
+
+  async function exportSelectedCardsAsPdf(button) {
+    const jsPdfNs = window.jspdf;
+    if (!jsPdfNs || typeof jsPdfNs.jsPDF !== 'function') {
+      setStatus('PDF 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error', 2600);
+      return;
+    }
+
+    const selectedCards = getSelectedExportCards().slice(0, MAX_CARD_COUNT);
+    appendExportDebugLog('pdf:start', `cards=${selectedCards.map((card) => card.label).join(', ')}`);
+    if (!selectedCards.length) {
+      setStatus('PDF로 저장할 명함을 먼저 선택해주세요.', 'warning', 2200);
+      return;
+    }
+
+    syncActiveCardSnapshot();
+    const originalCardId = workspace.activeCardId;
+    const originalLabel = button.textContent;
+    const previewWasCollapsed = mobilePreviewCollapsed;
+    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
+
+    if (previewWasCollapsed) {
+      setMobilePreviewCollapsed(false);
+    }
+    if (previewWasHidden && elements.previewArea) {
+      elements.previewArea.hidden = false;
+      elements.previewArea.style.display = '';
+    }
+
+    try {
+      button.disabled = true;
+      button.textContent = 'PDF 생성 중...';
+
+      const pdf = new jsPdfNs.jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [CARD_WIDTH_MM, CARD_HEIGHT_MM]
+      });
+
+      for (let index = 0; index < selectedCards.length; index += 1) {
+        const card = selectedCards[index];
+        appendExportDebugLog('pdf:card', card.label);
+        workspace.activeCardId = card.id;
+        applyCardData(card);
+        await waitForRenderStability();
+
+        const frontCanvas = await renderCardCanvas(elements.cardFront);
+        if (index > 0) {
+          pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        }
+        pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+
+        const backCanvas = await renderCardCanvas(elements.cardBack);
+        pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
+        pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
+      }
+
+      const pdfBlob = pdf.output('blob');
+      triggerBlobDownload(pdfBlob, getPdfFilename(selectedCards));
+      setStatus(`양면 PDF 다운로드를 시작했습니다. (${selectedCards.length}개 명함)`, 'success', 2600);
+    } catch (error) {
+      console.error(error);
+      appendExportDebugLog('pdf:error', error?.stack || String(error));
+      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
+    } finally {
+      workspace.activeCardId = originalCardId;
+      const activeCard = getActiveCard();
+      if (activeCard) {
+        applyCardData(activeCard);
+      }
+      if (previewWasCollapsed) {
+        setMobilePreviewCollapsed(true);
+      }
+      if (previewWasHidden && elements.previewArea) {
+        elements.previewArea.hidden = true;
+        elements.previewArea.style.display = 'none';
+      }
+      button.disabled = false;
+      button.textContent = originalLabel;
     }
   }
 
@@ -2130,6 +3683,75 @@ document.addEventListener('DOMContentLoaded', () => {
     applyCardData(resetCard);
     persistWorkspace();
     setStatus('현재 명함을 초기화했습니다.', 'warning', 1800);
+  }
+
+  function validateWizardStepOne() {
+    const hasName = !!inputs.name?.value?.trim();
+    const hasContact = !!inputs.phone?.value?.trim();
+
+    if (!hasName) {
+      setStatus('이름을 먼저 입력해주세요.', 'warning', 2200);
+      inputs.name?.focus();
+      return false;
+    }
+
+    if (!hasContact) {
+      setStatus('전화번호나 이메일 중 하나는 입력해주세요.', 'warning', 2200);
+      inputs.phone?.focus?.();
+      return false;
+    }
+
+    return true;
+  }
+
+  function handleWizardQuickStart() {
+    if (wizardRecommendedTemplates.length === 0) {
+      generateWizardRecommendations();
+    }
+
+    const fallbackTemplate = wizardRecommendedTemplates[0] || inputs.template?.value;
+    const selectedTemplate = wizardRecommendedTemplates.includes(inputs.template?.value)
+      ? inputs.template.value
+      : fallbackTemplate;
+
+    if (selectedTemplate) {
+      inputs.template.value = selectedTemplate;
+      applyTemplate(selectedTemplate);
+    }
+
+    setWizardStep(3);
+  }
+
+  function handleWizardNext() {
+    if (wizardStep === 1) {
+      if (!validateWizardStepOne()) return;
+      generateWizardRecommendations();
+      setWizardStep(2);
+      return;
+    }
+
+    if (wizardStep === 2) {
+      handleWizardQuickStart();
+      return;
+    }
+
+    if (wizardStep === 3) {
+      setWizardStep(4);
+      return;
+    }
+
+    saveCurrentPreset(true);
+  }
+
+  function handleWizardSecondary() {
+    if (wizardStep === 2) {
+      generateWizardRecommendations();
+      return;
+    }
+
+    if (wizardStep === 4) {
+      setAdvancedEditing(!advancedEditing);
+    }
   }
 
   paletteButtons.forEach((button) => {
@@ -2316,6 +3938,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   inputs.template.addEventListener('change', () => {
     applyTemplate(inputs.template.value);
+    renderWizardRecommendations();
     persistWorkspace();
   });
 
@@ -2329,9 +3952,19 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.exportPreset.addEventListener('click', exportCurrentPreset);
   }
 
+  if (buttons.downloadCsvSample) {
+    buttons.downloadCsvSample.addEventListener('click', downloadCsvSample);
+  }
+
   if (inputs.importPresetFile) {
     inputs.importPresetFile.addEventListener('change', (event) => {
       importPresetFromFile(event.target.files[0]);
+    });
+  }
+
+  if (inputs.importCsvFile) {
+    inputs.importCsvFile.addEventListener('change', (event) => {
+      importCardsFromCsvFile(event.target.files[0]);
     });
   }
 
@@ -2358,6 +3991,42 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.deleteCard.addEventListener('click', deleteActiveCard);
   }
 
+  if (buttons.refreshRecommendations) {
+    buttons.refreshRecommendations.addEventListener('click', generateWizardRecommendations);
+  }
+
+  if (buttons.quickStart) {
+    buttons.quickStart.addEventListener('click', handleWizardQuickStart);
+  }
+
+  if (buttons.wizardFillSample) {
+    buttons.wizardFillSample.addEventListener('click', fillSample);
+  }
+
+  if (buttons.toggleAdvanced) {
+    buttons.toggleAdvanced.addEventListener('click', () => {
+      setAdvancedEditing(!advancedEditing);
+    });
+  }
+
+  if (buttons.saveInline) {
+    buttons.saveInline.addEventListener('click', () => saveCurrentPreset(true));
+  }
+
+  if (buttons.wizardPrev) {
+    buttons.wizardPrev.addEventListener('click', () => {
+      if (wizardStep > 1) setWizardStep(wizardStep - 1);
+    });
+  }
+
+  if (buttons.wizardSecondary) {
+    buttons.wizardSecondary.addEventListener('click', handleWizardSecondary);
+  }
+
+  if (buttons.wizardNext) {
+    buttons.wizardNext.addEventListener('click', handleWizardNext);
+  }
+
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetCurrentCard);
   buttons.compare.addEventListener('click', toggleCompare);
@@ -2374,8 +4043,17 @@ document.addEventListener('DOMContentLoaded', () => {
       setMobilePreviewCollapsed(!mobilePreviewCollapsed);
     });
   }
-  buttons.downloadFront.addEventListener('click', () => requestCardDownload('front', buttons.downloadFront));
-  buttons.downloadBack.addEventListener('click', () => requestCardDownload('back', buttons.downloadBack));
+  buttons.downloadFront.addEventListener('click', () => exportSelectedCardsAsPng('front', buttons.downloadFront));
+  buttons.downloadBack.addEventListener('click', () => exportSelectedCardsAsPng('back', buttons.downloadBack));
+  if (buttons.downloadPdf) {
+    buttons.downloadPdf.addEventListener('click', () => exportSelectedCardsAsPdf(buttons.downloadPdf));
+  }
+  if (buttons.exportSelectCurrent) {
+    buttons.exportSelectCurrent.addEventListener('click', () => setExportSelectionMode('current'));
+  }
+  if (buttons.exportSelectAll) {
+    buttons.exportSelectAll.addEventListener('click', () => setExportSelectionMode('all'));
+  }
   window.addEventListener('resize', () => {
     updateContextLabels();
     syncMobileActionLabels();
@@ -2387,6 +4065,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   presetLibrary = loadPresetLibrary();
   workspace = loadWorkspace();
+  if (isGuidedWizardEnabled() && !workspaceHasMeaningfulContent(workspace)) {
+    const latestPreset = getLatestPresetRecord();
+    if (latestPreset) {
+      restoreWorkspaceFromPresetRecord(latestPreset, { wizardStep: 4, advancedEditing: false });
+    }
+  }
+  workspace.cards = workspace.cards.slice(0, MAX_CARD_COUNT);
+  if (!workspace.cards.length) {
+    workspace.cards = [createCard('명함 1')];
+  }
+  if (!workspace.cards.some((card) => card.id === workspace.activeCardId)) {
+    workspace.activeCardId = workspace.cards[0].id;
+  }
+  wizardStep = 1;
+  advancedEditing = false;
+  applySectionCopyUpdates();
   setActiveFacePanel('logo', 'front');
   setActiveFacePanel('image', 'front');
   setActiveFacePanel('qr', 'front');
@@ -2396,6 +4090,16 @@ document.addEventListener('DOMContentLoaded', () => {
   setMobilePreviewFace('front');
   setMobilePreviewCollapsed(false);
   applyCardData(getActiveCard());
+  setExportSelectionMode('current');
+  if (wizardStep === 2) {
+    generateWizardRecommendations();
+  }
+  updateWizardUI();
+  openSectionExclusive(
+    wizardStep === 2
+      ? elements.sectionRecommend
+      : (wizardStep === 4 ? (advancedEditing ? elements.sectionLogo : elements.sectionStyle) : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo))
+  );
   persistWorkspace();
   setStatus('준비 완료');
 });

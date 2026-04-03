@@ -12,11 +12,12 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-51">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-66">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body>
+<body class="is-guided-wizard is-wizard-step-1 is-wizard-preview-hidden">
   <div class="app-container">
     <aside class="controls">
       <div class="controls-hero">
@@ -29,7 +30,45 @@
           <span class="hero-badge">자동 저장</span>
         </div>
       </div>
-      <section class="control-group quick-start-group" id="section-start">
+      <section class="wizard-flow" id="wizard-flow">
+        <div class="wizard-flow__progress">
+          <span id="wizard-step-count">1 / 4</span>
+          <span id="wizard-step-label">입력 시작</span>
+        </div>
+        <div class="wizard-flow__copy">
+          <strong id="wizard-step-title">이름과 연락처만 먼저 입력하세요</strong>
+          <p id="wizard-step-description">필수 정보만 먼저 넣고, 다음 단계에서 템플릿과 상세 내용을 이어서 정리합니다.</p>
+        </div>
+      </section>
+
+      <section class="control-group wizard-entry-group" id="section-entry">
+        <div class="section-heading">
+          <span class="section-kicker">Step 1</span>
+          <h3>이름과 연락처</h3>
+          <p>필수 정보만 먼저 입력하고 명함 만들기를 시작합니다.</p>
+        </div>
+        <div class="field-grid wizard-entry-grid">
+          <label class="field full-span">
+            <span>이름</span>
+            <input type="text" id="input-name" placeholder="이름">
+          </label>
+          <label class="field full-span">
+            <span>연락처</span>
+            <input type="text" id="input-phone" placeholder="연락처">
+          </label>
+        </div>
+      </section>
+
+      <section class="control-group wizard-recommend-group" id="section-recommend" hidden>
+        <div class="section-heading">
+          <span class="section-kicker">Step 2</span>
+          <h3>추천 템플릿 3개</h3>
+          <p>입력한 정보에 잘 맞는 템플릿을 골라 빠르게 시작할 수 있습니다.</p>
+        </div>
+        <div id="wizard-recommend-grid" class="wizard-recommend-grid"></div>
+      </section>
+
+      <section class="control-group quick-start-group" id="section-start" hidden>
         <div class="section-heading">
           <span class="section-kicker">Start</span>
           <h3>빠른 시작</h3>
@@ -47,7 +86,7 @@
         </div>
       </section>
 
-      <section class="control-group" id="section-workspace">
+      <section class="control-group" id="section-workspace" hidden>
         <div class="section-heading">
           <span class="section-kicker">Workspace</span>
           <h3>프리셋 관리</h3>
@@ -70,13 +109,12 @@
           <label class="file-label workspace-import-label">JSON 파일 선택<input type="file" id="input-import-preset" accept=".json,application/json,text/json,text/plain,.txt"></label>
         </div>
 
-        <div class="sub-panel preset-import-fallback">
-          <div class="upload-help">모바일에서 내 파일이 바로 안 뜨면 JSON 내용을 아래에 붙여넣어 불러올 수 있습니다.</div>
-          <label class="field full-span">
-            <span>JSON 붙여넣기</span>
-            <textarea id="input-import-preset-text" rows="5" placeholder='{"preset": {...}}'></textarea>
-          </label>
-          <button id="btn-import-preset-text" class="btn btn-outline" type="button">붙여넣기 불러오기</button>
+        <div class="sub-panel bulk-import-panel">
+          <div class="upload-help">CSV 파일 한 번으로 여러 명함을 생성할 수 있습니다. 현재 브랜드 스타일과 로고는 유지되고, 인원별 정보만 대량으로 생성됩니다.</div>
+          <div class="workspace-action-row workspace-action-row--bulk">
+            <label class="file-label workspace-import-label">CSV 파일 선택<input type="file" id="input-import-csv" accept=".csv,text/csv,text/plain"></label>
+            <button id="btn-download-csv-sample" class="btn btn-outline" type="button">샘플 CSV</button>
+          </div>
         </div>
 
         <div class="preset-library">
@@ -100,11 +138,11 @@
         </div>
       </section>
 
-      <section class="control-group" id="section-info">
+      <section class="control-group" id="section-info" hidden>
         <div class="section-heading">
           <span class="section-kicker">Content</span>
-          <h3>기본 정보</h3>
-          <p>명함에 바로 노출되는 핵심 정보를 먼저 채웁니다.</p>
+          <h3>상세 정보</h3>
+          <p>회사명, 직책, 이메일, 주소처럼 더 채우고 싶은 정보를 이어서 입력합니다.</p>
         </div>
         <div class="field-grid">
           <label class="field full-span">
@@ -114,14 +152,6 @@
           <label class="field">
             <span>직책 / 직위</span>
             <input type="text" id="input-position" placeholder="직책/직위">
-          </label>
-          <label class="field">
-            <span>이름</span>
-            <input type="text" id="input-name" placeholder="이름">
-          </label>
-          <label class="field">
-            <span>연락처</span>
-            <input type="text" id="input-phone" placeholder="연락처">
           </label>
           <label class="field">
             <span>이메일</span>
@@ -140,9 +170,12 @@
             <input type="text" id="input-slogan" placeholder="뒷면 슬로건">
           </label>
         </div>
+        <div class="wizard-entry-actions">
+          <button id="btn-wizard-fill-sample" class="btn btn-outline" type="button">빠르게 채우기</button>
+        </div>
       </section>
 
-      <section class="control-group media-group" id="section-logo">
+      <section class="control-group media-group" id="section-logo" hidden>
         <div class="section-heading">
           <span class="section-kicker">Brand</span>
           <h3>로고 설정</h3>
@@ -214,7 +247,7 @@
         </section>
       </section>
 
-      <section class="control-group" id="section-text">
+      <section class="control-group" id="section-text" hidden>
         <div class="section-heading">
           <span class="section-kicker">Type</span>
           <h3>이름, 회사명 설정</h3>
@@ -260,7 +293,7 @@
         </div>
       </section>
 
-      <section class="control-group media-group" id="section-image">
+      <section class="control-group media-group" id="section-image" hidden>
         <div class="section-heading">
           <span class="section-kicker">Image</span>
           <h3>이미지 & 오버레이</h3>
@@ -346,7 +379,7 @@
         </section>
       </section>
 
-      <section class="control-group media-group" id="section-qr">
+      <section class="control-group media-group" id="section-qr" hidden>
         <div class="section-heading">
           <span class="section-kicker">QR</span>
           <h3>QR 생성</h3>
@@ -442,7 +475,17 @@
         </section>
       </section>
 
-      <section class="control-group" id="section-style">
+      <div class="actions advanced-save-bar" id="section-advanced-save" hidden>
+        <div class="actions-card">
+          <div class="actions-copy">
+            <strong>고급편집 저장</strong>
+            <span>현재 설정을 바로 저장합니다.</span>
+          </div>
+          <button id="btn-advanced-save" class="btn btn-primary" type="button">작업 저장</button>
+        </div>
+      </div>
+
+      <section class="control-group" id="section-style" hidden>
         <div class="section-heading">
           <span class="section-kicker">Style</span>
           <h3>스타일 & 템플릿</h3>
@@ -497,24 +540,39 @@
             <input type="color" id="color-point" value="#2a5a43">
           </div>
         </div>
+
+        <div class="wizard-advanced-toggle">
+          <button id="btn-toggle-advanced" class="btn btn-outline" type="button">고급편집 열기</button>
+          <span>로고, 이미지, QR, 텍스트 위치 조정</span>
+        </div>
       </section>
 
-      <div class="actions" id="section-export">
+      <div class="actions" id="section-export" hidden>
         <div class="actions-card">
           <div class="actions-copy">
             <strong>저장 및 보관</strong>
             <span id="save-output-note">프리셋 저장 후 JSON 내보내기까지 서버 없이 진행할 수 있습니다.</span>
           </div>
+          <div class="workspace-primary-row">
+            <button id="btn-save-inline" class="btn btn-primary" type="button">작업 저장</button>
+          </div>
           <div class="download-grid">
             <button id="btn-download-front" class="btn btn-primary" type="button">앞면 다운로드</button>
             <button id="btn-download-back" class="btn btn-secondary" type="button">뒷면 다운로드</button>
+            <button id="btn-download-pdf" class="btn btn-outline" type="button">양면 PDF</button>
           </div>
           <div id="status-box" class="status-box" aria-live="polite">준비 완료</div>
         </div>
       </div>
+
+      <div class="wizard-footer" id="wizard-footer">
+        <button id="btn-wizard-prev" class="btn btn-outline" type="button" hidden>이전</button>
+        <button id="btn-wizard-secondary" class="btn btn-outline" type="button" hidden>다른 추천 보기</button>
+        <button id="btn-wizard-next" class="btn btn-primary" type="button">명함 만들기</button>
+      </div>
     </aside>
 
-    <main class="preview-area" id="preview-area">
+    <main class="preview-area" id="preview-area" hidden>
       <div class="preview-notice" id="preview-notice">
         <strong>Business Card Studio</strong>
         <span>명함 편집기</span>
@@ -643,6 +701,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-51"></script>
+  <script src="./main.js?v=20260403-card-standard-66"></script>
 </body>
 </html>
