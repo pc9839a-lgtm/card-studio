@@ -12,7 +12,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-66">
+  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-67">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -475,16 +475,6 @@
         </section>
       </section>
 
-      <div class="actions advanced-save-bar" id="section-advanced-save" hidden>
-        <div class="actions-card">
-          <div class="actions-copy">
-            <strong>고급편집 저장</strong>
-            <span>현재 설정을 바로 저장합니다.</span>
-          </div>
-          <button id="btn-advanced-save" class="btn btn-primary" type="button">작업 저장</button>
-        </div>
-      </div>
-
       <section class="control-group" id="section-style" hidden>
         <div class="section-heading">
           <span class="section-kicker">Style</span>
@@ -565,6 +555,13 @@
         </div>
       </div>
 
+      <div class="wizard-download-actions" id="wizard-download-actions" hidden>
+        <button id="btn-wizard-download-front" class="btn btn-outline" type="button">앞면 다운로드</button>
+        <button id="btn-wizard-download-back" class="btn btn-outline" type="button">뒷면 다운로드</button>
+        <button id="btn-wizard-download-pdf" class="btn btn-outline" type="button">양면 PDF</button>
+        <button id="btn-print-preview" class="btn btn-outline" type="button">인쇄 미리보기</button>
+      </div>
+
       <div class="wizard-footer" id="wizard-footer">
         <button id="btn-wizard-prev" class="btn btn-outline" type="button" hidden>이전</button>
         <button id="btn-wizard-secondary" class="btn btn-outline" type="button" hidden>다른 추천 보기</button>
@@ -600,6 +597,10 @@
           <div class="card-section" id="card-section-front">
             <div class="card-label">명함 앞면 (Front)</div>
             <div id="card-front" class="business-card template-modern logo-align-center front-face">
+              <div class="print-guide-layer" aria-hidden="true">
+                <div class="print-guide print-guide--trim"></div>
+                <div class="print-guide print-guide--safe"></div>
+              </div>
               <div class="card-custom-img-layer front-image-layer">
                 <img class="inserted-img front-inserted-img" src="" alt="">
               </div>
@@ -634,6 +635,10 @@
           <div class="card-section" id="card-section-back">
             <div class="card-label">명함 뒷면 (Back)</div>
             <div id="card-back" class="business-card template-modern back-face">
+              <div class="print-guide-layer" aria-hidden="true">
+                <div class="print-guide print-guide--trim"></div>
+                <div class="print-guide print-guide--safe"></div>
+              </div>
               <div class="card-custom-img-layer back-image-layer">
                 <img class="inserted-img back-inserted-img" src="" alt="">
               </div>
@@ -701,6 +706,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-66"></script>
+  <script src="./main.js?v=20260403-card-standard-67"></script>
 </body>
 </html>

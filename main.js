@@ -164,7 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
     quickStart: document.getElementById('btn-quick-start'),
     toggleAdvanced: document.getElementById('btn-toggle-advanced'),
     saveInline: document.getElementById('btn-save-inline'),
-    wizardFillSample: document.getElementById('btn-wizard-fill-sample')
+    wizardFillSample: document.getElementById('btn-wizard-fill-sample'),
+    wizardDownloadFront: document.getElementById('btn-wizard-download-front'),
+    wizardDownloadBack: document.getElementById('btn-wizard-download-back'),
+    wizardDownloadPdf: document.getElementById('btn-wizard-download-pdf'),
+    printPreview: document.getElementById('btn-print-preview')
   };
 
   const elements = {
@@ -181,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
     wizardStepTitle: document.getElementById('wizard-step-title'),
     wizardStepDescription: document.getElementById('wizard-step-description'),
     wizardRecommendGrid: document.getElementById('wizard-recommend-grid'),
+    wizardDownloadActions: document.getElementById('wizard-download-actions'),
     wizardFooter: document.getElementById('wizard-footer'),
     exportCardSelection: document.getElementById('export-card-selection'),
     previewArea: document.getElementById('preview-area'),
@@ -311,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastPreviewCardWidth = PREVIEW_REFERENCE_WIDTH;
   let wizardStep = 1;
   let advancedEditing = false;
+  let printPreviewEnabled = false;
   let wizardRecommendedTemplates = [];
   let statusTimer = null;
   let state = createTransientState();
@@ -932,6 +938,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.wizardFlow) elements.wizardFlow.hidden = !isGuidedWizard;
     if (elements.wizardFooter) elements.wizardFooter.hidden = !isGuidedWizard;
+    if (elements.wizardDownloadActions) elements.wizardDownloadActions.hidden = !(isGuidedWizard && wizardStep === 4);
 
     if (appContainer) {
       appContainer.style.display = '';
@@ -1155,12 +1162,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (buttons.downloadBack) {
       buttons.downloadBack.textContent = isMobile ? '뒷면 공유' : '뒷면 다운로드';
     }
+    if (buttons.wizardDownloadFront) {
+      buttons.wizardDownloadFront.textContent = isMobile ? '앞면 공유' : '앞면 다운로드';
+    }
+    if (buttons.wizardDownloadBack) {
+      buttons.wizardDownloadBack.textContent = isMobile ? '뒷면 공유' : '뒷면 다운로드';
+    }
+    if (buttons.wizardDownloadPdf) {
+      buttons.wizardDownloadPdf.textContent = '양면 PDF';
+    }
     if (buttons.compare) {
       buttons.compare.disabled = isMobile;
       buttons.compare.title = isMobile ? '모바일에서는 전체 템플릿 비교를 숨겼습니다.' : '';
     }
     if (!isMobile) {
       setMobilePreviewCollapsed(false);
+    }
+  }
+
+  function setPrintPreviewEnabled(enabled) {
+    printPreviewEnabled = !!enabled;
+    document.body.classList.toggle('is-print-preview', printPreviewEnabled);
+    if (buttons.printPreview) {
+      buttons.printPreview.classList.toggle('is-active', printPreviewEnabled);
+      buttons.printPreview.textContent = printPreviewEnabled ? '인쇄 미리보기 끄기' : '인쇄 미리보기';
     }
   }
 
@@ -2967,57 +2992,88 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  function freezeExportLayers(cardElement) {
+  function syncExportFloatingLayers(sourceCardElement, cloneCardElement) {
     const restorers = [];
-    const cardRect = cardElement?.getBoundingClientRect();
-    const targetElements = cardElement
-      ? Array.from(cardElement.querySelectorAll('.preview-logo, .inserted-img, .inserted-qr'))
-      : [];
+    const sourceRect = sourceCardElement?.getBoundingClientRect();
+    const floatingSelectors = [
+      '.preview-logo-front',
+      '.preview-logo-back',
+      '.front-inserted-img',
+      '.back-inserted-img',
+      '.front-qr-image',
+      '.back-qr-image',
+      '.preview-company-manual'
+    ];
 
-    targetElements.forEach((element) => {
-      const computed = window.getComputedStyle(element);
-      if (computed.display === 'none' || computed.visibility === 'hidden') return;
+    if (!sourceCardElement || !cloneCardElement || !sourceRect) {
+      return () => {};
+    }
 
-      const rect = element.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
+    floatingSelectors.forEach((selector) => {
+      const sourceNodes = Array.from(sourceCardElement.querySelectorAll(selector));
+      const cloneNodes = Array.from(cloneCardElement.querySelectorAll(selector));
 
-      const snapshot = {
-        position: element.style.position,
-        left: element.style.left,
-        top: element.style.top,
-        right: element.style.right,
-        bottom: element.style.bottom,
-        transform: element.style.transform,
-        width: element.style.width,
-        height: element.style.height,
-        maxWidth: element.style.maxWidth,
-        maxHeight: element.style.maxHeight
-      };
+      cloneNodes.forEach((cloneNode, index) => {
+        const sourceNode = sourceNodes[index];
+        if (!sourceNode) return;
 
-      if (cardRect) {
-        element.style.position = 'absolute';
-        element.style.left = `${rect.left - cardRect.left}px`;
-        element.style.top = `${rect.top - cardRect.top}px`;
-        element.style.right = 'auto';
-        element.style.bottom = 'auto';
-        element.style.transform = 'none';
-      }
-      element.style.width = `${rect.width}px`;
-      element.style.height = `${rect.height}px`;
-      element.style.maxWidth = `${rect.width}px`;
-      element.style.maxHeight = `${rect.height}px`;
+        const sourceComputed = window.getComputedStyle(sourceNode);
+        const sourceNodeRect = sourceNode.getBoundingClientRect();
+        const snapshot = {
+          display: cloneNode.style.display,
+          visibility: cloneNode.style.visibility,
+          position: cloneNode.style.position,
+          left: cloneNode.style.left,
+          top: cloneNode.style.top,
+          right: cloneNode.style.right,
+          bottom: cloneNode.style.bottom,
+          transform: cloneNode.style.transform,
+          width: cloneNode.style.width,
+          height: cloneNode.style.height,
+          maxWidth: cloneNode.style.maxWidth,
+          maxHeight: cloneNode.style.maxHeight
+        };
 
+        if (sourceComputed.display === 'none' || sourceComputed.visibility === 'hidden' || !sourceNodeRect.width || !sourceNodeRect.height) {
+          cloneNode.style.display = 'none';
+          cloneNode.style.visibility = 'hidden';
+        } else {
+          cloneNode.style.display = selector === '.preview-company-manual' ? 'inline-flex' : sourceComputed.display;
+          cloneNode.style.visibility = 'visible';
+          cloneNode.style.position = 'absolute';
+          cloneNode.style.left = `${sourceNodeRect.left - sourceRect.left}px`;
+          cloneNode.style.top = `${sourceNodeRect.top - sourceRect.top}px`;
+          cloneNode.style.right = 'auto';
+          cloneNode.style.bottom = 'auto';
+          cloneNode.style.transform = 'none';
+          cloneNode.style.width = `${sourceNodeRect.width}px`;
+          cloneNode.style.height = `${sourceNodeRect.height}px`;
+          cloneNode.style.maxWidth = `${sourceNodeRect.width}px`;
+          cloneNode.style.maxHeight = `${sourceNodeRect.height}px`;
+        }
+
+        restorers.push(() => {
+          cloneNode.style.display = snapshot.display;
+          cloneNode.style.visibility = snapshot.visibility;
+          cloneNode.style.position = snapshot.position;
+          cloneNode.style.left = snapshot.left;
+          cloneNode.style.top = snapshot.top;
+          cloneNode.style.right = snapshot.right;
+          cloneNode.style.bottom = snapshot.bottom;
+          cloneNode.style.transform = snapshot.transform;
+          cloneNode.style.width = snapshot.width;
+          cloneNode.style.height = snapshot.height;
+          cloneNode.style.maxWidth = snapshot.maxWidth;
+          cloneNode.style.maxHeight = snapshot.maxHeight;
+        });
+      });
+    });
+
+    cloneCardElement.querySelectorAll('.print-guide-layer').forEach((layer) => {
+      const snapshot = layer.style.display;
+      layer.style.display = 'none';
       restorers.push(() => {
-        element.style.position = snapshot.position;
-        element.style.left = snapshot.left;
-        element.style.top = snapshot.top;
-        element.style.right = snapshot.right;
-        element.style.bottom = snapshot.bottom;
-        element.style.transform = snapshot.transform;
-        element.style.width = snapshot.width;
-        element.style.height = snapshot.height;
-        element.style.maxWidth = snapshot.maxWidth;
-        element.style.maxHeight = snapshot.maxHeight;
+        layer.style.display = snapshot;
       });
     });
 
@@ -3057,7 +3113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const images = Array.from(clone.querySelectorAll('img'));
     await Promise.all(images.map(setImageReady));
     await waitForRenderStability();
-    const restoreFrozenLayers = freezeExportLayers(clone);
+    const restoreFrozenLayers = syncExportFloatingLayers(cardElement, clone);
 
     return {
       element: clone,
@@ -4013,6 +4069,24 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.saveInline.addEventListener('click', () => saveCurrentPreset(true));
   }
 
+  if (buttons.wizardDownloadFront) {
+    buttons.wizardDownloadFront.addEventListener('click', () => exportSelectedCardsAsPng('front', buttons.wizardDownloadFront));
+  }
+
+  if (buttons.wizardDownloadBack) {
+    buttons.wizardDownloadBack.addEventListener('click', () => exportSelectedCardsAsPng('back', buttons.wizardDownloadBack));
+  }
+
+  if (buttons.wizardDownloadPdf) {
+    buttons.wizardDownloadPdf.addEventListener('click', () => exportSelectedCardsAsPdf(buttons.wizardDownloadPdf));
+  }
+
+  if (buttons.printPreview) {
+    buttons.printPreview.addEventListener('click', () => {
+      setPrintPreviewEnabled(!printPreviewEnabled);
+    });
+  }
+
   if (buttons.wizardPrev) {
     buttons.wizardPrev.addEventListener('click', () => {
       if (wizardStep > 1) setWizardStep(wizardStep - 1);
@@ -4087,6 +4161,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderPresetLibrary();
   syncPresetInput();
   syncMobileActionLabels();
+  setPrintPreviewEnabled(false);
   setMobilePreviewFace('front');
   setMobilePreviewCollapsed(false);
   applyCardData(getActiveCard());
