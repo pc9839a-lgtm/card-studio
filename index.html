@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -12,7 +12,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260403-card-standard-67">
+  <link rel="stylesheet" href="./style.css?v=20260405-card-standard-109">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -33,7 +33,6 @@
       <section class="wizard-flow" id="wizard-flow">
         <div class="wizard-flow__progress">
           <span id="wizard-step-count">1 / 4</span>
-          <span id="wizard-step-label">입력 시작</span>
         </div>
         <div class="wizard-flow__copy">
           <strong id="wizard-step-title">이름과 연락처만 먼저 입력하세요</strong>
@@ -54,7 +53,7 @@
           </label>
           <label class="field full-span">
             <span>연락처</span>
-            <input type="text" id="input-phone" placeholder="연락처">
+            <input type="tel" id="input-phone" placeholder="연락처" inputmode="numeric" pattern="[0-9]*" autocomplete="tel">
           </label>
         </div>
       </section>
@@ -144,6 +143,9 @@
           <h3>상세 정보</h3>
           <p>회사명, 직책, 이메일, 주소처럼 더 채우고 싶은 정보를 이어서 입력합니다.</p>
         </div>
+        <div class="wizard-entry-actions">
+          <button id="btn-wizard-fill-sample" class="btn btn-outline" type="button">빠르게 채우기</button>
+        </div>
         <div class="field-grid">
           <label class="field full-span">
             <span>회사 / 브랜드명</span>
@@ -169,9 +171,6 @@
             <span>뒷면 슬로건</span>
             <input type="text" id="input-slogan" placeholder="뒷면 슬로건">
           </label>
-        </div>
-        <div class="wizard-entry-actions">
-          <button id="btn-wizard-fill-sample" class="btn btn-outline" type="button">빠르게 채우기</button>
         </div>
       </section>
 
@@ -251,7 +250,7 @@
         <div class="section-heading">
           <span class="section-kicker">Type</span>
           <h3>이름, 회사명 설정</h3>
-          <p>이름과 회사명의 크기, 배치감을 빠르게 조정합니다.</p>
+          <p>이름과 회사명의 크기, 배치, 굵기를 빠르게 조정합니다.</p>
         </div>
         <div class="range-wrap">
           <label>이름 크기 <span id="val-size">24px</span></label>
@@ -297,7 +296,7 @@
         <div class="section-heading">
           <span class="section-kicker">Image</span>
           <h3>이미지 & 오버레이</h3>
-          <p>앞면과 뒷면 이미지를 토글로 전환하면서 같은 방식으로 조정합니다.</p>
+          <p>앞면과 뒷면 이미지를 전환하며 같은 방식으로 배치와 투명도를 조정합니다.</p>
         </div>
         <div class="face-toggle" data-toggle-group="image">
           <button type="button" class="face-toggle__btn is-active" data-section="image" data-face="front">앞면 이미지</button>
@@ -312,7 +311,7 @@
               <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-front-image" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"></label>
               <button id="btn-delete-front-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
-            <div class="upload-help">권장 2MB 이하 · JPG/PNG 가능 · 큰 이미지는 자동 최적화됩니다.</div>
+            <div class="upload-help">권장 2MB 이하 · JPG/PNG 기준 · 큰 이미지는 자동 최적화됩니다.</div>
             <div id="front-image-controls" class="sub-panel" style="display:none;">
               <div class="range-wrap">
                 <label>크기 조절 <span id="val-front-img-size">100%</span></label>
@@ -348,7 +347,7 @@
               <label class="file-label bg-label flex-grow">이미지 추가<input type="file" id="input-back-image" accept=".png,.jpg,.jpeg,.webp,.gif,image/png,image/jpeg,image/webp,image/gif"></label>
               <button id="btn-delete-back-image" class="btn btn-outline btn-danger delete-btn" type="button" style="display:none;">삭제</button>
             </div>
-            <div class="upload-help">권장 2MB 이하 · JPG/PNG 가능 · 큰 이미지는 자동 최적화됩니다.</div>
+            <div class="upload-help">권장 2MB 이하 · JPG/PNG 기준 · 큰 이미지는 자동 최적화됩니다.</div>
             <div id="back-image-controls" class="sub-panel" style="display:none;">
               <div class="range-wrap">
                 <label>크기 조절 <span id="val-back-img-size">100%</span></label>
@@ -474,7 +473,6 @@
           </div>
         </section>
       </section>
-
       <section class="control-group" id="section-style" hidden>
         <div class="section-heading">
           <span class="section-kicker">Style</span>
@@ -706,6 +704,6 @@
     </div>
   </footer>
 
-  <script src="./main.js?v=20260403-card-standard-67"></script>
+  <script type="module" src="./main.js?v=20260405-card-standard-109"></script>
 </body>
 </html>

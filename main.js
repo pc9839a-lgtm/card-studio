@@ -1,28 +1,53 @@
+﻿import {
+  canvasToBlob,
+  clamp,
+  deepClone,
+  escapeVCardValue,
+  generateId,
+  hexToRgb,
+  mixHexColors,
+  normalizeCsvHeader,
+  parseCsvText,
+  sanitizeFileName,
+  shuffleArray,
+  triggerBlobDownload,
+  triggerImageSave
+} from './scripts/utils.js';
+import {
+  CARD_FIELD_KEYS,
+  CARD_HEIGHT_MM,
+  CARD_WIDTH_MM,
+  CSV_FIELD_ALIASES,
+  CSV_SAMPLE_ROWS,
+  EXPORT_DPI,
+  EXPORT_RENDER_TIMEOUT_MS,
+  EXPORT_STANDARD_HEIGHT,
+  EXPORT_STANDARD_LABEL,
+  EXPORT_STANDARD_WIDTH,
+  FALLBACK_CARD_HEIGHT,
+  FALLBACK_CARD_WIDTH,
+  HARD_UPLOAD_LIMIT_BYTES,
+  IMAGE_READY_TIMEOUT_MS,
+  LEGACY_STORAGE_KEY,
+  MAX_BULK_IMPORT_ROWS,
+  MAX_CARD_COUNT,
+  MAX_IMAGE_SIDE,
+  PRESET_STORAGE_KEY,
+  PREVIEW_REFERENCE_WIDTH,
+  RECOMMENDED_UPLOAD_BYTES,
+  STORAGE_KEY,
+  TEMPLATE_RECOMMENDATION_FALLBACK,
+  TEMPLATE_RECOMMENDATION_META,
+  WORKSPACE_VERSION
+} from './scripts/config.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-  const LEGACY_STORAGE_KEY = 'business_card_studio_state_v15';
-  const STORAGE_KEY = 'business_card_studio_workspace_v16';
-  const PRESET_STORAGE_KEY = 'business_card_studio_presets_v1';
-  const WORKSPACE_VERSION = 1;
-  const RECOMMENDED_UPLOAD_BYTES = 2 * 1024 * 1024;
-  const HARD_UPLOAD_LIMIT_BYTES = 8 * 1024 * 1024;
-  const MAX_IMAGE_SIDE = 2400;
-  const MAX_CARD_COUNT = 30;
-  const MAX_BULK_IMPORT_ROWS = 30;
-  const CARD_WIDTH_MM = 90;
-  const CARD_HEIGHT_MM = 50;
-  const EXPORT_DPI = 600;
-  const EXPORT_STANDARD_WIDTH = Math.round((CARD_WIDTH_MM / 25.4) * EXPORT_DPI);
-  const EXPORT_STANDARD_HEIGHT = Math.round((CARD_HEIGHT_MM / 25.4) * EXPORT_DPI);
-  const EXPORT_STANDARD_LABEL = `${CARD_WIDTH_MM} x ${CARD_HEIGHT_MM}mm / ${EXPORT_DPI}dpi`;
-  const PREVIEW_REFERENCE_WIDTH = 380;
-  const FALLBACK_CARD_WIDTH = 450;
-  const FALLBACK_CARD_HEIGHT = 250;
-  const IMAGE_READY_TIMEOUT_MS = 4000;
-  const EXPORT_RENDER_TIMEOUT_MS = 15000;
   const storageState = {
     available: true,
     warned: false
   };
+  let hasUnsavedChanges = false;
+  let suspendUnsavedTracking = true;
 
   const downloadGrid = document.querySelector('.download-grid');
   if (downloadGrid && !document.getElementById('export-card-selection')) {
@@ -39,41 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
       <div id="export-card-selection" class="export-card-selection"></div>
     `;
     downloadGrid.insertAdjacentElement('afterend', panel);
-    const exportSelectionHead = panel.querySelector('.export-selection-panel__head');
-    if (exportSelectionHead) {
-      exportSelectionHead.innerHTML = `
-        <strong>\uB2E4\uC6B4\uB85C\uB4DC \uB300\uC0C1 \uBA85\uD568</strong>
-        <div class="export-selection-panel__actions">
-          <button id="btn-export-select-current" class="btn btn-outline btn-sm" type="button">\uD604\uC7AC\uB9CC</button>
-          <button id="btn-export-select-all" class="btn btn-outline btn-sm" type="button">\uC804\uCCB4</button>
-        </div>
-      `;
-    }
-    /*
-    if (exportSelectionTitle) exportSelectionTitle.textContent = '다운로드 대상 명함';
-    if (exportSelectCurrentButton) exportSelectCurrentButton.textContent = '현재만';
-    if (exportSelectAllButton) exportSelectAllButton.textContent = '전체';
   }
-
-  */
-  }
-
-  const CARD_FIELD_KEYS = [
-    'company', 'position', 'name', 'phone', 'email', 'address', 'extra', 'slogan',
-    'frontCompanyMode', 'frontCompanyX', 'frontCompanyY', 'backCompanyMode', 'backCompanyX', 'backCompanyY',
-    'frontLogoSize', 'frontLogoX', 'frontLogoY', 'backLogoSize', 'backLogoX', 'backLogoY',
-    'frontImgSize', 'frontImgX', 'frontImgY', 'backImgSize', 'backImgX', 'backImgY',
-    'frontQrMode', 'frontQrValue', 'frontQrSize', 'frontQrX', 'frontQrY',
-    'backQrMode', 'backQrValue', 'backQrSize', 'backQrX', 'backQrY',
-    'frontOverlayColor', 'frontOverlayOpacity', 'backOverlayColor', 'backOverlayOpacity',
-    'rangeSize', 'rangeWeight', 'template', 'font', 'frontBg', 'backBg', 'textColor', 'pointColor'
-  ];
 
   const inputs = {
     presetName: document.getElementById('input-preset-name'),
     importPresetFile: document.getElementById('input-import-preset'),
     importCsvFile: document.getElementById('input-import-csv'),
-    importPresetText: document.getElementById('input-import-preset-text'),
     savedPresetSelect: document.getElementById('select-saved-preset'),
     company: document.getElementById('input-company'),
     position: document.getElementById('input-position'),
@@ -151,7 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     generateFrontQr: document.getElementById('btn-generate-front-qr'),
     generateBackQr: document.getElementById('btn-generate-back-qr'),
     loadPreset: document.getElementById('btn-load-preset'),
-    importPresetText: document.getElementById('btn-import-preset-text'),
     exportPreset: document.getElementById('btn-export-preset'),
     downloadCsvSample: document.getElementById('btn-download-csv-sample'),
     addCard: document.getElementById('btn-add-card'),
@@ -282,30 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
     .map((input) => input?.closest('.field'))
     .filter(Boolean);
   const advancedSectionIds = ['section-logo', 'section-text', 'section-image', 'section-qr'];
-  const templateRecommendationMeta = {
-    'template-modern': { tag: '기본형', description: '처음 시작할 때 가장 깔끔한 기본 명함입니다.' },
-    'template-pet': { tag: '정돈형', description: '정보를 안정적으로 정리해 보여주기 좋습니다.' },
-    'template-transport': { tag: '포인트형', description: '제품 이미지나 강조 포인트를 빠르게 살릴 수 있습니다.' },
-    'template-clinic': { tag: '브랜드형', description: '로고와 브랜드 문구를 차분하게 살릴 수 있습니다.' },
-    'template-classic': { tag: '센터형', description: '이름과 연락처를 단정하게 보여주는 구성입니다.' },
-    'template-split': { tag: '분할형', description: '브랜드 영역과 정보 영역이 확실히 나뉘는 템플릿입니다.' },
-    'template-accent': { tag: '사이드형', description: '측면 포인트가 있어 존재감을 주기 좋습니다.' },
-    'template-bottom': { tag: '바텀형', description: '하단 포인트로 시선을 잡아주는 안정적인 구성입니다.' },
-    'template-dark': { tag: '다크형', description: '강한 대비와 고급스러운 톤이 필요한 경우에 맞습니다.' },
-    'template-creative': { tag: '라인형', description: '프레임과 선으로 개성을 주고 싶을 때 어울립니다.' }
-  };
-
-  const CSV_FIELD_ALIASES = {
-    name: ['name', '이름', '성명'],
-    phone: ['phone', 'mobile', 'tel', 'contact', '연락처', '휴대폰', '전화번호'],
-    email: ['email', 'e-mail', 'mail', '이메일'],
-    company: ['company', 'brand', 'business', '회사명', '브랜드', '상호'],
-    position: ['position', 'title', 'role', '직책', '직위'],
-    address: ['address', 'addr', '주소'],
-    extra: ['extra', 'info', 'memo', '추가정보', '메모'],
-    slogan: ['slogan', 'tagline', 'message', '슬로건', '소개문구']
-  };
-
   let presetLibrary = [];
   let workspace = null;
   let isCompareMode = false;
@@ -359,14 +330,6 @@ document.addEventListener('DOMContentLoaded', () => {
       frontImageDataUrl: '',
       backImageDataUrl: ''
     };
-  }
-
-  function deepClone(value) {
-    return JSON.parse(JSON.stringify(value));
-  }
-
-  function generateId(prefix) {
-    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   }
 
   function getDefaultCardData() {
@@ -440,7 +403,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function normalizeCard(rawCard, fallbackLabel) {
-    return createCard(fallbackLabel, rawCard || {});
+    const source = rawCard || {};
+    return createCard(fallbackLabel, {
+      ...source,
+      label: sanitizeDisplayLabel(source.label, fallbackLabel)
+    });
   }
 
   function getDefaultPresetName() {
@@ -448,6 +415,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let index = 1;
     while (usedNames.has(`프리셋 ${index}`)) index += 1;
     return `프리셋 ${index}`;
+  }
+
+  function sanitizeDisplayLabel(value, fallback) {
+    const text = String(value || '').trim();
+    if (!text) return fallback;
+    if (
+      text.includes('紐낇븿') ||
+      text.includes('紐꾨꽣') ||
+      text.includes('?꾨') ||
+      text.includes('??λ맂') ||
+      text.includes('쨌') ||
+      text.includes('?') ||
+      /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(text)
+    ) {
+      return fallback;
+    }
+    return text;
   }
 
   function getNextCardLabel(cards) {
@@ -473,7 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeCardId = cards.some((card) => card.id === source.activeCardId)
       ? source.activeCardId
       : cards[0].id;
-    const name = String(source.name || source.presetName || `프리셋 ${index + 1}`).trim() || `프리셋 ${index + 1}`;
+    const name = sanitizeDisplayLabel(
+      String(source.name || source.presetName || `프리셋 ${index + 1}`).trim(),
+      `프리셋 ${index + 1}`
+    );
     return {
       id: source.id || generateId('preset'),
       name,
@@ -519,7 +506,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       version: WORKSPACE_VERSION,
-      presetName: String(rawWorkspace.presetName || '').trim() || getDefaultPresetName(),
+      presetName: sanitizeDisplayLabel(
+        String(rawWorkspace.presetName || '').trim(),
+        getDefaultPresetName()
+      ),
       activePresetId: rawWorkspace.activePresetId || '',
       activeCardId,
       cards,
@@ -541,38 +531,6 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn(error);
       return [];
     }
-  }
-
-  function hexToRgb(hexColor) {
-    const normalized = String(hexColor || '').trim().replace('#', '');
-    if (!/^[0-9a-fA-F]{3,8}$/.test(normalized)) return null;
-    const hex = normalized.length === 3
-      ? normalized.split('').map((char) => char + char).join('')
-      : normalized.slice(0, 6);
-    return {
-      r: parseInt(hex.slice(0, 2), 16),
-      g: parseInt(hex.slice(2, 4), 16),
-      b: parseInt(hex.slice(4, 6), 16)
-    };
-  }
-
-  function rgbToHex({ r, g, b }) {
-    const clampChannel = (value) => Math.max(0, Math.min(255, Math.round(value)));
-    return `#${[clampChannel(r), clampChannel(g), clampChannel(b)]
-      .map((value) => value.toString(16).padStart(2, '0'))
-      .join('')}`;
-  }
-
-  function mixHexColors(baseColor, targetColor, ratio) {
-    const base = hexToRgb(baseColor);
-    const target = hexToRgb(targetColor);
-    if (!base || !target) return baseColor;
-    const weight = Math.max(0, Math.min(1, ratio));
-    return rgbToHex({
-      r: base.r + ((target.r - base.r) * weight),
-      g: base.g + ((target.g - base.g) * weight),
-      b: base.b + ((target.b - base.b) * weight)
-    });
   }
 
   function setQrInlineStatus(face, message = '', type = 'info') {
@@ -623,15 +581,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetId = link.getAttribute('href')?.replace('#', '');
       link.classList.toggle('is-active', !!openSection && openSection.id === targetId);
     });
-  }
-
-  function shuffleArray(items) {
-    const nextItems = [...items];
-    for (let index = nextItems.length - 1; index > 0; index -= 1) {
-      const swapIndex = Math.floor(Math.random() * (index + 1));
-      [nextItems[index], nextItems[swapIndex]] = [nextItems[swapIndex], nextItems[index]];
-    }
-    return nextItems;
   }
 
   function getTemplateOptions() {
@@ -760,9 +709,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const backSlogan = clone.querySelector('.back-slogan');
 
     if (previewCompany) previewCompany.textContent = 'MORNING STUDIO';
-    if (previewName) previewName.textContent = (inputs.name?.value || '').trim() || '홍지현';
+    if (previewName) previewName.textContent = '홍지현';
     if (previewPosition) previewPosition.textContent = 'Creative Director';
-    if (previewPhone) previewPhone.textContent = (inputs.phone?.value || '').trim() || '010-1234-5678';
+    if (previewPhone) previewPhone.textContent = '010-1234-5678';
     if (previewEmail) previewEmail.textContent = 'hello@morningstudio.kr';
     if (previewAddress) previewAddress.textContent = '서울특별시 강남구 테헤란로 123';
     if (previewExtra) previewExtra.textContent = '평일 09:00 - 18:00';
@@ -799,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const option = getTemplateOptions().find((item) => item.value === templateValue);
       if (!option) return;
 
-      const meta = templateRecommendationMeta[templateValue] || { tag: '추천', description: '빠르게 시작하기 좋은 템플릿입니다.' };
+      const meta = TEMPLATE_RECOMMENDATION_META[templateValue] || TEMPLATE_RECOMMENDATION_FALLBACK;
       const card = document.createElement('button');
       card.type = 'button';
       card.className = 'wizard-recommend-card';
@@ -812,7 +761,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const copy = document.createElement('div');
       copy.className = 'wizard-recommend-card__copy';
       copy.innerHTML = `
-        <div class="wizard-recommend-card__eyebrow">${meta.tag}</div>
         <strong>${option.label}</strong>
       `;
 
@@ -850,6 +798,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function setAdvancedEditing(nextState, options = {}) {
     advancedEditing = !!nextState;
     updateWizardUI();
+    if (wizardStep === 4 && elements.wizardFooter) {
+      elements.wizardFooter.hidden = false;
+      elements.wizardFooter.style.display = 'flex';
+    }
+    if (wizardStep === 4) {
+      if (buttons.wizardPrev) buttons.wizardPrev.hidden = false;
+      if (buttons.wizardSecondary) buttons.wizardSecondary.hidden = false;
+      if (buttons.wizardNext) buttons.wizardNext.hidden = false;
+    }
     if (wizardStep === 4) {
       openSectionExclusive(advancedEditing ? elements.sectionLogo : elements.sectionStyle);
     }
@@ -860,8 +817,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateWizardHeader() {
     const meta = wizardStepMeta[wizardStep] || wizardStepMeta[1];
-    if (elements.wizardStepCount) elements.wizardStepCount.textContent = `${wizardStep} / 4`;
-    if (elements.wizardStepLabel) elements.wizardStepLabel.textContent = meta.label;
+    if (elements.wizardStepCount) elements.wizardStepCount.textContent = `${wizardStep} / 4 ${meta.label}`;
+    if (elements.wizardStepLabel) {
+      elements.wizardStepLabel.textContent = '';
+      elements.wizardStepLabel.style.display = 'none';
+    }
     if (elements.wizardStepTitle) elements.wizardStepTitle.textContent = meta.title;
     if (elements.wizardStepDescription) elements.wizardStepDescription.textContent = meta.description;
   }
@@ -907,12 +867,19 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
       case 4:
         buttons.wizardSecondary.hidden = false;
-        buttons.wizardSecondary.textContent = advancedEditing ? '기본 편집으로 돌아가기' : '고급편집 열기';
+        buttons.wizardSecondary.textContent = advancedEditing ? '기본 편집' : '고급편집 열기';
         buttons.wizardNext.textContent = '작업 저장';
         break;
       default:
         buttons.wizardNext.textContent = '다음';
         break;
+    }
+
+    if (wizardStep === 4 && elements.wizardFooter) {
+      elements.wizardFooter.hidden = false;
+      if (buttons.wizardPrev) buttons.wizardPrev.hidden = false;
+      if (buttons.wizardSecondary) buttons.wizardSecondary.hidden = false;
+      if (buttons.wizardNext) buttons.wizardNext.hidden = false;
     }
   }
 
@@ -936,9 +903,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('is-wizard-step-3', isGuidedWizard && wizardStep === 3);
     document.body.classList.toggle('is-wizard-step-4', isGuidedWizard && wizardStep === 4);
 
+    const forceStep4Footer = isGuidedWizard && wizardStep === 4;
     if (elements.wizardFlow) elements.wizardFlow.hidden = !isGuidedWizard;
-    if (elements.wizardFooter) elements.wizardFooter.hidden = !isGuidedWizard;
+    if (elements.wizardFooter) {
+      elements.wizardFooter.hidden = !isGuidedWizard;
+      elements.wizardFooter.classList.toggle('is-force-visible', forceStep4Footer);
+    }
     if (elements.wizardDownloadActions) elements.wizardDownloadActions.hidden = !(isGuidedWizard && wizardStep === 4);
+    if (forceStep4Footer && elements.wizardFooter) {
+      elements.wizardFooter.hidden = false;
+      elements.wizardFooter.removeAttribute('hidden');
+      elements.wizardFooter.style.display = 'flex';
+      elements.wizardFooter.style.visibility = 'visible';
+    }
+    if (forceStep4Footer) {
+      [buttons.wizardPrev, buttons.wizardSecondary, buttons.wizardNext].forEach((button) => {
+        if (!button) return;
+        button.hidden = false;
+        button.removeAttribute('hidden');
+      });
+    }
 
     if (appContainer) {
       appContainer.style.display = '';
@@ -960,6 +944,25 @@ document.addEventListener('DOMContentLoaded', () => {
       controlsPanel.style.maxHeight = '';
       controlsPanel.style.overflow = '';
       controlsPanel.style.paddingTop = '';
+      controlsPanel.style.alignSelf = '';
+    }
+    if (elements.wizardFooter) {
+      elements.wizardFooter.style.display = '';
+      elements.wizardFooter.style.justifyContent = '';
+      elements.wizardFooter.style.width = '';
+      elements.wizardFooter.style.maxWidth = '';
+    }
+    if (elements.wizardFlow) {
+      elements.wizardFlow.style.width = '';
+      elements.wizardFlow.style.maxWidth = '';
+    }
+    if (elements.sectionEntry) {
+      elements.sectionEntry.style.width = '';
+      elements.sectionEntry.style.maxWidth = '';
+    }
+    if (elements.sectionRecommend) {
+      elements.sectionRecommend.style.width = '';
+      elements.sectionRecommend.style.maxWidth = '';
     }
     if (entryHeading) {
       entryHeading.style.display = '';
@@ -980,18 +983,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       if (appContainer && (wizardStep === 1 || wizardStep === 2)) {
-        appContainer.style.display = 'grid';
+        appContainer.style.display = 'flex';
         appContainer.style.width = '100%';
-        appContainer.style.justifyItems = 'center';
-        appContainer.style.alignContent = 'center';
+        appContainer.style.maxWidth = wizardStep === 1 ? '720px' : '1120px';
+        appContainer.style.margin = '0 auto';
+        appContainer.style.justifyContent = 'center';
+        appContainer.style.alignItems = 'center';
         appContainer.style.minHeight = '100vh';
         appContainer.style.padding = '28px 24px';
       }
       if (controlsPanel && wizardStep === 1) {
         controlsPanel.style.flex = '0 0 auto';
-        controlsPanel.style.width = 'min(100%, 520px)';
-        controlsPanel.style.maxWidth = '520px';
+        controlsPanel.style.width = '100%';
+        controlsPanel.style.maxWidth = 'none';
         controlsPanel.style.margin = '0 auto';
+        controlsPanel.style.alignSelf = 'center';
         controlsPanel.style.borderRight = '0';
         controlsPanel.style.position = 'static';
         controlsPanel.style.maxHeight = 'none';
@@ -1000,9 +1006,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       if (controlsPanel && wizardStep === 2) {
         controlsPanel.style.flex = '0 0 auto';
-        controlsPanel.style.width = 'min(100%, 860px)';
-        controlsPanel.style.maxWidth = '860px';
+        controlsPanel.style.width = '100%';
+        controlsPanel.style.maxWidth = 'none';
         controlsPanel.style.margin = '0 auto';
+        controlsPanel.style.alignSelf = 'center';
         controlsPanel.style.borderRight = '0';
         controlsPanel.style.position = 'static';
         controlsPanel.style.maxHeight = 'none';
@@ -1044,6 +1051,26 @@ document.addEventListener('DOMContentLoaded', () => {
           elements.sectionInfo.hidden = true;
           elements.sectionInfo.style.display = 'none';
         }
+        if (elements.wizardFlow) {
+          elements.wizardFlow.style.width = '100%';
+          elements.wizardFlow.style.maxWidth = 'none';
+        }
+        if (elements.sectionEntry) {
+          elements.sectionEntry.style.width = '100%';
+          elements.sectionEntry.style.maxWidth = 'none';
+        }
+        if (elements.wizardFooter) {
+          elements.wizardFooter.style.display = 'flex';
+          elements.wizardFooter.style.justifyContent = 'center';
+          elements.wizardFooter.style.width = '100%';
+          elements.wizardFooter.style.maxWidth = 'none';
+        }
+        if (buttons.wizardNext) {
+          buttons.wizardNext.style.width = 'auto';
+          buttons.wizardNext.style.minWidth = '190px';
+          buttons.wizardNext.style.paddingInline = '22px';
+          buttons.wizardNext.style.flex = '0 0 auto';
+        }
         setSectionCollapsed(elements.sectionEntry, false);
         elements.sectionEntry?.classList.remove('is-collapsed');
         if (entryHeading) entryHeading.style.display = 'none';
@@ -1053,6 +1080,18 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.sectionInfo?.classList.remove('is-collapsed');
       }
       if (wizardStep === 2) {
+        if (elements.wizardFlow) {
+          elements.wizardFlow.style.width = '100%';
+          elements.wizardFlow.style.maxWidth = 'none';
+        }
+        if (elements.sectionRecommend) {
+          elements.sectionRecommend.style.width = '100%';
+          elements.sectionRecommend.style.maxWidth = 'none';
+        }
+        if (elements.wizardFooter) {
+          elements.wizardFooter.style.width = '100%';
+          elements.wizardFooter.style.maxWidth = 'none';
+        }
         setSectionCollapsed(elements.sectionRecommend, false);
       }
       if (wizardStep === 4 && !showAdvanced) {
@@ -1185,7 +1224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('is-print-preview', printPreviewEnabled);
     if (buttons.printPreview) {
       buttons.printPreview.classList.toggle('is-active', printPreviewEnabled);
-      buttons.printPreview.textContent = printPreviewEnabled ? '인쇄 미리보기 끄기' : '인쇄 미리보기';
+      buttons.printPreview.textContent = printPreviewEnabled ? '재단선 끄기' : '재단선 보기';
     }
   }
 
@@ -1259,6 +1298,13 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  function getUiScaleForWidth(width) {
+    if (isMobileViewport()) {
+      return clamp(width / PREVIEW_REFERENCE_WIDTH, 0.78, 0.96);
+    }
+    return clamp(width / PREVIEW_REFERENCE_WIDTH, 1, 1.18);
+  }
+
   function formatExportSize(width, height) {
     return `${Math.round(width)} x ${Math.round(height)}px`;
   }
@@ -1281,24 +1327,13 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.partnersDesktopInner.style.setProperty('--partners-desktop-scale', scale.toFixed(3));
   }
 
-  function sanitizeFileName(name) {
-    return String(name || '')
-      .trim()
-      .replace(/[<>:"/\\|?*]+/g, '-')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'preset';
-  }
-
   function updateContextLabels() {
     const activeCard = getActiveCard();
-    const presetName = workspace.presetName || getDefaultPresetName();
-    const cardName = activeCard ? activeCard.label : '명함 1';
+    const presetName = sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName());
+    const cardName = sanitizeDisplayLabel(activeCard ? activeCard.label : '', '명함 1');
     const exportLabel = `미리보기 그대로 · ${EXPORT_STANDARD_LABEL} · ${formatExportSize(EXPORT_STANDARD_WIDTH, EXPORT_STANDARD_HEIGHT)}`;
     const width = getStablePreviewCardWidth();
-    const previewUiScale = isMobileViewport()
-      ? clamp(width / PREVIEW_REFERENCE_WIDTH, 0.78, 0.96)
-      : clamp(width / PREVIEW_REFERENCE_WIDTH, 1, 1.18);
+    const previewUiScale = getUiScaleForWidth(width);
 
     document.documentElement.style.setProperty('--card-ui-scale', previewUiScale.toFixed(3));
     updateDesktopPartnerScale();
@@ -1319,7 +1354,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function syncPresetInput() {
     if (inputs.presetName && document.activeElement !== inputs.presetName) {
-      inputs.presetName.value = workspace.presetName || getDefaultPresetName();
+      const safePresetName = sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName());
+      workspace.presetName = safePresetName;
+      inputs.presetName.value = safePresetName;
     }
   }
 
@@ -1342,7 +1379,7 @@ document.addEventListener('DOMContentLoaded', () => {
     presets.forEach((preset) => {
       const option = document.createElement('option');
       option.value = preset.id;
-      option.textContent = `${preset.name} · ${preset.cards.length}개 명함`;
+      option.textContent = `${sanitizeDisplayLabel(preset.name, getDefaultPresetName())} · ${preset.cards.length}개 명함`;
       inputs.savedPresetSelect.appendChild(option);
     });
 
@@ -1361,7 +1398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = `card-tab${card.id === workspace.activeCardId ? ' is-active' : ''}`;
-      button.textContent = card.label;
+      button.textContent = sanitizeDisplayLabel(card.label, '명함 1');
       button.addEventListener('click', () => {
         switchCard(card.id);
       });
@@ -1426,7 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const text = document.createElement('span');
-      text.textContent = card.label;
+      text.textContent = sanitizeDisplayLabel(card.label, '명함 1');
 
       label.append(checkbox, text);
       elements.exportCardSelection.appendChild(label);
@@ -1497,10 +1534,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!storageState.available) return;
     const activeCard = getActiveCard();
     if (activeCard) Object.assign(activeCard, collectCardFromUI(activeCard));
-    workspace.presetName = String(inputs.presetName?.value || workspace.presetName || '').trim() || getDefaultPresetName();
+    workspace.presetName = sanitizeDisplayLabel(
+      String(inputs.presetName?.value || workspace.presetName || '').trim(),
+      getDefaultPresetName()
+    );
     syncWizardStateToWorkspace();
     syncPresetInput();
     updateContextLabels();
+
+    if (!suspendUnsavedTracking) {
+      hasUnsavedChanges = true;
+    }
 
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
@@ -1517,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
       storageState.available = false;
       if (!storageState.warned) {
         storageState.warned = true;
-        setStatus('브라우저 저장 공간이 부족해 자동 저장을 중단했습니다. JSON 내보내기로 백업해주세요.', 'warning', 3200);
+        setStatus('브라우저 저장 공간이 부족합니다. 자동 저장을 중단했습니다. JSON 내보내기로 백업해주세요.', 'warning', 3200);
       }
     }
   }
@@ -1578,14 +1622,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateCompanyPosition();
     void refreshGeneratedVCardQrs();
-  }
-
-  function escapeVCardValue(value) {
-    return String(value || '')
-      .replace(/\\/g, '\\\\')
-      .replace(/\n/g, '\\n')
-      .replace(/;/g, '\\;')
-      .replace(/,/g, '\\,');
   }
 
   function buildVCardPayload() {
@@ -1783,7 +1819,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.frontQrDataUrl = dataUrl || '';
       elements.frontQrImage.crossOrigin = 'anonymous';
       elements.frontQrImage.referrerPolicy = 'no-referrer';
-      elements.frontQrImage.onload = () => setQrInlineStatus('front', '앞면 QR이 생성되었습니다.', 'success');
+      elements.frontQrImage.onload = () => setQrInlineStatus('front', '앞면 QR을 생성했습니다.', 'success');
       elements.frontQrImage.onerror = () => setQrInlineStatus('front', '앞면 QR 이미지를 불러오지 못했습니다.', 'error');
       elements.frontQrImage.src = state.frontQrDataUrl;
       elements.frontQrImage.style.display = dataUrl ? 'block' : 'none';
@@ -1799,7 +1835,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.backQrDataUrl = dataUrl || '';
     elements.backQrImage.crossOrigin = 'anonymous';
     elements.backQrImage.referrerPolicy = 'no-referrer';
-    elements.backQrImage.onload = () => setQrInlineStatus('back', '뒷면 QR이 생성되었습니다.', 'success');
+    elements.backQrImage.onload = () => setQrInlineStatus('back', '뒷면 QR을 생성했습니다.', 'success');
     elements.backQrImage.onerror = () => setQrInlineStatus('back', '뒷면 QR 이미지를 불러오지 못했습니다.', 'error');
     elements.backQrImage.src = state.backQrDataUrl;
     elements.backQrImage.style.display = dataUrl ? 'block' : 'none';
@@ -1834,8 +1870,8 @@ document.addEventListener('DOMContentLoaded', () => {
       );
       setStatus(
         modeInput?.value === 'vcard'
-          ? 'vCard에 넣을 기본 정보가 부족합니다.'
-          : 'QR에 넣을 링크를 입력해주세요.',
+          ? 'vCard 생성에 필요한 기본 정보가 부족합니다.'
+          : 'QR 생성용 링크를 입력해주세요.',
         'warning',
         2200
       );
@@ -1851,7 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const dataUrl = await createQrDataUrl(payload);
       applyQr(face, dataUrl);
-      setQrInlineStatus(face, `${face === 'front' ? '앞면' : '뒷면'} QR이 생성되었습니다.`, 'success');
+      setQrInlineStatus(face, `${face === 'front' ? '앞면' : '뒷면'} QR을 생성했습니다.`, 'success');
       if (!options.silent) {
         setStatus(`${face === 'front' ? '앞면' : '뒷면'} QR을 생성했습니다.`, 'success', 1800);
       }
@@ -1861,14 +1897,14 @@ document.addEventListener('DOMContentLoaded', () => {
       setQrInlineStatus(
         face,
         error && error.message === 'QR_UNAVAILABLE'
-          ? 'QR 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'
+          ? 'QR 생성 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
           : 'QR 생성에 실패했습니다. 다시 시도해주세요.',
         'error'
       );
       if (!options.silent) {
         setStatus(
           error && error.message === 'QR_UNAVAILABLE'
-            ? 'QR 생성 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해주세요.'
+            ? 'QR 생성 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'
             : 'QR 생성 중 문제가 발생했습니다.',
           'error',
           2600
@@ -2145,7 +2181,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildCurrentPresetRecord() {
-    workspace.presetName = String(inputs.presetName?.value || workspace.presetName || '').trim() || getDefaultPresetName();
+    workspace.presetName = sanitizeDisplayLabel(
+      String(inputs.presetName?.value || workspace.presetName || '').trim(),
+      getDefaultPresetName()
+    );
     syncPresetInput();
     persistWorkspace();
 
@@ -2156,7 +2195,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     return {
       id: workspace.activePresetId || generateId('preset'),
-      name: workspace.presetName,
+      name: sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName()),
       cards: deepClone(workspace.cards),
       activeCardId: workspace.activeCardId,
       savedAt: new Date().toISOString()
@@ -2181,6 +2220,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPresetLibrary();
     inputs.savedPresetSelect.value = record.id;
     persistWorkspace();
+    hasUnsavedChanges = false;
 
     if (showStatus) {
       setStatus(`${record.name} 저장됨`, 'success', 1800);
@@ -2213,9 +2253,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPresetLibrary();
     applyCardData(getActiveCard());
     persistWorkspace();
+    hasUnsavedChanges = false;
 
     if (showStatus) {
-      setStatus(`${preset.name} 불러옴`, 'success', 1800);
+      setStatus(`${preset.name} 불러오기 완료`, 'success', 1800);
     }
   }
 
@@ -2259,9 +2300,6 @@ document.addEventListener('DOMContentLoaded', () => {
       renderPresetLibrary();
       loadPresetById(importedPreset.id, false);
       setStatus(`${importedPreset.name} 업로드 완료`, 'success', 2200);
-      if (inputs.importPresetText && options.clearText !== false) {
-        inputs.importPresetText.value = '';
-      }
     } catch (error) {
       console.error(error);
       setStatus('JSON 프리셋 파일을 읽지 못했습니다.', 'error', 2400);
@@ -2277,64 +2315,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       inputs.importPresetFile.value = '';
     }
-  }
-
-  function normalizeCsvHeader(header) {
-    return String(header || '')
-      .trim()
-      .toLowerCase()
-      .replace(/\uFEFF/g, '')
-      .replace(/[\s_-]+/g, '');
-  }
-
-  function parseCsvText(rawText) {
-    const rows = [];
-    let current = '';
-    let row = [];
-    let inQuotes = false;
-
-    for (let index = 0; index < rawText.length; index += 1) {
-      const char = rawText[index];
-      const nextChar = rawText[index + 1];
-
-      if (char === '"') {
-        if (inQuotes && nextChar === '"') {
-          current += '"';
-          index += 1;
-        } else {
-          inQuotes = !inQuotes;
-        }
-        continue;
-      }
-
-      if (!inQuotes && char === ',') {
-        row.push(current);
-        current = '';
-        continue;
-      }
-
-      if (!inQuotes && (char === '\n' || char === '\r')) {
-        if (char === '\r' && nextChar === '\n') index += 1;
-        row.push(current);
-        current = '';
-        if (row.some((value) => String(value || '').trim() !== '')) {
-          rows.push(row);
-        }
-        row = [];
-        continue;
-      }
-
-      current += char;
-    }
-
-    if (current.length || row.length) {
-      row.push(current);
-      if (row.some((value) => String(value || '').trim() !== '')) {
-        rows.push(row);
-      }
-    }
-
-    return rows;
   }
 
   function buildCsvColumnMap(headers) {
@@ -2432,7 +2412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error && error.message === 'CSV_LIMIT') {
         setStatus(`CSV는 한 번에 최대 ${MAX_BULK_IMPORT_ROWS}명까지 불러올 수 있습니다.`, 'warning', 2600);
       } else if (error && error.message === 'CSV_HEADER') {
-        setStatus('CSV 헤더를 확인해주세요. 이름, 연락처, 이메일, 회사명, 직책 같은 열이 필요합니다.', 'error', 3200);
+        setStatus('CSV 헤더를 확인해주세요. 이름, 연락처, 이메일, 회사명, 직책 같은 컬럼명이 필요합니다.', 'error', 3200);
       } else {
         setStatus('CSV 파일을 읽지 못했습니다. 형식을 다시 확인해주세요.', 'error', 2600);
       }
@@ -2442,12 +2422,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function downloadCsvSample() {
-    const sampleRows = [
-      ['이름', '연락처', '이메일', '회사명', '직책', '주소', '추가정보', '슬로건'],
-      ['홍길동', '010-1234-5678', 'hello@example.com', 'WAYZI', 'Creative Director', '서울특별시 강남구 테헤란로 123', '평일 09:00 - 18:00', '당신의 브랜드를 더 선명하게 만듭니다'],
-      ['김웨이지', '010-9876-5432', 'team@example.com', 'WAYZI', 'Brand Manager', '서울특별시 마포구 월드컵북로 12', '카카오톡 상담 가능', '브랜드 경험을 명함으로 연결합니다']
-    ];
-    const csvText = `\uFEFF${sampleRows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n')}`;
+    const csvText = `\uFEFF${CSV_SAMPLE_ROWS.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',')).join('\r\n')}`;
     const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -2455,7 +2430,7 @@ document.addEventListener('DOMContentLoaded', () => {
     link.download = 'business-card-sample.csv';
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 0);
-    setStatus('샘플 CSV를 저장했습니다.', 'success', 1800);
+    setStatus('샘플 CSV를 다운로드했습니다.', 'success', 1800);
   }
 
   function createCardFromCurrent(duplicate = false) {
@@ -2478,7 +2453,13 @@ document.addEventListener('DOMContentLoaded', () => {
     workspace.activePresetId = '';
     applyCardData(newCard);
     persistWorkspace();
-    setStatus(duplicate ? `${newCard.label} 복제됨` : `${newCard.label} 추가됨`, 'success', 1800);
+    setStatus(
+      duplicate
+        ? `${sanitizeDisplayLabel(newCard.label, '명함 1')} 복제 완료`
+        : `${sanitizeDisplayLabel(newCard.label, '명함 1')} 추가 완료`,
+      'success',
+      1800
+    );
   }
 
   function deleteActiveCard() {
@@ -2503,7 +2484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     workspace.activePresetId = '';
     applyCardData(nextCard);
     persistWorkspace();
-    setStatus(`${activeCard.label} 삭제됨`, 'warning', 1800);
+    setStatus(`${sanitizeDisplayLabel(activeCard.label, '명함 1')} 삭제 완료`, 'warning', 1800);
   }
   function blobToDataUrl(blob) {
     return new Promise((resolve, reject) => {
@@ -2599,10 +2580,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (face === 'back') inputs.backQrX.value = value;
     updateColorVars();
     persistWorkspace();
-  }
-
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
   }
 
   function startDrag(event, config) {
@@ -2911,7 +2888,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isCompareMode = false;
         elements.compareView.style.display = 'none';
         elements.singleView.style.display = 'flex';
-        buttons.compare.textContent = '한눈에 비교';
+        buttons.compare.textContent = '?쒕늿??鍮꾧탳';
       });
 
       elements.compareGrid.appendChild(item);
@@ -2925,7 +2902,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('is-compare-mode');
       elements.compareView.style.display = 'none';
       elements.singleView.style.display = 'flex';
-      buttons.compare.textContent = '?쒕늿??鍮꾧탳';
+      buttons.compare.textContent = '한눈에 비교';
       setStatus('모바일에서는 전체 템플릿 비교를 숨겼습니다.', 'warning', 1800);
       return;
     }
@@ -2936,7 +2913,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCompareGrid();
       elements.singleView.style.display = 'none';
       elements.compareView.style.display = 'flex';
-      buttons.compare.textContent = '단일 보기';
+      buttons.compare.textContent = '한 장 보기';
     } else {
       elements.compareView.style.display = 'none';
       elements.singleView.style.display = 'flex';
@@ -3086,6 +3063,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const restoreCardVisibility = revealCardForCapture(cardElement);
     await waitForRenderStability();
     const { width, height } = getCardDimensions(cardElement);
+    const cardComputed = window.getComputedStyle(cardElement);
+    const rootComputed = window.getComputedStyle(document.documentElement);
+    const currentUiScale = (cardComputed.getPropertyValue('--card-ui-scale').trim() || rootComputed.getPropertyValue('--card-ui-scale').trim() || '1');
     const stage = document.createElement('div');
     stage.style.position = 'fixed';
     stage.style.left = '-20000px';
@@ -3106,6 +3086,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clone.style.left = 'auto';
     clone.style.top = 'auto';
     clone.style.position = 'relative';
+    clone.style.setProperty('--card-ui-scale', currentUiScale);
 
     stage.appendChild(clone);
     document.body.appendChild(stage);
@@ -3128,61 +3109,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  function canvasToBlob(canvas) {
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => resolve(blob), 'image/png');
-    });
-  }
-
-  async function triggerImageSave(blob, filename, fallbackDataUrl) {
-    const isMobile = window.matchMedia('(max-width: 767px)').matches;
-    if (blob && isMobile && typeof File !== 'undefined' && navigator.share) {
-      try {
-        const file = new File([blob], filename, { type: 'image/png' });
-        const sharePayload = {
-          title: filename,
-          files: [file]
-        };
-        const canShareFiles = typeof navigator.canShare !== 'function' || navigator.canShare({ files: [file] });
-        if (canShareFiles) {
-          await navigator.share({
-            ...sharePayload
-          });
-          return 'shared';
-        }
-      } catch (error) {
-        if (error && error.name === 'AbortError') {
-          return 'cancelled';
-        }
-      }
-    }
-
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = blob ? URL.createObjectURL(blob) : fallbackDataUrl;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    if (blob) {
-      setTimeout(() => URL.revokeObjectURL(link.href), 0);
-    }
-    return 'downloaded';
-  }
-
-  function triggerBlobDownload(blob, filename) {
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = URL.createObjectURL(blob);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 0);
-  }
-
   function getDownloadFilename(face, card = getActiveCard()) {
     const presetName = sanitizeFileName(workspace.presetName || 'preset');
     const activeCard = getActiveCard();
-    const cardName = sanitizeFileName(activeCard ? activeCard.label : '명함-1');
+    const cardName = sanitizeFileName(activeCard ? sanitizeDisplayLabel(activeCard.label, '명함-1') : '명함-1');
     return `${presetName}-${cardName}-${face}.png`;
   }
 
@@ -3190,7 +3120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const presetName = sanitizeFileName(workspace.presetName || 'preset');
     if (cards.length <= 1) {
       const activeCard = cards[0] || getActiveCard();
-      const cardName = sanitizeFileName(activeCard ? activeCard.label : '명함-1');
+      const cardName = sanitizeFileName(activeCard ? sanitizeDisplayLabel(activeCard.label, '명함-1') : '명함-1');
       return `${presetName}-${cardName}-front-back.pdf`;
     }
     return `${presetName}-${cards.length}cards-front-back.pdf`;
@@ -3199,6 +3129,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderCardCanvas(cardElement) {
     const exportResult = await prepareExportCapture(cardElement);
     try {
+      const viewportWidth = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0, Math.round(exportResult.width));
+      const viewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, Math.round(exportResult.height));
+
       return await Promise.race([
         html2canvas(exportResult.element, {
           scale: exportResult.scale,
@@ -3209,8 +3142,8 @@ document.addEventListener('DOMContentLoaded', () => {
           height: exportResult.height,
           scrollX: 0,
           scrollY: 0,
-          windowWidth: Math.round(exportResult.width),
-          windowHeight: Math.round(exportResult.height),
+          windowWidth: viewportWidth,
+          windowHeight: viewportHeight,
           removeContainer: true
         }),
         new Promise((_, reject) => {
@@ -3241,7 +3174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (isMobileViewport() && selectedCards.length > 1) {
-      setStatus('모바일에서는 현재 명함 한 장만 공유할 수 있습니다.', 'warning', 2200);
+      setStatus('모바일에서는 현재 명함만 공유할 수 있습니다.', 'warning', 2200);
     }
 
     syncActiveCardSnapshot();
@@ -3263,7 +3196,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const originalLabel = button.textContent;
       button.disabled = true;
-      button.textContent = exportCards.length > 1 ? '일괄 저장 중..' : '?대?吏 ???以?..';
+      button.textContent = exportCards.length > 1 ? '일괄 다운로드 중...' : '다운로드 중...';
 
       for (const card of exportCards) {
         workspace.activeCardId = card.id;
@@ -3276,8 +3209,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       setStatus(
         exportCards.length > 1
-          ? `${exportCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 저장을 시작했습니다.`
-          : `${targetFace === 'back' ? '뒷면' : '앞면'} 저장을 시작했습니다.`,
+          ? `${exportCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`
+          : `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`,
         'success',
         2200
       );
@@ -3332,7 +3265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
 
     button.disabled = true;
-    button.textContent = 'PDF 저장 중..';
+    button.textContent = 'PDF 생성 중...';
     if (previewWasCollapsed) {
       setMobilePreviewCollapsed(false);
     }
@@ -3370,7 +3303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       pdf.save(getPdfFilename());
-      setStatus(`양면 PDF 저장을 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
+      setStatus(`양면 PDF 다운로드를 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
     } catch (error) {
       console.error(error);
       setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
@@ -3403,7 +3336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (isMobileViewport() && selectedCards.length > 1) {
-      setStatus('모바일에서는 현재 명함 한 장만 공유할 수 있습니다.', 'warning', 2200);
+      setStatus('모바일에서는 현재 명함만 공유할 수 있습니다.', 'warning', 2200);
     }
 
     syncActiveCardSnapshot();
@@ -3725,7 +3658,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applyCardData(activeCard);
     persistWorkspace();
-    setStatus('현재 명함에 샘플을 적용했습니다.', 'success', 1800);
+    setStatus('현재 명함에 샘플 데이터를 적용했습니다.', 'success', 1800);
   }
 
   function resetCurrentCard() {
@@ -3752,7 +3685,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!hasContact) {
-      setStatus('전화번호나 이메일 중 하나는 입력해주세요.', 'warning', 2200);
+      setStatus('연락처를 먼저 입력해주세요.', 'warning', 2200);
       inputs.phone?.focus?.();
       return false;
     }
@@ -3959,6 +3892,9 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.company, inputs.position, inputs.name, inputs.phone, inputs.email, inputs.address, inputs.extra, inputs.slogan
   ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
+      if (input === inputs.phone) {
+        input.value = input.value.replace(/\D+/g, '');
+      }
       updateText();
       persistWorkspace();
     });
@@ -4021,17 +3957,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (inputs.importCsvFile) {
     inputs.importCsvFile.addEventListener('change', (event) => {
       importCardsFromCsvFile(event.target.files[0]);
-    });
-  }
-
-  if (buttons.importPresetText) {
-    buttons.importPresetText.addEventListener('click', () => {
-      const rawText = inputs.importPresetText?.value?.trim();
-      if (!rawText) {
-        setStatus('붙여넣은 JSON 데이터가 없습니다.', 'warning', 2200);
-        return;
-      }
-      importPresetFromText(rawText, { clearText: true });
     });
   }
 
@@ -4135,6 +4060,11 @@ document.addEventListener('DOMContentLoaded', () => {
       toggleCompare(false);
     }
   });
+  window.addEventListener('beforeunload', (event) => {
+    if (!hasUnsavedChanges) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
   window.addEventListener('load', updateDesktopPartnerScale);
 
   presetLibrary = loadPresetLibrary();
@@ -4176,5 +4106,8 @@ document.addEventListener('DOMContentLoaded', () => {
       : (wizardStep === 4 ? (advancedEditing ? elements.sectionLogo : elements.sectionStyle) : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo))
   );
   persistWorkspace();
+  suspendUnsavedTracking = false;
+  hasUnsavedChanges = false;
   setStatus('준비 완료');
 });
+
