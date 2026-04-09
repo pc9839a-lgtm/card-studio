@@ -159,19 +159,20 @@
             <span>이메일</span>
             <input type="email" id="input-email" placeholder="이메일">
           </label>
-          <label class="field full-span">
+          <label class="field full-span wizard-detail-optional">
             <span>주소</span>
             <input type="text" id="input-address" placeholder="주소">
           </label>
-          <label class="field full-span">
+          <label class="field full-span wizard-detail-optional">
             <span>추가 정보</span>
             <input type="text" id="input-extra" placeholder="운영시간, 예약 링크, 안내 문구 등">
           </label>
-          <label class="field full-span">
+          <label class="field full-span wizard-detail-optional">
             <span>뒷면 슬로건</span>
             <input type="text" id="input-slogan" placeholder="뒷면 슬로건">
           </label>
         </div>
+        <button id="btn-toggle-details-fields" class="btn btn-outline wizard-details-toggle" type="button" hidden>추가 정보 펼치기</button>
       </section>
 
       <section class="control-group media-group" id="section-logo" hidden>
@@ -529,10 +530,6 @@
           </div>
         </div>
 
-        <div class="wizard-advanced-toggle">
-          <button id="btn-toggle-advanced" class="btn btn-outline" type="button">고급편집 열기</button>
-          <span>로고, 이미지, QR, 텍스트 위치 조정</span>
-        </div>
       </section>
 
       <div class="actions" id="section-export" hidden>
@@ -562,8 +559,7 @@
 
       <div class="wizard-footer" id="wizard-footer">
         <button id="btn-wizard-prev" class="btn btn-outline" type="button" hidden>이전</button>
-        <button id="btn-wizard-secondary" class="btn btn-outline" type="button" hidden>다른 추천 보기</button>
-        <button id="btn-wizard-next" class="btn btn-primary" type="button">명함 만들기</button>
+        <button id="btn-wizard-next" class="btn btn-primary" type="button">다음</button>
       </div>
     </aside>
 
@@ -589,6 +585,13 @@
             <button id="btn-mobile-save-shortcut" class="btn btn-outline btn-sm" type="button">공유</button>
             <button id="btn-mobile-toggle-preview" class="btn btn-outline btn-sm" type="button">숨기기</button>
           </div>
+        </div>
+        <div class="mobile-save-panel" id="mobile-save-panel" hidden>
+          <label class="mobile-save-panel__field">
+            <span>작업 이름</span>
+            <input type="text" id="input-mobile-preset-name" placeholder="프리셋 이름">
+          </label>
+          <button id="btn-mobile-save-preset" class="btn btn-primary" type="button">작업 저장</button>
         </div>
 
         <div class="cards-wrapper" id="single-view">

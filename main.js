@@ -144,6 +144,8 @@ document.addEventListener('DOMContentLoaded', () => {
     mobileFaceBack: document.getElementById('btn-mobile-face-back'),
     mobileSaveShortcut: document.getElementById('btn-mobile-save-shortcut'),
     mobileTogglePreview: document.getElementById('btn-mobile-toggle-preview'),
+    mobilePresetName: document.getElementById('input-mobile-preset-name'),
+    mobileSavePreset: document.getElementById('btn-mobile-save-preset'),
     generateFrontQr: document.getElementById('btn-generate-front-qr'),
     generateBackQr: document.getElementById('btn-generate-back-qr'),
     loadPreset: document.getElementById('btn-load-preset'),
@@ -154,10 +156,9 @@ document.addEventListener('DOMContentLoaded', () => {
     deleteCard: document.getElementById('btn-delete-card'),
     wizardPrev: document.getElementById('btn-wizard-prev'),
     wizardNext: document.getElementById('btn-wizard-next'),
-    wizardSecondary: document.getElementById('btn-wizard-secondary'),
     refreshRecommendations: document.getElementById('btn-refresh-recommendations'),
     quickStart: document.getElementById('btn-quick-start'),
-    toggleAdvanced: document.getElementById('btn-toggle-advanced'),
+    toggleDetailsFields: document.getElementById('btn-toggle-details-fields'),
     saveInline: document.getElementById('btn-save-inline'),
     wizardFillSample: document.getElementById('btn-wizard-fill-sample'),
     wizardDownloadFront: document.getElementById('btn-wizard-download-front'),
@@ -273,7 +274,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const infoCoreFields = [inputs.name, inputs.phone]
     .map((input) => input?.closest('.field'))
     .filter(Boolean);
-  const infoDetailFields = [inputs.company, inputs.position, inputs.email, inputs.address, inputs.extra, inputs.slogan]
+  const infoPrimaryDetailFields = [inputs.company, inputs.position, inputs.email]
+    .map((input) => input?.closest('.field'))
+    .filter(Boolean);
+  const infoOptionalDetailFields = [inputs.address, inputs.extra, inputs.slogan]
     .map((input) => input?.closest('.field'))
     .filter(Boolean);
   const advancedSectionIds = ['section-logo', 'section-text', 'section-image', 'section-qr'];
@@ -284,9 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragJustEndedAt = 0;
   let mobilePreviewFace = 'front';
   let mobilePreviewCollapsed = false;
+  let mobileDetailStage = 'core';
+  let mobileSetupStage = 'style';
   let lastPreviewCardWidth = PREVIEW_REFERENCE_WIDTH;
   let wizardStep = 1;
   let advancedEditing = false;
+  let mobileFlowRoute = 'start';
   let printPreviewEnabled = false;
   let wizardRecommendedTemplates = [];
   let statusTimer = null;
@@ -315,9 +322,118 @@ document.addEventListener('DOMContentLoaded', () => {
     4: {
       label: '스타일 & 저장',
       title: '템플릿, 컬러, 폰트를 정리하고 저장하세요',
-      description: '필요하면 고급편집을 열어 로고, 이미지, QR, 위치까지 세밀하게 조정할 수 있습니다.'
+      description: '필요하면 세밀 편집으로 로고, 이미지, QR, 위치까지 조정할 수 있습니다.'
     }
   };
+  const mobileFlowMeta = {
+    start: {
+      label: '시작',
+      title: '이름과 연락처를 입력하세요',
+      description: '명함 제작을 시작할 수 있도록 꼭 필요한 정보만 먼저 받습니다.'
+    },
+    template: {
+      label: '템플릿',
+      title: '템플릿을 골라주세요',
+      description: '추천된 3개 중 하나를 고르면 다음 단계로 넘어갑니다.'
+    },
+    'details-core': {
+      label: '정보 1/2',
+      title: '기본 정보를 입력하세요',
+      description: '회사명, 직책, 이메일만 먼저 채웁니다.'
+    },
+    'details-extra': {
+      label: '정보 2/2',
+      title: '추가 정보를 입력하세요',
+      description: '주소, 추가 정보, 슬로건을 이어서 넣습니다.'
+    },
+    style: {
+      label: '스타일',
+      title: '색상과 배치를 먼저 정리하세요',
+      description: '회사명 위치, 템플릿, 색상, 폰트를 먼저 맞춥니다.'
+    },
+    type: {
+      label: '이름',
+      title: '이름과 회사명을 정리하세요',
+      description: '이름, 회사명, 직책 위치를 따로 조정합니다.'
+    },
+    logo: {
+      label: '로고',
+      title: '로고를 넣을까요?',
+      description: '지금 넣거나 건너뛰고 다음 단계로 넘어갈 수 있습니다.'
+    },
+    image: {
+      label: '이미지',
+      title: '이미지를 넣을까요?',
+      description: '배경 이미지나 홍보 이미지를 지금 넣거나 건너뛸 수 있습니다.'
+    },
+    qr: {
+      label: 'QR',
+      title: 'QR을 만들까요?',
+      description: '링크나 연락처로 QR을 만들고, 원하면 건너뛸 수 있습니다.'
+    },
+    preview: {
+      label: '확인',
+      title: '완성본을 확인하세요',
+      description: '앞면과 뒷면을 확인하고 바로 저장할 수 있습니다.'
+    },
+    advanced: {
+      label: '고급',
+      title: '세밀한 편집',
+      description: '로고, 이미지, QR, 색상 같은 고급 설정을 조정합니다.'
+    }
+  };
+  const MOBILE_FLOW_ROUTE_BY_STEP = {
+    1: 'start',
+    2: 'template',
+    3: 'details-core',
+    4: 'style'
+  };
+  const MOBILE_FLOW_ROUTE_LIST = ['start', 'template', 'details-core', 'details-extra', 'style', 'type', 'logo', 'image', 'qr', 'preview', 'advanced'];
+  const MOBILE_FLOW_PREVIEW_VISIBLE_ROUTES = new Set(['style', 'type', 'logo', 'image', 'qr', 'preview', 'advanced']);
+
+  function getMobileFlowRouteIndex(route = mobileFlowRoute) {
+    const index = MOBILE_FLOW_ROUTE_LIST.indexOf(route);
+    return index >= 0 ? index + 1 : MOBILE_FLOW_ROUTE_LIST.indexOf('preview') + 1;
+  }
+
+  function getWizardDisplayMeta() {
+    if (isMobileViewport()) {
+      return mobileFlowMeta[mobileFlowRoute] || mobileFlowMeta.preview;
+    }
+    return wizardStepMeta[wizardStep] || wizardStepMeta[1];
+  }
+
+  function getWizardPrimaryActionLabel() {
+    if (!isMobileViewport()) {
+      return '다음';
+    }
+
+    switch (mobileFlowRoute) {
+      case 'start':
+        return '다음';
+      case 'template':
+        return '다음';
+      case 'details-core':
+        return '다음';
+      case 'details-extra':
+        return '다음';
+      case 'style':
+        return '다음';
+      case 'type':
+        return '다음';
+      case 'logo':
+        return '다음';
+      case 'image':
+        return '다음';
+      case 'qr':
+        return '다음';
+      case 'advanced':
+        return '적용하기';
+      case 'preview':
+      default:
+        return '작업 저장';
+    }
+  }
 
   function createTransientState() {
     return {
@@ -606,6 +722,15 @@ document.addEventListener('DOMContentLoaded', () => {
       .filter((option) => option.value);
   }
 
+  function shuffleArray(items) {
+    const copy = Array.isArray(items) ? items.slice() : [];
+    for (let index = copy.length - 1; index > 0; index -= 1) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
+    }
+    return copy;
+  }
+
   function generateWizardRecommendations() {
     const buckets = [
       ['template-modern', 'template-pet', 'template-classic'],
@@ -701,8 +826,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentNameSize = 24;
     const currentFrontLogoSize = 96;
     const currentBackLogoSize = 96;
-    const previewWidth = 220;
-    const previewScale = clamp(previewWidth / PREVIEW_REFERENCE_WIDTH, 0.58, 0.58);
+    const isMobile = isMobileViewport();
+    const recommendGridWidth = elements.wizardRecommendGrid?.clientWidth || 0;
+    const desktopColumnWidth = recommendGridWidth > 0
+      ? Math.floor((recommendGridWidth - 24) / 3)
+      : 132;
+    const previewWidth = isMobile
+      ? 220
+      : clamp(desktopColumnWidth - 96, 168, 228);
+    const previewScale = isMobile
+      ? clamp(previewWidth / PREVIEW_REFERENCE_WIDTH, 0.58, 0.58)
+      : clamp(previewWidth / PREVIEW_REFERENCE_WIDTH, 0.44, 0.6);
     const clone = elements.cardFront.cloneNode(true);
     const templateValues = getTemplateOptions().map((option) => option.value);
     clone.removeAttribute('id');
@@ -780,10 +914,26 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderWizardRecommendations() {
     if (!elements.wizardRecommendGrid) return;
 
+    if (wizardRecommendedTemplates.length === 0) {
+      const fallbackTemplates = getTemplateOptions().map((option) => option.value).filter(Boolean);
+      wizardRecommendedTemplates = shuffleArray(fallbackTemplates).slice(0, 3);
+    }
+
     elements.wizardRecommendGrid.innerHTML = '';
     const selectedTemplate = inputs.template?.value;
+    const templateValues = wizardRecommendedTemplates.length > 0
+      ? wizardRecommendedTemplates
+      : getTemplateOptions().map((option) => option.value).filter(Boolean).slice(0, 3);
 
-    wizardRecommendedTemplates.forEach((templateValue) => {
+    if (templateValues.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'wizard-recommend-empty';
+      emptyState.textContent = '템플릿을 불러오지 못했습니다. 다시 시도해주세요.';
+      elements.wizardRecommendGrid.appendChild(emptyState);
+      return;
+    }
+
+    templateValues.forEach((templateValue) => {
       const option = getTemplateOptions().find((item) => item.value === templateValue);
       if (!option) return;
 
@@ -820,12 +970,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function syncInfoFieldVisibility() {
-    const showDetails = !isGuidedWizardEnabled() || wizardStep >= 3;
+    const isMobile = isMobileViewport();
+    const isMobileDetailsCore = isMobile && mobileFlowRoute === 'details-core';
+    const isMobileDetailsExtra = isMobile && mobileFlowRoute === 'details-extra';
+    const showDesktopDetails = !isGuidedWizardEnabled() || wizardStep >= 3;
     infoCoreFields.forEach((field) => {
       if (field) field.hidden = false;
     });
-    infoDetailFields.forEach((field) => {
-      if (field) field.hidden = !showDetails;
+    infoPrimaryDetailFields.forEach((field) => {
+      if (field) field.hidden = isMobile ? !isMobileDetailsCore : !showDesktopDetails;
+    });
+    infoOptionalDetailFields.forEach((field) => {
+      if (field) field.hidden = isMobile ? !isMobileDetailsExtra : !showDesktopDetails;
     });
   }
 
@@ -841,17 +997,94 @@ document.addEventListener('DOMContentLoaded', () => {
     workspace.advancedEditing = advancedEditing;
   }
 
+  function getMobileFlowRoute(step = wizardStep, isAdvanced = advancedEditing) {
+    if (step === 4 && isAdvanced) return 'advanced';
+    if (step === 3 && isMobileViewport()) return mobileDetailStage === 'extra' ? 'details-extra' : 'details-core';
+    if (step === 4 && isMobileViewport()) {
+      return mobileSetupStage;
+    }
+    return MOBILE_FLOW_ROUTE_BY_STEP[step] || 'preview';
+  }
+
+  function syncMobileFlowRoute() {
+    const nextRoute = getMobileFlowRoute();
+    mobileFlowRoute = nextRoute;
+
+    document.body.dataset.mobileRoute = nextRoute;
+    document.body.classList.toggle('is-mobile-flow', isMobileViewport());
+    MOBILE_FLOW_ROUTE_LIST.forEach((route) => {
+      document.body.classList.toggle(`is-mobile-route-${route}`, route === nextRoute);
+    });
+  }
+
+  function setMobileFlowRoute(route, options = {}) {
+    const nextRoute = MOBILE_FLOW_ROUTE_LIST.includes(route) ? route : 'preview';
+
+    switch (nextRoute) {
+      case 'start':
+        mobileDetailStage = 'core';
+        setWizardStep(1, options);
+        break;
+      case 'template':
+        mobileDetailStage = 'core';
+        setWizardStep(2, options);
+        break;
+      case 'details-core':
+        mobileDetailStage = 'core';
+        setWizardStep(3, { ...options, keepMobileDetailStage: true });
+        break;
+      case 'details-extra':
+        mobileDetailStage = 'extra';
+        setWizardStep(3, { ...options, keepMobileDetailStage: true });
+        break;
+      case 'style':
+        mobileSetupStage = 'style';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'type':
+        mobileSetupStage = 'type';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'logo':
+        mobileSetupStage = 'logo';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'image':
+        mobileSetupStage = 'image';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'qr':
+        mobileSetupStage = 'qr';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'preview':
+        mobileSetupStage = 'preview';
+        setWizardStep(4, { ...options, keepMobileSetupStage: true });
+        break;
+      case 'advanced':
+        mobileDetailStage = 'core';
+        mobileSetupStage = 'style';
+        setWizardStep(4, options);
+        setAdvancedEditing(true, options);
+        break;
+      default:
+        mobileDetailStage = 'core';
+        mobileSetupStage = 'style';
+        setWizardStep(4, options);
+        break;
+    }
+  }
+
   function setAdvancedEditing(nextState, options = {}) {
     advancedEditing = !!nextState;
     updateWizardUI();
     if (wizardStep === 4 && elements.wizardFooter) {
       elements.wizardFooter.hidden = false;
-      elements.wizardFooter.style.display = 'flex';
+      elements.wizardFooter.style.display = '';
     }
     if (wizardStep === 4) {
       if (buttons.wizardPrev) buttons.wizardPrev.hidden = false;
-      if (buttons.wizardSecondary) buttons.wizardSecondary.hidden = false;
-      if (buttons.wizardNext) buttons.wizardNext.hidden = false;
+      if (buttons.wizardNext) buttons.wizardNext.hidden = isMobileViewport() && mobileFlowRoute === 'preview';
     }
     if (wizardStep === 4) {
       openSectionExclusive(advancedEditing ? elements.sectionLogo : elements.sectionStyle);
@@ -862,14 +1095,28 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateWizardHeader() {
-    const meta = wizardStepMeta[wizardStep] || wizardStepMeta[1];
-    if (elements.wizardStepCount) elements.wizardStepCount.textContent = `${wizardStep} / 4 ${meta.label}`;
+    const meta = getWizardDisplayMeta();
+    if (elements.wizardStepCount) {
+      elements.wizardStepCount.textContent = isMobileViewport()
+        ? meta.label
+        : `${wizardStep} / 4 ${meta.label}`;
+    }
     if (elements.wizardStepLabel) {
       elements.wizardStepLabel.textContent = '';
       elements.wizardStepLabel.style.display = 'none';
     }
     if (elements.wizardStepTitle) elements.wizardStepTitle.textContent = meta.title;
     if (elements.wizardStepDescription) elements.wizardStepDescription.textContent = meta.description;
+  }
+
+  function updateWizardDetailsToggle() {
+    if (!buttons.toggleDetailsFields) return;
+    const isMobile = isMobileViewport();
+    const shouldShow = isMobile && wizardStep === 3;
+    const isExtraStage = mobileDetailStage === 'extra';
+    buttons.toggleDetailsFields.hidden = !shouldShow;
+    buttons.toggleDetailsFields.textContent = isExtraStage ? '기본 정보 보기' : '추가 정보 보기';
+    buttons.toggleDetailsFields.setAttribute('aria-expanded', isExtraStage ? 'true' : 'false');
   }
 
   function applySectionCopyUpdates() {
@@ -881,65 +1128,102 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getDesktopStepFourSections() {
+    if (isMobileViewport() || wizardStep !== 4) return [];
+    return [
+      elements.sectionStyle,
+      elements.sectionText,
+      elements.sectionLogo,
+      elements.sectionImage,
+      elements.sectionQr,
+      elements.sectionWorkspace,
+      elements.sectionExport
+    ]
+      .filter((section) => section && !section.hidden);
+  }
+
+  function getDesktopStepFourActiveIndex() {
+    const sections = getDesktopStepFourSections();
+    if (!sections.length) return -1;
+    const activeIndex = sections.findIndex((section) => !section.classList.contains('is-collapsed'));
+    return activeIndex >= 0 ? activeIndex : 0;
+  }
+
+  function moveDesktopStepFourSection(direction = 1) {
+    const sections = getDesktopStepFourSections();
+    if (!sections.length) return false;
+
+    const activeIndex = getDesktopStepFourActiveIndex();
+    const nextIndex = clamp(activeIndex + direction, 0, sections.length - 1);
+    if (nextIndex === activeIndex) {
+      return false;
+    }
+
+    const nextSection = sections[nextIndex];
+    openSectionExclusive(nextSection);
+    nextSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return true;
+  }
+
   function updateWizardFooter() {
-    if (!buttons.wizardPrev || !buttons.wizardNext || !buttons.wizardSecondary) return;
+    if (!buttons.wizardPrev || !buttons.wizardNext) return;
+    const isMobile = isMobileViewport();
+    const forceMobileNext = isMobile && mobileFlowRoute !== 'preview' && mobileFlowRoute !== 'advanced';
+    const isMobilePreviewRoute = isMobile && mobileFlowRoute === 'preview';
+    const desktopStepFourActiveIndex = getDesktopStepFourActiveIndex();
+    const desktopStepFourSections = getDesktopStepFourSections();
 
     buttons.wizardPrev.hidden = wizardStep === 1;
     buttons.wizardPrev.disabled = wizardStep === 1;
 
-    buttons.wizardSecondary.hidden = true;
-    buttons.wizardSecondary.disabled = false;
     buttons.wizardNext.disabled = false;
+    buttons.wizardNext.hidden = isMobilePreviewRoute;
 
     if (buttons.quickStart) {
-      buttons.quickStart.hidden = wizardStep !== 2;
+      buttons.quickStart.hidden = isMobile || wizardStep !== 2;
     }
 
-    if (buttons.toggleAdvanced) {
-      buttons.toggleAdvanced.textContent = advancedEditing ? '고급편집 닫기' : '고급편집 열기';
+    if (buttons.wizardFillSample) {
+      buttons.wizardFillSample.hidden = isMobile && wizardStep === 3;
     }
 
-    switch (wizardStep) {
-      case 1:
-        buttons.wizardNext.textContent = '명함 만들기';
-        break;
-      case 2:
-        buttons.wizardSecondary.hidden = false;
-        buttons.wizardSecondary.textContent = '다른 추천 보기';
-        buttons.wizardNext.textContent = '시작';
-        break;
-      case 3:
-        buttons.wizardNext.textContent = '다음';
-        break;
-      case 4:
-        buttons.wizardSecondary.hidden = false;
-        buttons.wizardSecondary.textContent = advancedEditing ? '기본 편집' : '고급편집 열기';
-        buttons.wizardNext.textContent = '작업 저장';
-        break;
-      default:
-        buttons.wizardNext.textContent = '다음';
-        break;
-    }
+    buttons.wizardNext.textContent = forceMobileNext ? '다음' : getWizardPrimaryActionLabel();
 
     if (wizardStep === 4 && elements.wizardFooter) {
       elements.wizardFooter.hidden = false;
       if (buttons.wizardPrev) buttons.wizardPrev.hidden = false;
-      if (buttons.wizardSecondary) buttons.wizardSecondary.hidden = false;
-      if (buttons.wizardNext) buttons.wizardNext.hidden = false;
+      if (buttons.wizardNext) buttons.wizardNext.hidden = isMobilePreviewRoute;
+    }
+
+    if (elements.wizardFooter) {
+      const visibleButtonCount = [buttons.wizardPrev, buttons.wizardNext]
+        .filter((button) => button && !button.hidden)
+        .length;
+      elements.wizardFooter.classList.toggle('is-single-action', visibleButtonCount === 1);
     }
   }
 
   function updateWizardUI() {
     const isGuidedWizard = isGuidedWizardEnabled();
-    const isPreviewVisible = isGuidedWizard ? wizardStep >= 3 : true;
-    const advancedToggleWrap = buttons.toggleAdvanced?.closest('.wizard-advanced-toggle');
+    const isMobile = isMobileViewport();
+    const showAdvanced = isMobile && wizardStep === 4 && advancedEditing;
+    const visibleMobileSections = new Set();
     const appContainer = document.querySelector('.app-container');
     const controlsPanel = document.querySelector('.controls');
     const entryHeading = elements.sectionEntry?.querySelector('.section-heading');
 
+    syncMobileFlowRoute();
     updateWizardHeader();
     syncInfoFieldVisibility();
     syncWizardStateToWorkspace();
+    updateWizardDetailsToggle();
+    syncMobileActionLabels();
+
+    const isPreviewVisible = isGuidedWizard
+      ? (isMobile
+        ? MOBILE_FLOW_PREVIEW_VISIBLE_ROUTES.has(mobileFlowRoute)
+        : wizardStep >= 3)
+      : true;
 
     document.body.classList.toggle('is-wizard-preview-hidden', isGuidedWizard && !isPreviewVisible);
     document.body.classList.toggle('is-wizard-advanced-open', isGuidedWizard && advancedEditing);
@@ -950,24 +1234,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('is-wizard-step-4', isGuidedWizard && wizardStep === 4);
 
     const forceStep4Footer = isGuidedWizard && wizardStep === 4;
+    const showWizardDownloads = isGuidedWizard && (isMobile ? mobileFlowRoute === 'preview' : wizardStep === 4);
     if (elements.wizardFlow) elements.wizardFlow.hidden = !isGuidedWizard;
     if (elements.wizardFooter) {
       elements.wizardFooter.hidden = !isGuidedWizard;
       elements.wizardFooter.classList.toggle('is-force-visible', forceStep4Footer);
     }
-    if (elements.wizardDownloadActions) elements.wizardDownloadActions.hidden = !(isGuidedWizard && wizardStep === 4);
+    if (elements.wizardDownloadActions) elements.wizardDownloadActions.hidden = !showWizardDownloads;
     if (forceStep4Footer && elements.wizardFooter) {
       elements.wizardFooter.hidden = false;
       elements.wizardFooter.removeAttribute('hidden');
-      elements.wizardFooter.style.display = 'flex';
+      elements.wizardFooter.style.display = '';
       elements.wizardFooter.style.visibility = 'visible';
     }
     if (forceStep4Footer) {
-      [buttons.wizardPrev, buttons.wizardSecondary, buttons.wizardNext].forEach((button) => {
+      [buttons.wizardPrev, buttons.wizardNext].forEach((button) => {
         if (!button) return;
         button.hidden = false;
         button.removeAttribute('hidden');
       });
+      if (isMobile && mobileFlowRoute === 'preview' && buttons.wizardNext) {
+        buttons.wizardNext.hidden = true;
+        buttons.wizardNext.setAttribute('hidden', 'hidden');
+      }
     }
 
     if (appContainer) {
@@ -995,6 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.wizardFooter) {
       elements.wizardFooter.style.display = '';
       elements.wizardFooter.style.justifyContent = '';
+      elements.wizardFooter.style.visibility = '';
       elements.wizardFooter.style.width = '';
       elements.wizardFooter.style.maxWidth = '';
     }
@@ -1024,14 +1314,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setWizardSectionVisibility(elements.sectionExport, true);
       [elements.sectionLogo, elements.sectionText, elements.sectionImage, elements.sectionQr]
         .forEach((section) => setWizardSectionVisibility(section, true));
-      if (advancedToggleWrap) {
-        advancedToggleWrap.hidden = true;
-      }
     } else {
-      if (appContainer && (wizardStep === 1 || wizardStep === 2)) {
+      if (appContainer && wizardStep === 1) {
         appContainer.style.display = 'flex';
         appContainer.style.width = '100%';
-        appContainer.style.maxWidth = wizardStep === 1 ? '720px' : '1120px';
+        appContainer.style.maxWidth = '720px';
         appContainer.style.margin = '0 auto';
         appContainer.style.justifyContent = 'center';
         appContainer.style.alignItems = 'center';
@@ -1050,10 +1337,20 @@ document.addEventListener('DOMContentLoaded', () => {
         controlsPanel.style.overflow = 'visible';
         controlsPanel.style.paddingTop = '24px';
       }
-      if (controlsPanel && wizardStep === 2) {
+      if (appContainer && wizardStep === 2 && !isMobile) {
+        appContainer.style.display = 'flex';
+        appContainer.style.width = '100%';
+        appContainer.style.maxWidth = '1120px';
+        appContainer.style.margin = '0 auto';
+        appContainer.style.justifyContent = 'center';
+        appContainer.style.alignItems = 'center';
+        appContainer.style.minHeight = '100vh';
+        appContainer.style.padding = '28px 24px';
+      }
+      if (controlsPanel && wizardStep === 2 && !isMobile) {
         controlsPanel.style.flex = '0 0 auto';
         controlsPanel.style.width = '100%';
-        controlsPanel.style.maxWidth = 'none';
+        controlsPanel.style.maxWidth = '1040px';
         controlsPanel.style.margin = '0 auto';
         controlsPanel.style.alignSelf = 'center';
         controlsPanel.style.borderRight = '0';
@@ -1061,18 +1358,64 @@ document.addEventListener('DOMContentLoaded', () => {
         controlsPanel.style.maxHeight = 'none';
         controlsPanel.style.overflow = 'visible';
       }
-      setWizardSectionVisibility(elements.sectionEntry, wizardStep === 1);
-      setWizardSectionVisibility(elements.sectionRecommend, wizardStep === 2);
-      setWizardSectionVisibility(elements.sectionInfo, wizardStep === 3);
-      const showAdvanced = wizardStep === 4 && advancedEditing;
-      setWizardSectionVisibility(elements.sectionStyle, wizardStep === 4 && !showAdvanced);
-      setWizardSectionVisibility(elements.sectionWorkspace, wizardStep === 4 && !showAdvanced);
-      setWizardSectionVisibility(elements.sectionExport, wizardStep === 4);
-      setWizardSectionVisibility(elements.sectionStart, false);
-      [elements.sectionLogo, elements.sectionText, elements.sectionImage, elements.sectionQr]
-        .forEach((section) => setWizardSectionVisibility(section, showAdvanced));
-      if (advancedToggleWrap) {
-        advancedToggleWrap.hidden = false;
+      if (isMobile) {
+        switch (mobileFlowRoute) {
+          case 'start':
+            visibleMobileSections.add(elements.sectionEntry);
+            break;
+          case 'template':
+            visibleMobileSections.add(elements.sectionRecommend);
+            break;
+          case 'details-core':
+          case 'details-extra':
+            visibleMobileSections.add(elements.sectionInfo);
+            break;
+          case 'style':
+            visibleMobileSections.add(elements.sectionStyle);
+            break;
+          case 'type':
+            visibleMobileSections.add(elements.sectionText);
+            break;
+          case 'logo':
+            visibleMobileSections.add(elements.sectionLogo);
+            break;
+          case 'image':
+            visibleMobileSections.add(elements.sectionImage);
+            break;
+          case 'qr':
+            visibleMobileSections.add(elements.sectionQr);
+            break;
+          case 'advanced':
+            [elements.sectionStyle, elements.sectionText, elements.sectionLogo, elements.sectionImage, elements.sectionQr]
+              .forEach((section) => visibleMobileSections.add(section));
+            break;
+          default:
+            break;
+        }
+        [
+          elements.sectionStart,
+          elements.sectionEntry,
+          elements.sectionRecommend,
+          elements.sectionInfo,
+          elements.sectionStyle,
+          elements.sectionWorkspace,
+          elements.sectionExport,
+          elements.sectionLogo,
+          elements.sectionText,
+          elements.sectionImage,
+          elements.sectionQr
+        ].forEach((section) => setWizardSectionVisibility(section, visibleMobileSections.has(section)));
+      } else {
+        const isDesktopStepFour = wizardStep === 4;
+        setWizardSectionVisibility(elements.sectionEntry, wizardStep === 1);
+        setWizardSectionVisibility(elements.sectionRecommend, wizardStep === 2);
+        setWizardSectionVisibility(elements.sectionInfo, wizardStep === 3);
+        setWizardSectionVisibility(elements.sectionStyle, isDesktopStepFour);
+        setWizardSectionVisibility(elements.sectionWorkspace, isDesktopStepFour);
+        setWizardSectionVisibility(elements.sectionExport, wizardStep === 4);
+        setWizardSectionVisibility(elements.sectionStart, false);
+        [elements.sectionLogo, elements.sectionText, elements.sectionImage, elements.sectionQr]
+          .forEach((section) => setWizardSectionVisibility(section, isDesktopStepFour));
       }
 
       [
@@ -1088,8 +1431,8 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.sectionImage,
         elements.sectionQr
       ].forEach((section) => {
-        if (!section) return;
-        setSectionCollapsed(section, true);
+        if (!section || !isMobile) return;
+        setSectionCollapsed(section, !visibleMobileSections.has(section));
       });
 
       if (wizardStep === 1) {
@@ -1124,6 +1467,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (wizardStep === 3) {
         setSectionCollapsed(elements.sectionInfo, false);
         elements.sectionInfo?.classList.remove('is-collapsed');
+        if (isMobile && (mobileFlowRoute === 'details-core' || mobileFlowRoute === 'details-extra')) {
+          elements.sectionInfo.hidden = false;
+          elements.sectionInfo.style.display = '';
+          const infoGrid = elements.sectionInfo.querySelector('.field-grid');
+          if (infoGrid) {
+            infoGrid.style.display = 'grid';
+          }
+        }
       }
       if (wizardStep === 2) {
         if (elements.wizardFlow) {
@@ -1140,13 +1491,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setSectionCollapsed(elements.sectionRecommend, false);
       }
-      if (wizardStep === 4 && !showAdvanced) {
+      if (wizardStep === 4 && !showAdvanced && isMobile) {
         setSectionCollapsed(elements.sectionStyle, false);
-        setSectionCollapsed(elements.sectionExport, false);
       }
-      if (showAdvanced) {
+      if (showAdvanced && isMobile) {
         setSectionCollapsed(elements.sectionLogo, false);
         setSectionCollapsed(elements.sectionExport, false);
+      }
+      if (isMobile) {
+        if (mobileFlowRoute === 'style') {
+          setSectionCollapsed(elements.sectionStyle, false);
+          elements.sectionStyle?.classList.remove('is-collapsed');
+        }
+        if (mobileFlowRoute === 'type') {
+          setSectionCollapsed(elements.sectionText, false);
+          elements.sectionText?.classList.remove('is-collapsed');
+        }
+        if (mobileFlowRoute === 'logo') {
+          setSectionCollapsed(elements.sectionLogo, false);
+          elements.sectionLogo?.classList.remove('is-collapsed');
+        }
+        if (mobileFlowRoute === 'image') {
+          setSectionCollapsed(elements.sectionImage, false);
+          elements.sectionImage?.classList.remove('is-collapsed');
+        }
+        if (mobileFlowRoute === 'qr') {
+          setSectionCollapsed(elements.sectionQr, false);
+          elements.sectionQr?.classList.remove('is-collapsed');
+        }
       }
     }
 
@@ -1170,16 +1542,47 @@ document.addEventListener('DOMContentLoaded', () => {
       advancedEditing = false;
     }
 
+    if (isMobileViewport() && wizardStep === 3 && !options.keepMobileDetailStage) {
+      mobileDetailStage = 'core';
+    }
+    if (isMobileViewport() && wizardStep === 4 && !options.keepMobileSetupStage) {
+      mobileSetupStage = 'style';
+    }
+
     updateWizardUI();
 
     if (wizardStep === 2 && (forceRecommendations || wizardRecommendedTemplates.length === 0)) {
       refreshWizardRecommendations();
+    } else if (wizardStep === 2) {
+      renderWizardRecommendations();
     }
 
     const defaultSection = wizardStep === 2
       ? elements.sectionRecommend
       : wizardStep === 4
-        ? (advancedEditing ? elements.sectionLogo : elements.sectionStyle)
+        ? (() => {
+            if (!isMobileViewport()) {
+              return elements.sectionStyle;
+            }
+            switch (mobileFlowRoute) {
+              case 'style':
+                return elements.sectionStyle;
+              case 'type':
+                return elements.sectionText;
+              case 'logo':
+                return elements.sectionLogo;
+              case 'image':
+                return elements.sectionImage;
+              case 'qr':
+                return elements.sectionQr;
+              case 'preview':
+                return null;
+              case 'advanced':
+                return advancedEditing ? elements.sectionLogo : elements.sectionStyle;
+              default:
+                return elements.sectionStyle;
+            }
+          })()
         : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo);
 
     if (!options.skipOpen && defaultSection && !defaultSection.hidden) {
@@ -1193,6 +1596,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function goToWizardStepFromSection(sectionId) {
     if (!isGuidedWizardEnabled()) return;
+    if (isMobileViewport()) {
+      if (sectionId === 'section-entry' && wizardStep !== 1) {
+        setWizardStep(1);
+        return;
+      }
+      if (sectionId === 'section-recommend' && wizardStep !== 2) {
+        setWizardStep(2);
+        return;
+      }
+      if (sectionId === 'section-info' && wizardStep < 3) {
+        setWizardStep(3);
+        return;
+      }
+      if (sectionId === 'section-style') {
+        setMobileFlowRoute('style', { keepMobileSetupStage: true });
+        return;
+      }
+      if (sectionId === 'section-text') {
+        setMobileFlowRoute('type', { keepMobileSetupStage: true });
+        return;
+      }
+      if (sectionId === 'section-logo') {
+        setMobileFlowRoute('logo', { keepMobileSetupStage: true });
+        return;
+      }
+      if (sectionId === 'section-image') {
+        setMobileFlowRoute('image', { keepMobileSetupStage: true });
+        return;
+      }
+      if (sectionId === 'section-qr') {
+        setMobileFlowRoute('qr', { keepMobileSetupStage: true });
+        return;
+      }
+      if (sectionId === 'section-export') {
+        setMobileFlowRoute('preview', { keepMobileSetupStage: true });
+        return;
+      }
+    }
 
     if (sectionId === 'section-entry' && wizardStep !== 1) {
       setWizardStep(1);
@@ -1239,29 +1680,44 @@ document.addEventListener('DOMContentLoaded', () => {
   function syncMobileActionLabels() {
     const isMobile = isMobileViewport();
     if (buttons.mobileSaveShortcut) {
-      buttons.mobileSaveShortcut.textContent = isMobile ? '공유' : '저장';
+      buttons.mobileSaveShortcut.textContent = isMobile
+        ? (mobilePreviewFace === 'back' ? '뒷면 다운로드' : '앞면 다운로드')
+        : '저장';
     }
     if (buttons.downloadFront) {
-      buttons.downloadFront.textContent = isMobile ? '앞면 공유' : '앞면 다운로드';
+      buttons.downloadFront.textContent = isMobile ? '앞면 다운로드' : '앞면 다운로드';
     }
     if (buttons.downloadBack) {
-      buttons.downloadBack.textContent = isMobile ? '뒷면 공유' : '뒷면 다운로드';
+      buttons.downloadBack.textContent = isMobile ? '뒷면 다운로드' : '뒷면 다운로드';
     }
     if (buttons.wizardDownloadFront) {
-      buttons.wizardDownloadFront.textContent = isMobile ? '앞면 공유' : '앞면 다운로드';
+      buttons.wizardDownloadFront.textContent = isMobile ? '앞면 다운로드' : '앞면 다운로드';
     }
     if (buttons.wizardDownloadBack) {
-      buttons.wizardDownloadBack.textContent = isMobile ? '뒷면 공유' : '뒷면 다운로드';
+      buttons.wizardDownloadBack.textContent = isMobile ? '뒷면 다운로드' : '뒷면 다운로드';
     }
     if (buttons.wizardDownloadPdf) {
-      buttons.wizardDownloadPdf.textContent = '양면 PDF';
+      buttons.wizardDownloadPdf.textContent = isMobile ? 'PDF 저장' : '양면 PDF';
     }
     if (buttons.compare) {
       buttons.compare.disabled = isMobile;
       buttons.compare.title = isMobile ? '모바일에서는 전체 템플릿 비교를 숨겼습니다.' : '';
     }
+    if (buttons.printPreview) {
+      buttons.printPreview.hidden = isMobile;
+    }
     if (!isMobile) {
       setMobilePreviewCollapsed(false);
+    }
+  }
+
+  function syncMobileSavePanel() {
+    const isPreviewRoute = isMobileViewport() && mobileFlowRoute === 'preview';
+    if (elements.mobileSavePanel) {
+      elements.mobileSavePanel.hidden = !isPreviewRoute;
+    }
+    if (elements.mobilePresetName && document.activeElement !== elements.mobilePresetName) {
+      elements.mobilePresetName.value = sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName());
     }
   }
 
@@ -1293,6 +1749,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (workspace) {
       updateContextLabels();
     }
+    syncMobileActionLabels();
+    syncMobileSavePanel();
   }
 
   function getVisiblePreviewCard() {
@@ -1403,6 +1861,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const safePresetName = sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName());
       workspace.presetName = safePresetName;
       inputs.presetName.value = safePresetName;
+    }
+    if (elements.mobilePresetName && document.activeElement !== elements.mobilePresetName) {
+      elements.mobilePresetName.value = sanitizeDisplayLabel(workspace.presetName, getDefaultPresetName());
     }
   }
 
@@ -2832,6 +3293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetSection?.id === 'section-info') {
       setMobilePreviewCollapsed(true);
     }
+    updateWizardFooter();
   }
 
   collapsibleSections.forEach((section, index) => {
@@ -2931,11 +3393,9 @@ document.addEventListener('DOMContentLoaded', () => {
       item.addEventListener('click', () => {
         inputs.template.value = option.value;
         applyTemplate(option.value);
+        renderWizardRecommendations();
         persistWorkspace();
-        isCompareMode = false;
-        elements.compareView.style.display = 'none';
-        elements.singleView.style.display = 'flex';
-        buttons.compare.textContent = '?쒕늿??鍮꾧탳';
+        toggleCompare(false);
       });
 
       elements.compareGrid.appendChild(item);
@@ -3549,6 +4009,48 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleWizardNext() {
+    if (isMobileViewport()) {
+      switch (mobileFlowRoute) {
+        case 'start':
+          if (!validateWizardStepOne()) return;
+          setWizardStep(3);
+          return;
+        case 'template':
+          handleWizardQuickStart();
+          setMobileFlowRoute('details-core', { keepMobileDetailStage: true });
+          return;
+        case 'details-core':
+          setMobileFlowRoute('details-extra', { keepMobileDetailStage: true });
+          return;
+        case 'details-extra':
+          setMobileFlowRoute('style', { keepMobileSetupStage: true });
+          return;
+        case 'style':
+          setMobileFlowRoute('type', { keepMobileSetupStage: true });
+          return;
+        case 'type':
+          setMobileFlowRoute('logo', { keepMobileSetupStage: true });
+          return;
+        case 'logo':
+          setMobileFlowRoute('image', { keepMobileSetupStage: true });
+          return;
+        case 'image':
+          setMobileFlowRoute('qr', { keepMobileSetupStage: true });
+          return;
+        case 'qr':
+          setMobileFlowRoute('preview', { keepMobileSetupStage: true });
+          return;
+        case 'preview':
+          saveCurrentPreset(true);
+          return;
+        case 'advanced':
+          setMobileFlowRoute('preview', { keepMobileSetupStage: true });
+          return;
+        default:
+          break;
+      }
+    }
+
     if (wizardStep === 1) {
       if (!validateWizardStepOne()) return;
       setWizardStep(2, { forceRecommendations: true });
@@ -3561,22 +4063,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (wizardStep === 3) {
+      if (isMobileViewport() && mobileDetailStage === 'core') {
+        mobileDetailStage = 'extra';
+        updateWizardUI();
+        setSectionCollapsed(elements.sectionInfo, false);
+        elements.sectionInfo?.classList.remove('is-collapsed');
+        return;
+      }
       setWizardStep(4);
+      return;
+    }
+
+    if (!isMobileViewport() && wizardStep === 4) {
+      if (moveDesktopStepFourSection(1)) {
+        return;
+      }
+      if (elements.sectionExport && !elements.sectionExport.hidden) {
+        openSectionExclusive(elements.sectionExport);
+        elements.sectionExport.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      saveCurrentPreset(true);
       return;
     }
 
     saveCurrentPreset(true);
   }
 
-  function handleWizardSecondary() {
-    if (wizardStep === 2) {
-      refreshWizardRecommendations();
-      return;
-    }
-
-    if (wizardStep === 4) {
-      setAdvancedEditing(!advancedEditing);
-    }
+  function toggleWizardDetailFields() {
+    if (!(isMobileViewport() && wizardStep === 3)) return;
+    mobileDetailStage = mobileDetailStage === 'core' ? 'extra' : 'core';
+    updateWizardUI();
+    setSectionCollapsed(elements.sectionInfo, false);
+    elements.sectionInfo?.classList.remove('is-collapsed');
   }
 
   paletteButtons.forEach((button) => {
@@ -3863,10 +4381,8 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.wizardFillSample.addEventListener('click', fillSample);
   }
 
-  if (buttons.toggleAdvanced) {
-    buttons.toggleAdvanced.addEventListener('click', () => {
-      setAdvancedEditing(!advancedEditing);
-    });
+  if (buttons.toggleDetailsFields) {
+    buttons.toggleDetailsFields.addEventListener('click', toggleWizardDetailFields);
   }
 
   if (buttons.saveInline) {
@@ -3893,12 +4409,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (buttons.wizardPrev) {
     buttons.wizardPrev.addEventListener('click', () => {
+      if (isMobileViewport()) {
+        switch (mobileFlowRoute) {
+          case 'advanced':
+            setAdvancedEditing(false, { persist: false });
+            setMobileFlowRoute('preview', { keepMobileSetupStage: true });
+            return;
+          case 'preview':
+            setMobileFlowRoute('qr', { keepMobileSetupStage: true });
+            return;
+          case 'qr':
+            setMobileFlowRoute('image', { keepMobileSetupStage: true });
+            return;
+          case 'image':
+            setMobileFlowRoute('logo', { keepMobileSetupStage: true });
+            return;
+          case 'logo':
+            setMobileFlowRoute('type', { keepMobileSetupStage: true });
+            return;
+          case 'type':
+            setMobileFlowRoute('style', { keepMobileSetupStage: true });
+            return;
+          case 'style':
+            setMobileFlowRoute('details-extra', { keepMobileDetailStage: true });
+            return;
+          case 'details-extra':
+            setMobileFlowRoute('details-core', { keepMobileDetailStage: true });
+            return;
+          case 'details-core':
+            setMobileFlowRoute('start', { keepMobileDetailStage: true });
+            return;
+          case 'template':
+            setMobileFlowRoute('start', { keepMobileDetailStage: true });
+            return;
+          default:
+            break;
+        }
+      }
+      if (!isMobileViewport() && wizardStep === 4) {
+        if (moveDesktopStepFourSection(-1)) return;
+      }
       if (wizardStep > 1) setWizardStep(wizardStep - 1);
     });
-  }
-
-  if (buttons.wizardSecondary) {
-    buttons.wizardSecondary.addEventListener('click', handleWizardSecondary);
   }
 
   if (buttons.wizardNext) {
@@ -3920,6 +4472,18 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.mobileTogglePreview.addEventListener('click', () => {
       setMobilePreviewCollapsed(!mobilePreviewCollapsed);
     });
+  }
+  if (elements.mobilePresetName) {
+    elements.mobilePresetName.addEventListener('input', () => {
+      const safeName = sanitizeDisplayLabel(elements.mobilePresetName.value.trim(), getDefaultPresetName());
+      workspace.presetName = safeName;
+      if (inputs.presetName) inputs.presetName.value = safeName;
+      updateContextLabels();
+      persistWorkspace();
+    });
+  }
+  if (buttons.mobileSavePreset) {
+    buttons.mobileSavePreset.addEventListener('click', () => saveCurrentPreset(true));
   }
   buttons.downloadFront.addEventListener('click', () => exportSelectedCardsAsPng('front', buttons.downloadFront));
   buttons.downloadBack.addEventListener('click', () => exportSelectedCardsAsPng('back', buttons.downloadBack));
@@ -3982,7 +4546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   openSectionExclusive(
     wizardStep === 2
       ? elements.sectionRecommend
-      : (wizardStep === 4 ? (advancedEditing ? elements.sectionLogo : elements.sectionStyle) : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo))
+      : (wizardStep === 4 ? elements.sectionStyle : (wizardStep === 1 ? elements.sectionEntry : elements.sectionInfo))
   );
   persistWorkspace();
   suspendUnsavedTracking = false;
