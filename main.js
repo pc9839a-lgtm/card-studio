@@ -154,7 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
     addCard: document.getElementById('btn-add-card'),
     duplicateCard: document.getElementById('btn-duplicate-card'),
     deleteCard: document.getElementById('btn-delete-card'),
+    wizardFillSampleFooter: document.getElementById('btn-wizard-fill-sample-footer'),
     wizardPrev: document.getElementById('btn-wizard-prev'),
+    wizardReset: document.getElementById('btn-wizard-reset'),
     wizardNext: document.getElementById('btn-wizard-next'),
     refreshRecommendations: document.getElementById('btn-refresh-recommendations'),
     quickStart: document.getElementById('btn-quick-start'),
@@ -1170,6 +1172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isMobile = isMobileViewport();
     const forceMobileNext = isMobile && mobileFlowRoute !== 'preview' && mobileFlowRoute !== 'advanced';
     const isMobilePreviewRoute = isMobile && mobileFlowRoute === 'preview';
+    const isMobileDetailsRoute = isMobile && (mobileFlowRoute === 'details-core' || mobileFlowRoute === 'details-extra');
     const desktopStepFourActiveIndex = getDesktopStepFourActiveIndex();
     const desktopStepFourSections = getDesktopStepFourSections();
 
@@ -1187,6 +1190,16 @@ document.addEventListener('DOMContentLoaded', () => {
       buttons.wizardFillSample.hidden = isMobile && wizardStep === 3;
     }
 
+    if (buttons.wizardFillSampleFooter) {
+      buttons.wizardFillSampleFooter.hidden = !isMobileDetailsRoute;
+      buttons.wizardFillSampleFooter.disabled = !isMobileDetailsRoute;
+    }
+
+    if (buttons.wizardReset) {
+      buttons.wizardReset.hidden = !isMobileDetailsRoute;
+      buttons.wizardReset.disabled = !isMobileDetailsRoute;
+    }
+
     buttons.wizardNext.textContent = forceMobileNext ? '다음' : getWizardPrimaryActionLabel();
 
     if (wizardStep === 4 && elements.wizardFooter) {
@@ -1196,6 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.wizardFooter) {
+      elements.wizardFooter.classList.toggle('is-mobile-details-actions', isMobileDetailsRoute);
       const visibleButtonCount = [buttons.wizardPrev, buttons.wizardNext]
         .filter((button) => button && !button.hidden)
         .length;
@@ -4381,6 +4395,10 @@ document.addEventListener('DOMContentLoaded', () => {
     buttons.wizardFillSample.addEventListener('click', fillSample);
   }
 
+  if (buttons.wizardFillSampleFooter) {
+    buttons.wizardFillSampleFooter.addEventListener('click', fillSample);
+  }
+
   if (buttons.toggleDetailsFields) {
     buttons.toggleDetailsFields.addEventListener('click', toggleWizardDetailFields);
   }
@@ -4459,6 +4477,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   buttons.fillSample.addEventListener('click', fillSample);
   buttons.resetAll.addEventListener('click', resetCurrentCard);
+  if (buttons.wizardReset) buttons.wizardReset.addEventListener('click', resetCurrentCard);
   buttons.compare.addEventListener('click', toggleCompare);
   if (buttons.save) buttons.save.addEventListener('click', () => saveCurrentPreset(true));
   if (buttons.mobileFaceFront) buttons.mobileFaceFront.addEventListener('click', () => setMobilePreviewFace('front'));
