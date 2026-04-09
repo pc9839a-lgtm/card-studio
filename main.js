@@ -406,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const source = rawCard || {};
     return createCard(fallbackLabel, {
       ...source,
+      phone: sanitizePhoneValue(source.phone),
       label: sanitizeDisplayLabel(source.label, fallbackLabel)
     });
   }
@@ -432,6 +433,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return fallback;
     }
     return text;
+  }
+
+  function sanitizePhoneValue(value) {
+    return String(value || '').replace(/\D+/g, '');
+  }
+
+  function syncPhoneInputValue() {
+    if (!inputs.phone) return '';
+    const sanitized = sanitizePhoneValue(inputs.phone.value);
+    if (inputs.phone.value !== sanitized) {
+      inputs.phone.value = sanitized;
+    }
+    return sanitized;
   }
 
   function getNextCardLabel(cards) {
@@ -611,6 +625,31 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWizardRecommendations();
   }
 
+  function refreshWizardRecommendations(options = {}) {
+    const {
+      showStatus = true,
+      statusDuration = 2600
+    } = options;
+
+    try {
+      generateWizardRecommendations();
+      return true;
+    } catch (error) {
+      console.error('추천 템플릿 생성 실패:', error);
+      if (showStatus) {
+        setStatus('추천 템플릿을 불러오는 중 문제가 발생했습니다. 템플릿 목록은 계속 사용할 수 있습니다.', 'warning', statusDuration);
+      }
+      return false;
+    }
+  }
+
+  function buildWizardRecommendationPreviewFallback(label) {
+    const fallback = document.createElement('div');
+    fallback.className = 'wizard-recommend-card__preview-fallback';
+    fallback.textContent = label || '추천 템플릿';
+    return fallback;
+  }
+
   function cardHasMeaningfulContent(card) {
     if (!card) return false;
     return [
@@ -756,13 +795,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const preview = document.createElement('div');
       preview.className = 'wizard-recommend-card__preview';
-      preview.appendChild(buildWizardRecommendationPreview(templateValue));
+      try {
+        preview.appendChild(buildWizardRecommendationPreview(templateValue));
+      } catch (error) {
+        console.error('추천 템플릿 미리보기 생성 실패:', error);
+        preview.appendChild(buildWizardRecommendationPreviewFallback(option.label));
+      }
 
       const copy = document.createElement('div');
       copy.className = 'wizard-recommend-card__copy';
-      copy.innerHTML = `
-        <strong>${option.label}</strong>
-      `;
+      const title = document.createElement('strong');
+      title.textContent = option.label;
+      const description = document.createElement('p');
+      description.textContent = meta.description;
+      copy.append(title, description);
 
       card.append(preview, copy);
       card.addEventListener('click', () => {
@@ -1124,11 +1170,11 @@ document.addEventListener('DOMContentLoaded', () => {
       advancedEditing = false;
     }
 
-    if (wizardStep === 2 && (forceRecommendations || wizardRecommendedTemplates.length === 0)) {
-      generateWizardRecommendations();
-    }
-
     updateWizardUI();
+
+    if (wizardStep === 2 && (forceRecommendations || wizardRecommendedTemplates.length === 0)) {
+      refreshWizardRecommendations();
+    }
 
     const defaultSection = wizardStep === 2
       ? elements.sectionRecommend
@@ -1517,6 +1563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     CARD_FIELD_KEYS.forEach((key) => {
       if (inputs[key]) collected[key] = inputs[key].value;
     });
+    collected.phone = sanitizePhoneValue(collected.phone);
 
     collected.frontLogoAlign = state.frontLogoAlign;
     collected.backLogoAlign = state.backLogoAlign;
@@ -2132,7 +2179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     CARD_FIELD_KEYS.forEach((key) => {
       if (inputs[key] && typeof card[key] !== 'undefined') {
-        inputs[key].value = card[key];
+        inputs[key].value = key === 'phone' ? sanitizePhoneValue(card[key]) : card[key];
       }
     });
 
@@ -2374,7 +2421,7 @@ document.addEventListener('DOMContentLoaded', () => {
       company: row.company || '',
       position: row.position || '',
       name: row.name || '',
-      phone: row.phone || '',
+      phone: sanitizePhoneValue(row.phone || ''),
       email: row.email || '',
       address: row.address || '',
       extra: row.extra || '',
@@ -3111,8 +3158,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getDownloadFilename(face, card = getActiveCard()) {
     const presetName = sanitizeFileName(workspace.presetName || 'preset');
-    const activeCard = getActiveCard();
-    const cardName = sanitizeFileName(activeCard ? sanitizeDisplayLabel(activeCard.label, '명함-1') : '명함-1');
+    const targetCard = card || getActiveCard();
+    const cardName = sanitizeFileName(targetCard ? sanitizeDisplayLabel(targetCard.label, '명함-1') : '명함-1');
     return `${presetName}-${cardName}-${face}.png`;
   }
 
@@ -3126,14 +3173,33 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${presetName}-${cards.length}cards-front-back.pdf`;
   }
 
+  function getHtml2CanvasApi() {
+    if (typeof window.html2canvas !== 'function') {
+      const error = new Error('HTML2CANVAS_UNAVAILABLE');
+      error.code = 'HTML2CANVAS_UNAVAILABLE';
+      throw error;
+    }
+
+    return window.html2canvas;
+  }
+
+  function getExportErrorMessage(error, fallbackMessage) {
+    if (error?.code === 'HTML2CANVAS_UNAVAILABLE') {
+      return '이미지 내보내기 엔진을 불러오지 못했습니다. 페이지를 새로고침한 뒤 다시 시도해주세요.';
+    }
+
+    return fallbackMessage;
+  }
+
   async function renderCardCanvas(cardElement) {
+    const exportRenderer = getHtml2CanvasApi();
     const exportResult = await prepareExportCapture(cardElement);
     try {
       const viewportWidth = Math.max(window.innerWidth || 0, document.documentElement.clientWidth || 0, Math.round(exportResult.width));
       const viewportHeight = Math.max(window.innerHeight || 0, document.documentElement.clientHeight || 0, Math.round(exportResult.height));
 
       return await Promise.race([
-        html2canvas(exportResult.element, {
+        exportRenderer(exportResult.element, {
           scale: exportResult.scale,
           useCORS: true,
           backgroundColor: null,
@@ -3160,167 +3226,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const blob = await canvasToBlob(canvas);
     const result = await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
     return { canvas, result };
-  }
-
-  async function requestCardDownload(face, button) {
-    const targetFace = face === 'back' ? 'back' : 'front';
-    const selectedCards = getSelectedExportCards();
-    const exportCards = isMobileViewport() && selectedCards.length > 1
-      ? [getActiveCard()].filter(Boolean)
-      : selectedCards;
-    if (isMobileViewport() && mobilePreviewFace !== targetFace) {
-      setStatus(`미리보기에서 ${targetFace === 'back' ? '뒷면' : '앞면'}을 선택해주세요.`, 'warning', 2200);
-      return;
-    }
-
-    if (isMobileViewport() && selectedCards.length > 1) {
-      setStatus('모바일에서는 현재 명함만 공유할 수 있습니다.', 'warning', 2200);
-    }
-
-    syncActiveCardSnapshot();
-    const originalCardId = workspace.activeCardId;
-    const previewWasCollapsed = mobilePreviewCollapsed;
-    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
-    if (previewWasCollapsed) {
-      setMobilePreviewCollapsed(false);
-    }
-    if (previewWasHidden && elements.previewArea) {
-      elements.previewArea.hidden = false;
-      elements.previewArea.style.display = '';
-    }
-    if (previewWasHidden && elements.previewArea) {
-      elements.previewArea.hidden = false;
-      elements.previewArea.style.display = '';
-    }
-
-    try {
-      const originalLabel = button.textContent;
-      button.disabled = true;
-      button.textContent = exportCards.length > 1 ? '일괄 다운로드 중...' : '다운로드 중...';
-
-      for (const card of exportCards) {
-        workspace.activeCardId = card.id;
-        applyCardData(card);
-        await saveCardImage(
-          targetFace === 'back' ? elements.cardBack : elements.cardFront,
-          getDownloadFilename(targetFace)
-        );
-      }
-
-      setStatus(
-        exportCards.length > 1
-          ? `${exportCards.length}개 명함 ${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`
-          : `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드를 시작했습니다.`,
-        'success',
-        2200
-      );
-      button.textContent = originalLabel;
-      button.disabled = false;
-    } finally {
-      workspace.activeCardId = originalCardId;
-      applyCardData(getActiveCard());
-      if (previewWasCollapsed) {
-        setMobilePreviewCollapsed(true);
-      }
-    }
-  }
-
-  async function downloadCard(cardElement, filename, button) {
-    const original = button.textContent;
-    button.disabled = true;
-    button.textContent = '이미지 저장 중...';
-
-    try {
-      const canvas = await renderCardCanvas(cardElement);
-      const blob = await canvasToBlob(canvas);
-      const result = await triggerImageSave(blob, filename, canvas.toDataURL('image/png'));
-      if (result === 'shared') {
-        setStatus(`공유/저장 창을 열었습니다. (${formatExportSize(canvas.width, canvas.height)})`, 'success', 2400);
-      } else if (result === 'cancelled') {
-        setStatus('저장을 취소했습니다.', 'warning', 1800);
-      } else {
-        setStatus(`저장을 시작했습니다. (${formatExportSize(canvas.width, canvas.height)})`, 'success', 2200);
-      }
-    } catch (error) {
-      console.error(error);
-      setStatus('저장 중 문제가 발생했습니다.', 'error', 2200);
-    } finally {
-      button.disabled = false;
-      button.textContent = original;
-    }
-  }
-
-  async function downloadCombinedPdf(button) {
-    const jsPdfNs = window.jspdf;
-    if (!jsPdfNs || typeof jsPdfNs.jsPDF !== 'function') {
-      setStatus('PDF 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error', 2600);
-      return;
-    }
-
-    persistWorkspace();
-    const originalCardId = workspace.activeCardId;
-    const cardsToExport = workspace.cards.slice(0, MAX_CARD_COUNT);
-    const originalLabel = button.textContent;
-    const previewWasCollapsed = mobilePreviewCollapsed;
-    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
-
-    button.disabled = true;
-    button.textContent = 'PDF 생성 중...';
-    if (previewWasCollapsed) {
-      setMobilePreviewCollapsed(false);
-    }
-    if (previewWasHidden && elements.previewArea) {
-      elements.previewArea.hidden = false;
-      elements.previewArea.style.display = '';
-    }
-    if (previewWasHidden && elements.previewArea) {
-      elements.previewArea.hidden = false;
-      elements.previewArea.style.display = '';
-    }
-
-    try {
-      const pdf = new jsPdfNs.jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [CARD_WIDTH_MM, CARD_HEIGHT_MM]
-      });
-
-      for (let index = 0; index < cardsToExport.length; index += 1) {
-        const card = cardsToExport[index];
-        workspace.activeCardId = card.id;
-        applyCardData(card);
-        await waitForRenderStability();
-
-        const frontCanvas = await renderCardCanvas(elements.cardFront);
-        if (index > 0) {
-          pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
-        }
-        pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
-
-        const backCanvas = await renderCardCanvas(elements.cardBack);
-        pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
-        pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
-      }
-
-      pdf.save(getPdfFilename());
-      setStatus(`양면 PDF 다운로드를 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
-    } catch (error) {
-      console.error(error);
-      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
-    } finally {
-      workspace.activeCardId = originalCardId;
-      applyCardData(getActiveCard());
-      persistWorkspace();
-      if (previewWasCollapsed) {
-        setMobilePreviewCollapsed(true);
-      }
-      if (previewWasHidden && elements.previewArea) {
-        elements.previewArea.hidden = true;
-        elements.previewArea.style.display = 'none';
-      }
-      button.disabled = false;
-      button.textContent = originalLabel;
-    }
   }
 
   async function requestCardDownload(face, button) {
@@ -3376,84 +3281,11 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     } catch (error) {
       console.error(error);
-      setStatus(`${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`, 'error', 2200);
-    } finally {
-      workspace.activeCardId = originalCardId;
-      const activeCard = getActiveCard();
-      if (activeCard) {
-        applyCardData(activeCard);
-      }
-      if (previewWasCollapsed) {
-        setMobilePreviewCollapsed(true);
-      }
-      if (previewWasHidden && elements.previewArea) {
-        elements.previewArea.hidden = true;
-        elements.previewArea.style.display = 'none';
-      }
-      button.disabled = false;
-      button.textContent = originalLabel;
-    }
-  }
-
-  async function downloadCombinedPdf(button) {
-    const jsPdfNs = window.jspdf;
-    if (!jsPdfNs || typeof jsPdfNs.jsPDF !== 'function') {
-      setStatus('PDF 엔진을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.', 'error', 2600);
-      return;
-    }
-
-    syncActiveCardSnapshot();
-    const originalCardId = workspace.activeCardId;
-    const cardsToExport = getSelectedExportCards().slice(0, MAX_CARD_COUNT);
-    const originalLabel = button.textContent;
-    const previewWasCollapsed = mobilePreviewCollapsed;
-    const previewWasHidden = !!elements.previewArea?.hidden || elements.previewArea?.style.display === 'none';
-
-    if (!cardsToExport.length) {
-      setStatus('PDF로 저장할 명함을 먼저 선택해주세요.', 'warning', 2200);
-      return;
-    }
-
-    button.disabled = true;
-    button.textContent = 'PDF 생성 중...';
-    if (previewWasCollapsed) {
-      setMobilePreviewCollapsed(false);
-    }
-    if (previewWasHidden && elements.previewArea) {
-      elements.previewArea.hidden = false;
-      elements.previewArea.style.display = '';
-    }
-
-    try {
-      const pdf = new jsPdfNs.jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: [CARD_WIDTH_MM, CARD_HEIGHT_MM]
-      });
-
-      for (let index = 0; index < cardsToExport.length; index += 1) {
-        const card = cardsToExport[index];
-        workspace.activeCardId = card.id;
-        applyCardData(card);
-        await waitForRenderStability();
-
-        const frontCanvas = await renderCardCanvas(elements.cardFront);
-        if (index > 0) {
-          pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
-        }
-        pdf.addImage(frontCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
-
-        const backCanvas = await renderCardCanvas(elements.cardBack);
-        pdf.addPage([CARD_WIDTH_MM, CARD_HEIGHT_MM], 'landscape');
-        pdf.addImage(backCanvas.toDataURL('image/png'), 'PNG', 0, 0, CARD_WIDTH_MM, CARD_HEIGHT_MM, undefined, 'FAST');
-      }
-
-      const pdfBlob = pdf.output('blob');
-      triggerBlobDownload(pdfBlob, getPdfFilename(cardsToExport));
-      setStatus(`양면 PDF 다운로드를 시작했습니다. (${cardsToExport.length}개 명함)`, 'success', 2600);
-    } catch (error) {
-      console.error(error);
-      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
+      setStatus(
+        getExportErrorMessage(error, `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`),
+        'error',
+        2200
+      );
     } finally {
       workspace.activeCardId = originalCardId;
       const activeCard = getActiveCard();
@@ -3527,7 +3359,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error(error);
       appendExportDebugLog('png:error', error?.stack || String(error));
-      setStatus(`${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`, 'error', 2600);
+      setStatus(
+        getExportErrorMessage(error, `${targetFace === 'back' ? '뒷면' : '앞면'} 다운로드 중 문제가 발생했습니다.`),
+        'error',
+        2600
+      );
     } finally {
       workspace.activeCardId = originalCardId;
       const activeCard = getActiveCard();
@@ -3608,7 +3444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
       console.error(error);
       appendExportDebugLog('pdf:error', error?.stack || String(error));
-      setStatus('PDF 출력 중 문제가 발생했습니다.', 'error', 2600);
+      setStatus(getExportErrorMessage(error, 'PDF 출력 중 문제가 발생했습니다.'), 'error', 2600);
     } finally {
       workspace.activeCardId = originalCardId;
       const activeCard = getActiveCard();
@@ -3676,7 +3512,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function validateWizardStepOne() {
     const hasName = !!inputs.name?.value?.trim();
-    const hasContact = !!inputs.phone?.value?.trim();
+    const phone = syncPhoneInputValue();
+    const hasContact = !!phone;
 
     if (!hasName) {
       setStatus('이름을 먼저 입력해주세요.', 'warning', 2200);
@@ -3695,7 +3532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleWizardQuickStart() {
     if (wizardRecommendedTemplates.length === 0) {
-      generateWizardRecommendations();
+      refreshWizardRecommendations();
     }
 
     const fallbackTemplate = wizardRecommendedTemplates[0] || inputs.template?.value;
@@ -3714,8 +3551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function handleWizardNext() {
     if (wizardStep === 1) {
       if (!validateWizardStepOne()) return;
-      generateWizardRecommendations();
-      setWizardStep(2);
+      setWizardStep(2, { forceRecommendations: true });
       return;
     }
 
@@ -3734,7 +3570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function handleWizardSecondary() {
     if (wizardStep === 2) {
-      generateWizardRecommendations();
+      refreshWizardRecommendations();
       return;
     }
 
@@ -3893,10 +3729,53 @@ document.addEventListener('DOMContentLoaded', () => {
   ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
       if (input === inputs.phone) {
-        input.value = input.value.replace(/\D+/g, '');
+        input.value = sanitizePhoneValue(input.value);
       }
       updateText();
       persistWorkspace();
+    });
+  });
+
+  if (inputs.phone) {
+    inputs.phone.addEventListener('beforeinput', (event) => {
+      if (event.inputType && event.inputType.startsWith('delete')) return;
+      if (event.data == null) return;
+      if (!/^\d+$/.test(event.data)) {
+        event.preventDefault();
+        return;
+      }
+
+      const currentValue = inputs.phone.value || '';
+      const selectionStart = inputs.phone.selectionStart ?? currentValue.length;
+      const selectionEnd = inputs.phone.selectionEnd ?? currentValue.length;
+      const nextValue = `${currentValue.slice(0, selectionStart)}${event.data}${currentValue.slice(selectionEnd)}`;
+      if (sanitizePhoneValue(nextValue) !== nextValue) {
+        event.preventDefault();
+      }
+    });
+
+    inputs.phone.addEventListener('paste', (event) => {
+      event.preventDefault();
+      const pastedText = event.clipboardData?.getData('text') || '';
+      const currentValue = inputs.phone.value || '';
+      const selectionStart = inputs.phone.selectionStart ?? currentValue.length;
+      const selectionEnd = inputs.phone.selectionEnd ?? currentValue.length;
+      const nextValue = `${currentValue.slice(0, selectionStart)}${pastedText}${currentValue.slice(selectionEnd)}`;
+      inputs.phone.value = sanitizePhoneValue(nextValue);
+      updateText();
+      persistWorkspace();
+    });
+
+    inputs.phone.addEventListener('drop', (event) => {
+      event.preventDefault();
+    });
+  }
+
+  [inputs.name, inputs.phone].filter(Boolean).forEach((input) => {
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return;
+      event.preventDefault();
+      handleWizardNext();
     });
   });
 
@@ -4097,7 +3976,7 @@ document.addEventListener('DOMContentLoaded', () => {
   applyCardData(getActiveCard());
   setExportSelectionMode('current');
   if (wizardStep === 2) {
-    generateWizardRecommendations();
+    refreshWizardRecommendations({ showStatus: false });
   }
   updateWizardUI();
   openSectionExclusive(

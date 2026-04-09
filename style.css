@@ -3561,7 +3561,11 @@ body.is-guided-wizard.is-wizard-step-3 .wizard-flow {
 }
 
 .wizard-recommend-card__copy p {
-  display: none;
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ui-muted);
 }
 
 .wizard-advanced-toggle {

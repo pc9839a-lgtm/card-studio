@@ -36,19 +36,19 @@ export const CARD_FIELD_KEYS = [
 export const TEMPLATE_RECOMMENDATION_META = {
   'template-modern': { tag: '기본형', description: '처음 시작할 때 가장 무난하게 쓰기 좋은 기본 명함입니다.' },
   'template-pet': { tag: '정돈형', description: '정보를 안정적으로 정리해 보여주기 좋습니다.' },
-  'template-transport': { tag: '포인트형', description: '강한 포인트로 존재감을 주는 템플릿입니다.' },
+  'template-transport': { tag: '사인형', description: '강한 사인 컬러로 존재감을 주는 템플릿입니다.' },
   'template-clinic': { tag: '브랜드형', description: '로고와 브랜드 문구를 차분하게 담기 좋습니다.' },
-  'template-classic': { tag: '센터형', description: '이름과 연락처를 단정하게 보여주는 구성입니다.' },
-  'template-split': { tag: '분할형', description: '브랜드 영역과 정보 영역이 확실히 나뉜 템플릿입니다.' },
-  'template-accent': { tag: '사이드형', description: '측면 포인트가 있어 존재감을 주기 좋습니다.' },
-  'template-bottom': { tag: '바텀형', description: '하단 포인트로 시선을 잡아주는 안정적인 구성입니다.' },
-  'template-dark': { tag: '다크형', description: '강한 대비와 고급스러운 톤이 필요한 경우에 맞습니다.' },
+  'template-classic': { tag: '레터형', description: '이름과 연락처를 단정하게 보여주는 구성입니다.' },
+  'template-split': { tag: '분할형', description: '브랜드 영역과 정보 영역을 확실하게 나누는 템플릿입니다.' },
+  'template-accent': { tag: '사이드형', description: '측면 포인트 컬러로 존재감을 더하기 좋습니다.' },
+  'template-bottom': { tag: '바텀형', description: '하단 포인트 라인으로 시선을 모아주는 안정적인 구성입니다.' },
+  'template-dark': { tag: '다크형', description: '강한 대비와 고급스러운 톤이 필요한 경우에 잘 맞습니다.' },
   'template-creative': { tag: '브랜드형', description: '라인과 여백으로 개성을 주는 템플릿입니다.' }
 };
 
 export const TEMPLATE_RECOMMENDATION_FALLBACK = {
   tag: '추천형',
-  description: '빠르게 시작하기 좋은 템플릿입니다.'
+  description: '빠르게 시작하기 좋은 추천 템플릿입니다.'
 };
 
 export const CSV_FIELD_ALIASES = {
@@ -64,6 +64,6 @@ export const CSV_FIELD_ALIASES = {
 
 export const CSV_SAMPLE_ROWS = [
   ['이름', '연락처', '이메일', '회사명', '직책', '주소', '추가정보', '슬로건'],
-  ['홍길동', '010-1234-5678', 'hello@example.com', 'WAYZI', 'Creative Director', '서울 강남구 테헤란로 123', '평일 09:00 - 18:00', '당신의 브랜드를 더 선명하게 만듭니다'],
-  ['김웨이지', '010-9876-5432', 'team@example.com', 'WAYZI', 'Brand Manager', '서울 마포구 월드컵북로 12', '카카오 상담 가능', '브랜드 경험을 명함으로 연결합니다']
+  ['홍민준', '010-1234-5678', 'hello@example.com', 'WAYZI', 'Creative Director', '서울 강남구 테헤란로 123', '평일 09:00 - 18:00', '혁신적인 브랜드를 더 선명하게 만듭니다'],
+  ['김예지', '010-9876-5432', 'team@example.com', 'WAYZI', 'Brand Manager', '서울 마포구 월드컵북로 12', '카카오 상담 가능', '브랜드 경험을 명함으로 연결합니다']
 ];
