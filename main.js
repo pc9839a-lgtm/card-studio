@@ -119,6 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     frontBg: document.getElementById('color-front-bg'),
     backBg: document.getElementById('color-back-bg'),
     textColor: document.getElementById('color-text'),
+    frontTextColor: document.getElementById('color-front-text'),
+    backTextColor: document.getElementById('color-back-text'),
+    useSplitTextColor: document.getElementById('input-use-split-text-color'),
     pointColor: document.getElementById('color-point'),
     frontImageControls: document.getElementById('front-image-controls'),
     backImageControls: document.getElementById('back-image-controls'),
@@ -134,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fillSample: document.getElementById('btn-fill-sample'),
     resetAll: document.getElementById('btn-reset-all'),
     compare: document.getElementById('btn-compare'),
+    toggleTextColorSplit: document.getElementById('btn-toggle-text-color-split'),
     downloadFront: document.getElementById('btn-download-front'),
     downloadBack: document.getElementById('btn-download-back'),
     downloadPdf: document.getElementById('btn-download-pdf'),
@@ -258,6 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
     sectionEntry: document.getElementById('section-entry'),
     sectionRecommend: document.getElementById('section-recommend'),
     sectionWorkspace: document.getElementById('section-workspace'),
+    textColorSharedItem: document.getElementById('color-text-shared-item'),
+    frontTextColorItem: document.getElementById('color-front-text-item'),
+    backTextColorItem: document.getElementById('color-back-text-item'),
     sectionInfo: document.getElementById('section-info'),
     sectionLogo: document.getElementById('section-logo'),
     sectionText: document.getElementById('section-text'),
@@ -499,6 +506,9 @@ document.addEventListener('DOMContentLoaded', () => {
       frontBg: '#ffffff',
       backBg: '#ffffff',
       textColor: '#333333',
+      frontTextColor: '#333333',
+      backTextColor: '#333333',
+      useSplitTextColor: 'false',
       pointColor: '#2a5a43',
       frontLogoAlign: 'center',
       backLogoAlign: 'center',
@@ -522,8 +532,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function normalizeCard(rawCard, fallbackLabel) {
     const source = rawCard || {};
+    const sharedTextColor = String(source.textColor || '#333333');
+    const normalizedFrontTextColor = String(source.frontTextColor || sharedTextColor);
+    const normalizedBackTextColor = String(source.backTextColor || sharedTextColor);
+    const normalizedUseSplitTextColor = source.useSplitTextColor === true || source.useSplitTextColor === 'true'
+      ? 'true'
+      : 'false';
     return createCard(fallbackLabel, {
       ...source,
+      frontTextColor: normalizedFrontTextColor,
+      backTextColor: normalizedBackTextColor,
+      useSplitTextColor: normalizedUseSplitTextColor,
       phone: sanitizePhoneValue(source.phone),
       label: sanitizeDisplayLabel(source.label, fallbackLabel)
     });
@@ -2461,16 +2480,111 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.frontCompanyManual.style.fontFamily = computed.fontFamily;
   }
 
+  function getUseSplitTextColor() {
+    return inputs.useSplitTextColor?.value === 'true';
+  }
+
+  function hasSplitTextColorHistory() {
+    return inputs.useSplitTextColor?.dataset.hasSplitHistory === 'true';
+  }
+
+  function setSplitTextColorHistory(enabled) {
+    if (!inputs.useSplitTextColor) return;
+    inputs.useSplitTextColor.dataset.hasSplitHistory = enabled ? 'true' : 'false';
+  }
+
+  function cacheSplitTextColors() {
+    if (!inputs.useSplitTextColor || !inputs.frontTextColor || !inputs.backTextColor) return;
+    inputs.useSplitTextColor.dataset.frontTextColor = inputs.frontTextColor.value;
+    inputs.useSplitTextColor.dataset.backTextColor = inputs.backTextColor.value;
+  }
+
+  function syncTextColorModeUI() {
+    const isSplit = getUseSplitTextColor();
+
+    if (elements.textColorSharedItem) elements.textColorSharedItem.hidden = isSplit;
+    if (elements.frontTextColorItem) elements.frontTextColorItem.hidden = !isSplit;
+    if (elements.backTextColorItem) elements.backTextColorItem.hidden = !isSplit;
+
+    if (buttons.toggleTextColorSplit) {
+      buttons.toggleTextColorSplit.classList.toggle('is-active', isSplit);
+      buttons.toggleTextColorSplit.setAttribute('aria-pressed', isSplit ? 'true' : 'false');
+      buttons.toggleTextColorSplit.textContent = isSplit ? '앞/뒤 분리 중' : '앞/뒤 따로';
+    }
+  }
+
+  function syncSharedTextColorState() {
+    if (getUseSplitTextColor()) return;
+    if (hasSplitTextColorHistory()) return;
+    if (!inputs.textColor || !inputs.frontTextColor || !inputs.backTextColor) return;
+    inputs.frontTextColor.value = inputs.textColor.value;
+    inputs.backTextColor.value = inputs.textColor.value;
+    cacheSplitTextColors();
+  }
+
+  function hydrateTextColorModeState() {
+    if (!inputs.textColor || !inputs.frontTextColor || !inputs.backTextColor || !inputs.useSplitTextColor) return;
+    const hasHistory = getUseSplitTextColor()
+      || inputs.frontTextColor.value !== inputs.textColor.value
+      || inputs.backTextColor.value !== inputs.textColor.value;
+    setSplitTextColorHistory(hasHistory);
+    syncSharedTextColorState();
+    cacheSplitTextColors();
+    syncTextColorModeUI();
+  }
+
+  function toggleSplitTextColorMode(forceEnabled) {
+    if (!inputs.textColor || !inputs.frontTextColor || !inputs.backTextColor || !inputs.useSplitTextColor) return;
+
+    const nextEnabled = typeof forceEnabled === 'boolean'
+      ? forceEnabled
+      : !getUseSplitTextColor();
+
+    if (nextEnabled) {
+      if (hasSplitTextColorHistory()) {
+        inputs.frontTextColor.value = inputs.useSplitTextColor.dataset.frontTextColor || inputs.frontTextColor.value || inputs.textColor.value;
+        inputs.backTextColor.value = inputs.useSplitTextColor.dataset.backTextColor || inputs.backTextColor.value || inputs.textColor.value;
+      } else {
+        inputs.frontTextColor.value = inputs.textColor.value;
+        inputs.backTextColor.value = inputs.textColor.value;
+      }
+      inputs.useSplitTextColor.value = 'true';
+      setSplitTextColorHistory(true);
+      cacheSplitTextColors();
+    } else {
+      const resolvedSharedColor = inputs.frontTextColor.value || inputs.textColor.value;
+      cacheSplitTextColors();
+      inputs.useSplitTextColor.value = 'false';
+      inputs.textColor.value = resolvedSharedColor;
+      setSplitTextColorHistory(
+        inputs.frontTextColor.value !== resolvedSharedColor
+        || inputs.backTextColor.value !== resolvedSharedColor
+      );
+    }
+
+    syncTextColorModeUI();
+    updateColorVars();
+    persistWorkspace();
+  }
+
   function updateColorVars() {
     const root = document.documentElement;
+    const frontTextColor = getUseSplitTextColor()
+      ? (inputs.frontTextColor?.value || inputs.textColor.value)
+      : inputs.textColor.value;
+    const backTextColor = getUseSplitTextColor()
+      ? (inputs.backTextColor?.value || inputs.textColor.value)
+      : inputs.textColor.value;
     const transportBackStart = mixHexColors(inputs.pointColor.value, '#ffffff', 0.94);
     const transportBackEnd = mixHexColors(inputs.pointColor.value, '#ffffff', 0.82);
     const transportAccentStart = mixHexColors(inputs.pointColor.value, '#ffffff', 0.42);
     const transportAccentEnd = mixHexColors(inputs.pointColor.value, '#0f172a', 0.14);
     root.style.setProperty('--front-bg', inputs.frontBg.value);
     root.style.setProperty('--back-bg', inputs.backBg.value);
-    root.style.setProperty('--card-text', inputs.textColor.value);
-    root.style.setProperty('--company-color', inputs.textColor.value);
+    root.style.setProperty('--front-text', frontTextColor);
+    root.style.setProperty('--back-text', backTextColor);
+    root.style.setProperty('--card-text', frontTextColor);
+    root.style.setProperty('--company-color', frontTextColor);
     root.style.setProperty('--card-point', inputs.pointColor.value);
     root.style.setProperty('--transport-back-gradient-start', transportBackStart);
     root.style.setProperty('--transport-back-gradient-end', transportBackEnd);
@@ -2484,6 +2598,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     elements.cardFront.style.background = inputs.frontBg.value;
     elements.cardBack.style.background = inputs.backBg.value;
+    elements.cardFront.style.color = frontTextColor;
+    elements.cardBack.style.color = backTextColor;
 
     elements.frontLogo.style.left = `${inputs.frontLogoX.value}%`;
     elements.frontLogo.style.top = `${inputs.frontLogoY.value}%`;
@@ -2673,6 +2789,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inputs.backLogoFile) inputs.backLogoFile.value = '';
     if (inputs.frontImageFile) inputs.frontImageFile.value = '';
     if (inputs.backImageFile) inputs.backImageFile.value = '';
+
+    hydrateTextColorModeState();
 
     applyTemplate(inputs.template.value || card.template);
     updateText();
@@ -3940,6 +4058,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function fillSample() {
     const activeCard = getActiveCard();
     if (!activeCard) return;
+    if (
+      cardHasMeaningfulContent(activeCard)
+      && !window.confirm('현재 입력한 내용이 샘플 데이터로 덮어써집니다. 계속할까요?')
+    ) {
+      setStatus('샘플 적용을 취소했습니다.', 'info', 1600);
+      return;
+    }
 
     Object.assign(activeCard, createCard(activeCard.label, {
       id: activeCard.id,
@@ -3957,6 +4082,9 @@ document.addEventListener('DOMContentLoaded', () => {
       frontBg: '#ffffff',
       backBg: '#ffffff',
       textColor: '#1f2937',
+      frontTextColor: '#1f2937',
+      backTextColor: '#1f2937',
+      useSplitTextColor: 'false',
       pointColor: '#2563eb',
       frontOverlayColor: '#000000',
       frontOverlayOpacity: '0',
@@ -4116,6 +4244,14 @@ document.addEventListener('DOMContentLoaded', () => {
       inputs.frontBg.value = button.dataset.front;
       inputs.backBg.value = button.dataset.back;
       inputs.textColor.value = button.dataset.text;
+      if (getUseSplitTextColor()) {
+        setSplitTextColorHistory(true);
+        cacheSplitTextColors();
+      } else if (!hasSplitTextColorHistory()) {
+        inputs.frontTextColor.value = button.dataset.text;
+        inputs.backTextColor.value = button.dataset.text;
+        cacheSplitTextColors();
+      }
       inputs.pointColor.value = button.dataset.point;
       updateColorVars();
       persistWorkspace();
@@ -4318,9 +4454,26 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.frontImgY, inputs.frontQrSize, inputs.frontQrX, inputs.frontQrY,
     inputs.backImgSize, inputs.backImgX, inputs.backImgY, inputs.backQrSize, inputs.backQrX, inputs.backQrY, inputs.frontOverlayColor,
     inputs.frontOverlayOpacity, inputs.backOverlayColor, inputs.backOverlayOpacity, inputs.frontBg,
-    inputs.backBg, inputs.textColor, inputs.pointColor, inputs.font
+    inputs.backBg, inputs.pointColor, inputs.font
   ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
+      updateColorVars();
+      persistWorkspace();
+    });
+  });
+
+  if (inputs.textColor) {
+    inputs.textColor.addEventListener('input', () => {
+      syncSharedTextColorState();
+      updateColorVars();
+      persistWorkspace();
+    });
+  }
+
+  [inputs.frontTextColor, inputs.backTextColor].filter(Boolean).forEach((input) => {
+    input.addEventListener('input', () => {
+      setSplitTextColorHistory(true);
+      cacheSplitTextColors();
       updateColorVars();
       persistWorkspace();
     });
@@ -4473,6 +4626,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (buttons.wizardNext) {
     buttons.wizardNext.addEventListener('click', handleWizardNext);
+  }
+
+  if (buttons.toggleTextColorSplit) {
+    buttons.toggleTextColorSplit.addEventListener('click', () => {
+      toggleSplitTextColorMode();
+    });
   }
 
   buttons.fillSample.addEventListener('click', fillSample);

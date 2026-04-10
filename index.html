@@ -12,7 +12,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260405-card-standard-109">
+  <link rel="stylesheet" href="./style.css?v=20260410-card-standard-110">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -511,6 +511,20 @@
           </label>
         </div>
 
+        <div class="color-mode-toggle">
+          <div class="color-mode-toggle__copy">
+            <strong>텍스트 색상</strong>
+            <span>기본은 앞뒤 동일, 필요할 때만 분리합니다.</span>
+          </div>
+          <input type="hidden" id="input-use-split-text-color" value="false">
+          <button
+            id="btn-toggle-text-color-split"
+            class="btn btn-outline btn-sm color-mode-toggle__btn"
+            type="button"
+            aria-pressed="false"
+          >앞/뒤 따로</button>
+        </div>
+
         <div class="color-picker-group split-color-group">
           <div class="color-item">
             <label>앞면 배경</label>
@@ -520,9 +534,17 @@
             <label>뒷면 배경</label>
             <input type="color" id="color-back-bg" value="#ffffff">
           </div>
-          <div class="color-item">
+          <div class="color-item" id="color-text-shared-item">
             <label>텍스트</label>
             <input type="color" id="color-text" value="#333333">
+          </div>
+          <div class="color-item" id="color-front-text-item" hidden>
+            <label>앞면 텍스트</label>
+            <input type="color" id="color-front-text" value="#333333">
+          </div>
+          <div class="color-item" id="color-back-text-item" hidden>
+            <label>뒷면 텍스트</label>
+            <input type="color" id="color-back-text" value="#333333">
           </div>
           <div class="color-item">
             <label>포인트</label>
@@ -709,6 +731,6 @@
     </div>
   </footer>
 
-  <script type="module" src="./main.js?v=20260405-card-standard-109"></script>
+  <script type="module" src="./main.js?v=20260410-card-standard-110"></script>
 </body>
 </html>

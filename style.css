@@ -3,6 +3,8 @@
 :root {
   color-scheme: light dark;
   --card-bg: #ffffff;
+  --front-text: #333333;
+  --back-text: #333333;
   --card-text: #333333;
   --card-point: #2a5a43;
   --company-color: #333333;
@@ -223,6 +225,48 @@ input[type="color"]:focus,
 .color-picker-group {
   display: flex;
   gap: 10px;
+}
+
+.color-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.color-mode-toggle__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.color-mode-toggle__copy strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.color-mode-toggle__copy span {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.color-mode-toggle__btn {
+  flex-shrink: 0;
+  min-width: 110px;
+}
+
+.color-mode-toggle__btn.is-active {
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  border-color: #111827;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.16);
 }
 
 .color-item {
@@ -605,7 +649,7 @@ input[type="color"]:focus,
   width: min(450px, 100%);
   aspect-ratio: 9 / 5;
   background-color: var(--card-bg);
-  color: var(--card-text);
+  color: var(--front-text);
   font-family: var(--card-font);
   box-shadow: var(--shadow-strong);
   position: relative;
@@ -735,9 +779,17 @@ body.is-print-preview .print-guide-layer {
 .back-content .preview-logo { max-width: calc(150px * var(--card-ui-scale)); max-height: calc(60px * var(--card-ui-scale)); margin-bottom: calc(16px * var(--card-ui-scale)); }
 .back-content .back-company { font-size: calc(18px * var(--card-ui-scale)); margin-bottom: calc(8px * var(--card-ui-scale)); }
 .back-content .back-slogan { font-size: calc(12px * var(--card-ui-scale)); opacity: 0.8; letter-spacing: calc(1px * var(--card-ui-scale)); }
+.back-face {
+  color: var(--back-text);
+}
 .preview-company,
 .back-company {
   min-height: 1.2em;
+}
+
+.back-company,
+.back-slogan {
+  color: var(--back-text);
 }
 
 .template-modern .card-content { flex-direction: column; justify-content: space-between; }
@@ -746,8 +798,8 @@ body.is-print-preview .print-guide-layer {
 .template-pet .brand-area { position: absolute; top: calc(30px * var(--card-ui-scale)); right: calc(35px * var(--card-ui-scale)); text-align: right; }
 .template-pet .preview-divider { width: 100%; height: 1px; opacity: 0.3; margin: calc(8px * var(--card-ui-scale)) 0 calc(12px * var(--card-ui-scale)) 0; }
 .template-pet .contact-info { flex-direction: row; flex-wrap: wrap; gap: calc(10px * var(--card-ui-scale)) calc(15px * var(--card-ui-scale)); }
-#card-back.template-pet { background-color: var(--back-bg) !important; color: var(--card-text) !important; }
-#card-back.template-pet .back-company, #card-back.template-pet .back-slogan { color: var(--card-text) !important; }
+#card-back.template-pet { background-color: var(--back-bg) !important; color: var(--back-text) !important; }
+#card-back.template-pet .back-company, #card-back.template-pet .back-slogan { color: var(--back-text) !important; }
 
 .template-transport {
   background:
@@ -939,7 +991,7 @@ body.is-print-preview .print-guide-layer {
 #card-back.template-transport {
   background:
     linear-gradient(145deg, #fffdf9 0%, #faf5ff 100%) !important;
-  color: var(--card-text) !important;
+  color: var(--back-text) !important;
 }
 
 .back-face.template-transport .card-content.back-content {
@@ -993,7 +1045,7 @@ body.is-print-preview .print-guide-layer {
 .template-clinic .brand-area { position: static; order: 2; text-align: left; margin-top: calc(2px * var(--card-ui-scale)); }
 .template-clinic .info-area { order: 1; }
 .template-clinic .preview-extra { color: var(--card-point); font-weight: 700; }
-#card-back.template-clinic { background-color: var(--back-bg) !important; color: var(--card-text) !important; }
+#card-back.template-clinic { background-color: var(--back-bg) !important; color: var(--back-text) !important; }
 
 .back-face.template-clinic {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, var(--back-bg) 38%, var(--back-bg) 100%) !important;
@@ -1049,7 +1101,8 @@ body.is-print-preview .print-guide-layer {
   text-align: center;
   font-size: calc(10px * var(--card-ui-scale));
   line-height: 1.5;
-  color: rgba(31, 41, 55, 0.82);
+  color: var(--back-text);
+  opacity: 0.82;
   z-index: 2;
 }
 
@@ -1179,13 +1232,16 @@ body.is-print-preview .print-guide-layer {
   }
 }
 
-.template-dark { background-color: #111 !important; color: #eee !important; }
+.template-dark { background-color: #111 !important; color: var(--front-text) !important; }
 .template-dark .preview-name { color: var(--card-point); }
 .template-dark .preview-company { color: var(--company-color); }
-.template-dark .info-row { color: #ccc; }
+.template-dark .info-row { color: var(--front-text); }
 .template-dark .preview-divider { background-color: #333; }
 .template-dark .card-content { flex-direction: column; justify-content: center; align-items: flex-start; }
 .template-dark .brand-area { margin-bottom: calc(20px * var(--card-ui-scale)); }
+.back-face.template-dark { color: var(--back-text) !important; }
+.back-face.template-dark .back-company,
+.back-face.template-dark .back-slogan { color: var(--back-text) !important; }
 
 .template-creative .card-content { position: relative; border: calc(4px * var(--card-ui-scale)) solid var(--card-point); margin: calc(28px * var(--card-ui-scale)); width: calc(100% - (56px * var(--card-ui-scale))); height: calc(100% - (56px * var(--card-ui-scale))); padding: calc(22px * var(--card-ui-scale)) calc(22px * var(--card-ui-scale)) calc(22px * var(--card-ui-scale)) calc(22px * var(--card-ui-scale)); display: flex; flex-direction: column; justify-content: flex-end; }
 .template-creative .brand-area { position: absolute; top: calc(20px * var(--card-ui-scale)); right: calc(22px * var(--card-ui-scale)); left: auto; text-align: right; max-width: calc(42% - (6px * var(--card-ui-scale))); }
@@ -2835,6 +2891,15 @@ body {
     min-width: 0;
   }
 
+  .color-mode-toggle {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .color-mode-toggle__btn {
+    width: 100%;
+  }
+
   .field-grid,
   .download-grid {
     grid-template-columns: 1fr;
@@ -3397,7 +3462,7 @@ body.is-guided-wizard.is-wizard-step-2 #section-recommend .section-heading {
 }
 
 body.is-guided-wizard.is-wizard-step-2 #section-recommend .wizard-recommend-card__copy p {
-  display: none !important;
+  display: block !important;
 }
 
 body.is-guided-wizard.is-wizard-step-2 .wizard-recommend-card {
