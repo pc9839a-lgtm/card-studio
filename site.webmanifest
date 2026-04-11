@@ -1,6 +1,7 @@
 {
-  "name": "카드 studio | Business Card Studio",
-  "short_name": "카드 studio",
+  "name": "CardStudio | 카드스튜디오",
+  "short_name": "CardStudio",
+  "description": "간편한 무료 명함 · 썸네일 · 카드뉴스 제작 도구. 실시간 미리보기와 PNG, PDF 저장을 지원합니다.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#eef2f7",
@@ -9,7 +10,8 @@
     {
       "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/svg+xml"
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }

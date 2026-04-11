@@ -2601,6 +2601,124 @@ body {
   border-color: rgba(203, 213, 225, 0.72);
 }
 
+.seo-content {
+  padding: 18px 20px 8px;
+}
+
+.seo-content__inner {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.seo-hero,
+.seo-panel {
+  padding: 28px 30px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+}
+
+.seo-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.seo-hero__eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: #2563eb;
+}
+
+.seo-hero h2,
+.seo-panel h3 {
+  margin: 0;
+  color: #0f172a;
+  letter-spacing: -0.04em;
+}
+
+.seo-hero h2 {
+  font-size: 32px;
+  line-height: 1.14;
+}
+
+.seo-panel h3 {
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.seo-hero p,
+.seo-panel p,
+.seo-list li,
+.seo-faq p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #475569;
+}
+
+.seo-feature-grid,
+.seo-columns {
+  display: grid;
+  gap: 20px;
+}
+
+.seo-feature-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.seo-columns {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.seo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.seo-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seo-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.seo-faq details {
+  border-radius: 18px;
+  border: 1px solid rgba(203, 213, 225, 0.88);
+  background: linear-gradient(180deg, #fbfdff 0%, #f8fafc 100%);
+  padding: 18px 20px;
+}
+
+.seo-faq summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 16px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.seo-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.seo-faq details p {
+  margin-top: 10px;
+}
+
 .site-footer {
   padding: 24px 20px 30px;
   background: linear-gradient(180deg, rgba(240, 244, 248, 0.18) 0%, rgba(226, 232, 240, 0.52) 100%);
@@ -2704,6 +2822,15 @@ body {
   .site-footer__contact p {
     text-align: left;
   }
+
+  .seo-feature-grid,
+  .seo-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .seo-hero h2 {
+    font-size: 28px;
+  }
 }
 
 @media (max-width: 767px) {
@@ -2714,6 +2841,31 @@ body {
   body {
     padding-top: 0;
     padding-bottom: 20px;
+  }
+
+  .seo-content {
+    padding: 14px 12px 4px;
+  }
+
+  .seo-hero,
+  .seo-panel {
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+
+  .seo-hero h2 {
+    font-size: 24px;
+  }
+
+  .seo-panel h3 {
+    font-size: 20px;
+  }
+
+  .seo-hero p,
+  .seo-panel p,
+  .seo-list li,
+  .seo-faq p {
+    font-size: 14px;
   }
 
   .partners-desktop {
