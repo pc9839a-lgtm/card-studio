@@ -4736,196 +4736,122 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-/* ===== MOBILE UX SAFE PATCH: business preview sticky + cardnews compact navigator ===== */
+// ===== studio home menu + about modal hotfix =====
 document.addEventListener('DOMContentLoaded', () => {
-  const previewArea = document.getElementById('preview-area');
-  const cardnewsLab = document.getElementById('cardnews-lab');
-  const cardnewsIntro = cardnewsLab?.querySelector('.cardnews-lab__intro');
+  const body = document.body;
+  const home = document.getElementById('studio-home');
+  const buttons = Array.from(document.querySelectorAll('[data-studio-target]'));
+  const panels = Array.from(document.querySelectorAll('[data-studio-panel]'));
 
-  const isMobileViewportSafe = () => window.matchMedia('(max-width: 767px)').matches;
+  if (!body || !buttons.length || !panels.length) return;
 
-  const syncBusinessPreviewStickyState = () => {
-    const isReady = !!(previewArea && isMobileViewportSafe() && !previewArea.hidden);
-    document.body.classList.toggle('is-mobile-preview-sticky-ready', isReady);
+  const normalizeMode = (mode) => {
+    if (mode === 'business' || mode === 'cardnews') return mode;
+    return 'home';
   };
 
-  if (previewArea) {
-    const previewObserver = new MutationObserver(syncBusinessPreviewStickyState);
-    previewObserver.observe(previewArea, {
-      attributes: true,
-      attributeFilter: ['hidden', 'class', 'style']
+  const setStudioMode = (mode, options = {}) => {
+    const safeMode = normalizeMode(mode);
+    const scroll = options.scroll === true;
+
+    body.dataset.studioMode = safeMode;
+
+    buttons.forEach((button) => {
+      const active = safeMode !== 'home' && button.dataset.studioTarget === safeMode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
 
-    const bodyObserver = new MutationObserver(syncBusinessPreviewStickyState);
-    bodyObserver.observe(document.body, {
-      attributes: true,
-      attributeFilter: ['class']
+    panels.forEach((panel) => {
+      const active = safeMode !== 'home' && panel.dataset.studioPanel === safeMode;
+      panel.hidden = !active;
+      panel.classList.toggle('is-active', active);
     });
 
-    window.addEventListener('resize', syncBusinessPreviewStickyState);
-    setTimeout(syncBusinessPreviewStickyState, 80);
+    if (home) {
+      home.hidden = false;
+    }
+
+    if (scroll && safeMode !== 'home') {
+      const targetPanel = panels.find((panel) => panel.dataset.studioPanel === safeMode);
+      if (targetPanel) {
+        window.requestAnimationFrame(() => {
+          targetPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    }
+  };
+
+  window.setStudioMode = setStudioMode;
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      setStudioMode(button.dataset.studioTarget, { scroll: true });
+    });
+  });
+
+  let initialMode = 'home';
+  if (window.location.hash.includes('cardnews')) {
+    initialMode = 'cardnews';
+  } else if (window.location.hash.includes('business')) {
+    initialMode = 'business';
+  } else if (body.dataset.studioMode) {
+    initialMode = body.dataset.studioMode;
   }
 
-  if (!cardnewsLab || !cardnewsIntro) return;
+  setStudioMode(initialMode, { scroll: false });
+});
 
-  const cardnewsSectionMeta = [
-    { key: 'cards', label: '카드' },
-    { key: 'format', label: '형식' },
-    { key: 'text', label: '텍스트' },
-    { key: 'background', label: '배경' },
-    { key: 'image', label: '이미지' },
-    { key: 'shape', label: '도형' },
-    { key: 'export', label: '저장' }
-  ];
+document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
+  const aboutModal = document.getElementById('studio-about-modal');
+  const openButton = document.getElementById('btn-open-studio-about');
+  const closeButtons = Array.from(document.querySelectorAll('[data-studio-about-close]'));
 
-  const getCardnewsSections = () => Array.from(
-    cardnewsLab.querySelectorAll('.cardnews-group[data-cardnews-section]')
-  );
+  if (!body || !aboutModal) return;
 
-  const findCardnewsSection = (key) => getCardnewsSections().find(
-    (section) => section.dataset.cardnewsSection === key
-  ) || null;
+  let lastFocusedElement = null;
 
-  let navObserver = null;
+  const closeAboutModal = () => {
+    aboutModal.hidden = true;
+    aboutModal.setAttribute('aria-hidden', 'true');
+    body.classList.remove('is-studio-about-open');
+    if (lastFocusedElement instanceof HTMLElement) {
+      lastFocusedElement.focus();
+    }
+  };
 
-  const ensureCardnewsQuickNav = () => {
-    let quickNav = cardnewsLab.querySelector('.cardnews-mobile-quicknav');
-    if (quickNav) return quickNav;
+  const openAboutModal = () => {
+    lastFocusedElement = document.activeElement;
+    aboutModal.hidden = false;
+    aboutModal.setAttribute('aria-hidden', 'false');
+    body.classList.add('is-studio-about-open');
+  };
 
-    quickNav = document.createElement('div');
-    quickNav.className = 'cardnews-mobile-quicknav';
-    quickNav.setAttribute('aria-label', '카드뉴스 모바일 빠른 이동');
-
-    const chips = document.createElement('div');
-    chips.className = 'cardnews-mobile-quicknav__chips';
-
-    cardnewsSectionMeta.forEach(({ key, label }) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'cardnews-mobile-quicknav__btn';
-      button.dataset.cardnewsNav = key;
-      button.textContent = label;
-      chips.appendChild(button);
+  if (openButton) {
+    openButton.addEventListener('click', (event) => {
+      event.preventDefault();
+      openAboutModal();
     });
+  }
 
-    const previewToggle = document.createElement('button');
-    previewToggle.type = 'button';
-    previewToggle.className = 'cardnews-mobile-quicknav__preview-btn';
-    previewToggle.setAttribute('data-cardnews-preview-toggle', 'true');
-    previewToggle.textContent = '미리보기 보기';
-
-    quickNav.append(chips, previewToggle);
-    cardnewsIntro.insertAdjacentElement('afterend', quickNav);
-
-    quickNav.addEventListener('click', (event) => {
-      const button = event.target.closest('button');
-      if (!button) return;
-
-      if (button.dataset.cardnewsNav) {
-        openCardnewsSection(button.dataset.cardnewsNav, true);
-        return;
-      }
-
-      if (button.hasAttribute('data-cardnews-preview-toggle')) {
-        cardnewsLab.classList.toggle('is-mobile-preview-collapsed');
-        syncCardnewsQuickNavState();
-      }
+  closeButtons.forEach((button) => {
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      closeAboutModal();
     });
+  });
 
-    return quickNav;
-  };
-
-  const syncCardnewsQuickNavState = () => {
-    const quickNav = cardnewsLab.querySelector('.cardnews-mobile-quicknav');
-    if (!quickNav) return;
-
-    const sections = getCardnewsSections();
-    const activeSection = sections.find((section) => section.classList.contains('is-linked'))
-      || sections.find((section) => !section.classList.contains('is-collapsed'))
-      || findCardnewsSection('cards');
-
-    quickNav.querySelectorAll('[data-cardnews-nav]').forEach((button) => {
-      button.classList.toggle(
-        'is-active',
-        !!activeSection && button.dataset.cardnewsNav === activeSection.dataset.cardnewsSection
-      );
+  aboutModal.querySelectorAll('[data-studio-target]').forEach((button) => {
+    button.addEventListener('click', () => {
+      closeAboutModal();
     });
+  });
 
-    const previewToggle = quickNav.querySelector('[data-cardnews-preview-toggle]');
-    if (previewToggle) {
-      previewToggle.textContent = cardnewsLab.classList.contains('is-mobile-preview-collapsed')
-        ? '미리보기 보기'
-        : '미리보기 숨기기';
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !aboutModal.hidden) {
+      closeAboutModal();
     }
-  };
-
-  const openCardnewsSection = (sectionKey, scroll = false) => {
-    const target = findCardnewsSection(sectionKey);
-    if (!target) return;
-
-    const heading = target.querySelector('.section-heading');
-    if (heading) {
-      heading.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    }
-
-    setTimeout(() => {
-      const sections = getCardnewsSections();
-
-      if (!target.classList.contains('is-linked')) {
-        sections.forEach((section) => {
-          const isTarget = section === target;
-          section.classList.toggle('is-linked', isTarget);
-          section.classList.toggle('is-collapsed', !isTarget);
-          const toggle = section.querySelector('.section-heading');
-          if (toggle) {
-            toggle.setAttribute('aria-expanded', isTarget ? 'true' : 'false');
-          }
-        });
-      }
-
-      if (scroll) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      syncCardnewsQuickNavState();
-    }, 0);
-  };
-
-  const syncCardnewsMobileMode = () => {
-    const isMobile = isMobileViewportSafe();
-    cardnewsLab.classList.toggle('is-mobile-compact', isMobile);
-
-    if (!isMobile) {
-      cardnewsLab.classList.remove('is-mobile-preview-collapsed');
-      syncCardnewsQuickNavState();
-      return;
-    }
-
-    ensureCardnewsQuickNav();
-
-    if (!cardnewsLab.dataset.mobilePreviewDefaultApplied) {
-      cardnewsLab.classList.add('is-mobile-preview-collapsed');
-      cardnewsLab.dataset.mobilePreviewDefaultApplied = 'true';
-    }
-
-    if (!cardnewsLab.dataset.mobileCardnewsInitialSection) {
-      cardnewsLab.dataset.mobileCardnewsInitialSection = 'cards';
-      setTimeout(() => openCardnewsSection('cards', false), 100);
-    }
-
-    if (!navObserver) {
-      navObserver = new MutationObserver(syncCardnewsQuickNavState);
-      getCardnewsSections().forEach((section) => {
-        navObserver.observe(section, {
-          attributes: true,
-          attributeFilter: ['class']
-        });
-      });
-    }
-
-    syncCardnewsQuickNavState();
-  };
-
-  setTimeout(syncCardnewsMobileMode, 120);
-  window.addEventListener('resize', syncCardnewsMobileMode);
+  });
 });
