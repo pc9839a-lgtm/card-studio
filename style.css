@@ -5392,3 +5392,134 @@ body.is-studio-about-open {
     text-align: center;
   }
 }
+
+/* ===== CardStudio mobile optimization phase 1 ===== */
+/* 목적: style.css 1차 패치 - 명함 모바일 미리보기 안정화 전용 */
+/* 적용 방식: 현재 style.css 맨 아래에 그대로 추가 */
+/* 주의: 홈 / 푸터 / 카드뉴스 / PC 레이아웃은 건드리지 않음 */
+
+@media (max-width: 767px) {
+  /* 명함 모바일 상단 미리보기 영역 안정화 */
+  .preview-area {
+    top: 0;
+    z-index: 45;
+    padding: 6px 10px 10px;
+    background:
+      linear-gradient(180deg, rgba(238, 243, 248, 0.98) 0%, rgba(248, 251, 255, 0.94) 78%, rgba(248, 251, 255, 0) 100%);
+  }
+
+  /* 툴바 높이와 정보 밀도 축소 */
+  .preview-toolbar {
+    padding: 10px 12px;
+    gap: 8px;
+    border-radius: 16px;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  }
+
+  .preview-toolbar__meta strong {
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  #preview-context-label {
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  #preview-template-label {
+    display: none;
+  }
+
+  /* 모바일 액션 버튼은 더 촘촘하게 */
+  .mobile-preview-actions {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .mobile-preview-actions .btn {
+    min-height: 34px;
+    padding: 0 6px;
+    font-size: 11px;
+    border-radius: 12px;
+    letter-spacing: -0.03em;
+  }
+
+  /* 저장 패널도 높이 축소 */
+  .mobile-save-panel {
+    margin: 8px auto 10px;
+    padding: 12px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .mobile-save-panel__field {
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .mobile-save-panel__field input {
+    min-height: 42px;
+    font-size: 14px;
+    border-radius: 12px;
+  }
+
+  .mobile-save-panel .btn {
+    min-height: 42px;
+    font-size: 13px;
+  }
+
+  /* 카드 영역 자체를 조금 더 압축 */
+  .cards-wrapper {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .card-section {
+    gap: 6px;
+  }
+
+  .card-label {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+
+  .business-card {
+    width: min(100%, 72mm);
+    max-width: 100%;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+  }
+
+  /* 미리보기 접힘 상태를 더 가볍게 */
+  .preview-area.is-collapsed {
+    padding: 6px 10px 6px;
+    background: linear-gradient(180deg, rgba(238, 243, 248, 0.98) 0%, rgba(248, 251, 255, 0.9) 100%);
+  }
+
+  .preview-area.is-collapsed .preview-toolbar {
+    margin-bottom: 0;
+  }
+
+  /* 컨트롤 시작 지점이 너무 붙지 않게 */
+  .controls {
+    padding-top: 10px;
+  }
+
+  /* 모바일에서 불필요하게 큰 여백 압축 */
+  body.is-mobile-flow .wizard-flow {
+    top: calc(env(safe-area-inset-top, 0px) + 6px);
+  }
+
+  body.is-mobile-flow .control-group,
+  body.is-mobile-flow .actions-card {
+    border-radius: 18px;
+  }
+
+  /* 비교보기에서는 현재 모바일 sticky를 완전히 끔 */
+  body.is-compare-mode .preview-area {
+    position: static;
+    top: auto;
+    z-index: auto;
+    padding: 12px 10px 0;
+    background: transparent;
+  }
+}
