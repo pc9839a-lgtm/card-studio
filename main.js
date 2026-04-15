@@ -279,7 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const faceToggleButtons = document.querySelectorAll('.face-toggle__btn');
   const facePanels = document.querySelectorAll('.face-panel');
   const controlNavLinks = document.querySelectorAll('.control-nav__link');
-  const collapsibleSections = Array.from(document.querySelectorAll('.control-group, .actions'));
+  const collapsibleSections = Array.from(
+    document.querySelectorAll('.control-group:not(.cardnews-group), .actions')
+  );
   const infoCoreFields = [inputs.name, inputs.phone]
     .map((input) => input?.closest('.field'))
     .filter(Boolean);
@@ -4732,3 +4734,96 @@ document.addEventListener('DOMContentLoaded', () => {
   setStatus('준비 완료');
 });
 
+
+
+// ===== main screen studio mode navigation =====
+document.addEventListener('DOMContentLoaded', () => {
+  const buttons = Array.from(document.querySelectorAll('[data-studio-target]'));
+  const panels = Array.from(document.querySelectorAll('[data-studio-panel]'));
+  if (!buttons.length || !panels.length) return;
+
+  const body = document.body;
+
+  const setMode = (mode, { scroll = false } = {}) => {
+    const safeMode = mode === 'cardnews'
+      ? 'cardnews'
+      : (mode === 'business' ? 'business' : 'home');
+
+    body.dataset.studioMode = safeMode;
+
+    buttons.forEach((button) => {
+      const active = safeMode !== 'home' && button.dataset.studioTarget === safeMode;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+
+    panels.forEach((panel) => {
+      const active = safeMode !== 'home' && panel.dataset.studioPanel === safeMode;
+      panel.classList.toggle('is-active', active);
+      panel.hidden = !active;
+    });
+
+    if (scroll && safeMode !== 'home') {
+      const targetPanel = panels.find((panel) => panel.dataset.studioPanel === safeMode);
+      targetPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  buttons.forEach((button) => {
+    button.addEventListener('click', () => setMode(button.dataset.studioTarget, { scroll: true }));
+  });
+
+  let initialMode = 'home';
+
+  if (window.location.hash.includes('cardnews')) {
+    initialMode = 'cardnews';
+  } else if (window.location.hash.includes('business')) {
+    initialMode = 'business';
+  }
+
+  setMode(initialMode, { scroll: false });
+});
+
+
+// ===== footer about modal =====
+document.addEventListener('DOMContentLoaded', () => {
+  const aboutModal = document.getElementById('studio-about-modal');
+  const openButton = document.getElementById('btn-open-studio-about');
+  const closeButtons = Array.from(document.querySelectorAll('[data-studio-about-close]'));
+
+  if (!aboutModal || !openButton) return;
+
+  let lastFocusedElement = null;
+
+  const closeAboutModal = () => {
+    aboutModal.hidden = true;
+    aboutModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('is-studio-about-open');
+    if (lastFocusedElement instanceof HTMLElement) {
+      lastFocusedElement.focus();
+    }
+  };
+
+  const openAboutModal = () => {
+    lastFocusedElement = document.activeElement;
+    aboutModal.hidden = false;
+    aboutModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('is-studio-about-open');
+  };
+
+  openButton.addEventListener('click', openAboutModal);
+
+  closeButtons.forEach((button) => {
+    button.addEventListener('click', closeAboutModal);
+  });
+
+  aboutModal.querySelectorAll('[data-studio-target]').forEach((button) => {
+    button.addEventListener('click', closeAboutModal);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !aboutModal.hidden) {
+      closeAboutModal();
+    }
+  });
+});

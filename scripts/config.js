@@ -30,7 +30,8 @@ export const CARD_FIELD_KEYS = [
   'frontQrMode', 'frontQrValue', 'frontQrSize', 'frontQrX', 'frontQrY',
   'backQrMode', 'backQrValue', 'backQrSize', 'backQrX', 'backQrY',
   'frontOverlayColor', 'frontOverlayOpacity', 'backOverlayColor', 'backOverlayOpacity',
-  'rangeSize', 'rangeWeight', 'template', 'font', 'frontBg', 'backBg', 'textColor', 'pointColor'
+  'rangeSize', 'rangeWeight', 'template', 'font', 'frontBg', 'backBg',
+  'textColor', 'frontTextColor', 'backTextColor', 'useSplitTextColor', 'pointColor'
 ];
 
 export const TEMPLATE_RECOMMENDATION_META = {

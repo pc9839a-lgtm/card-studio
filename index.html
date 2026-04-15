@@ -13,15 +13,11 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./favicon.svg">
   <link rel="manifest" href="./site.webmanifest?v=20260411-brand-stage2">
-  <meta name="google-site-verification" content="iDIM5o9jB7wgkMXXgxl0u3m9WmtNWFJ1Qb_RI7G6qCU" />
-  <meta name="naver-site-verification" content="6d87f3d6cc4f449a4b0901b86b1feddb69302618" />
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-MLDJ9QF3');</script>
-<!-- End Google Tag Manager -->
+  <meta name="google-site-verification" content="">
+  <meta name="naver-site-verification" content="">
+  <!-- Google Tag Manager (head) START -->
+  <!-- 여기에 Google Tag Manager head 스크립트를 붙여넣으세요. -->
+  <!-- Google Tag Manager (head) END -->
   <meta property="og:locale" content="ko_KR">
   <meta property="og:type" content="website">
   <meta property="og:title" content="온라인 명함 · 썸네일 · 카드뉴스 제작 | CardStudio">
@@ -107,15 +103,54 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260411-card-seo-stage1">
+  <link rel="stylesheet" href="./style.css?v=20260412-cardnews-folder-1">
+<link rel="stylesheet" href="./cardnews/card-news.css?v=20260414-cardnews-template-fix-3">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body class="is-guided-wizard is-wizard-step-1 is-wizard-preview-hidden">
+<body class="is-guided-wizard is-wizard-step-1 is-wizard-preview-hidden" data-studio-mode="home">
   <!-- Google Tag Manager (noscript) START -->
   <!-- 여기에 Google Tag Manager noscript iframe 코드를 붙여넣으세요. -->
   <!-- Google Tag Manager (noscript) END -->
+  <header class="studio-home" id="studio-home">
+    <div class="studio-home__inner">
+      <div class="studio-home__copy">
+        <span class="studio-home__eyebrow">CARDSTUDIO</span>
+        <h1>카드스튜디오</h1>
+        <p><br>명함, 카드뉴스(섬네일)제작<br>누구나 쉽게 제작할 수 있습니다.</p>
+        <div class="studio-home__chips">
+          <span>실시간 미리보기</span>
+          <span>명함 PNG · PDF 저장</span>
+          <span>카드뉴스 ZIP 저장</span>
+        </div>
+      </div>
+
+      <div class="studio-home__menu-wrap">
+        <div class="studio-home__menu-title">
+          <strong>원하는 작업을 선택해주세요 </strong>
+          <span>메뉴</span>
+        </div>
+        <div class="studio-home__menu" aria-label="제작 도구 메뉴">
+          <button type="button" class="studio-menu-card" data-studio-target="business">
+            <span class="studio-menu-card__tag">BUSINESS CARD</span>
+            <strong>명함만들기</strong>
+            <p>이름, 연락처, 로고, QR 넣고 바로 저장</p>
+            <span class="studio-menu-card__cta">명함 작업 열기</span>
+          </button>
+
+          <button type="button" class="studio-menu-card" data-studio-target="cardnews">
+            <span class="studio-menu-card__tag">CARD NEWS</span>
+            <strong>카드뉴스 만들기</strong>
+            <p>카드뉴스 · 썸네일 여러 장 편집 후 한 번에 저장</p>
+            <span class="studio-menu-card__cta">카드뉴스 작업 열기</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <section class="studio-workspace studio-workspace--business is-active" id="workspace-business" data-studio-panel="business">
   <div class="app-container">
     <aside class="controls">
       <div class="controls-hero">
@@ -789,90 +824,629 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     </main>
 
   </div>
+  </section>
 
-  <section class="seo-content" aria-labelledby="seo-content-title">
-    <div class="seo-content__inner">
-      <div class="seo-hero">
-        <span class="seo-hero__eyebrow">ONLINE BUSINESS CARD MAKER</span>
-        <h2 id="seo-content-title">온라인 명함 만들기부터 저장까지 한 번에 진행할 수 있습니다</h2>
-        <p>
-          CardStudio는 명함 제작에서 시작해 썸네일과 카드뉴스까지 확장할 수 있는 카드 기반 콘텐츠 제작 도구입니다.
-          템플릿 선택, 회사명 입력, 로고 업로드, 이미지 오버레이, QR 생성,
-          앞면과 뒷면 미리보기, PNG 및 PDF 저장까지 한 화면에서 이어서 처리할 수 있습니다.
-          설치 없이 모바일과 PC에서 바로 사용할 수 있고, 실시간 미리보기로 결과를 확인하면서 명함 디자인을 정리할 수 있습니다.
-        </p>
+  <section class="cardnews-lab studio-workspace studio-workspace--cardnews" id="cardnews-lab" data-studio-panel="cardnews" aria-labelledby="cardnews-lab-title">
+    <div class="cardnews-lab__inner">
+      <div class="cardnews-lab__intro">
+        <span class="cardnews-lab__eyebrow">CARD NEWS LAB</span>
+        <h2 id="cardnews-lab-title">CardStudio 카드뉴스 제작기</h2>
+        <p>정사각형과 세로형 카드뉴스를 만들고, 텍스트를 여러 개 추가해 개별 편집할 수 있는 2차 편집기입니다. 텍스트 스타일, 이미지 마스크, 도형, 레이어 순서, 여러 장 카드 구성과 ZIP 저장까지 한 번에 진행할 수 있습니다.</p>
       </div>
 
-      <div class="seo-feature-grid">
-        <article class="seo-panel seo-panel--feature">
-          <h3>추천 템플릿으로 빠른 시작</h3>
-          <p>기본 정보 입력 후 바로 사용할 수 있는 템플릿을 추천하고, 여러 스타일을 비교한 뒤 원하는 명함 디자인으로 시작할 수 있습니다.</p>
+      <div class="cardnews-studio">
+        <aside class="cardnews-panel" aria-label="카드뉴스 편집 패널">
+          <section class="control-group cardnews-group" data-cardnews-section="cards">
+            <div class="section-heading">
+              <span class="section-kicker">Cards</span>
+              <h3>카드 구성</h3>
+              <p>카드별로 이름을 붙이고 새 카드 추가, 복사, 삭제를 진행합니다.</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field full-span">
+                <span>현재 카드 이름</span>
+                <input type="text" id="cardnews-card-name" placeholder="카드 이름을 입력하세요">
+              </label>
+            </div>
+
+            <div class="cardnews-card-list" id="cardnews-card-list" aria-live="polite"></div>
+
+            <div class="cardnews-action-row cardnews-action-row--cards">
+              <button id="btn-cardnews-card-add" class="btn btn-outline" type="button">새 카드 추가</button>
+              <button id="btn-cardnews-card-copy" class="btn btn-outline" type="button">카드 복사</button>
+              <button id="btn-cardnews-card-remove" class="btn btn-outline" type="button">카드 삭제</button>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="format">
+            <div class="section-heading">
+              <span class="section-kicker">Format</span>
+              <h3>포맷과 템플릿</h3>
+              <p>정사각형과 세로형 비율 중 하나를 고르고, 기본 배경 예시까지 포함된 템플릿을 적용합니다.</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>포맷</span>
+                <select id="cardnews-format">
+                  <option value="square">정사각형 1080 x 1080</option>
+                  <option value="portrait">세로형 1080 x 1350</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>템플릿</span>
+                <select id="cardnews-template">
+                  <option value="cover">커버형</option>
+                  <option value="split">상하 분할형</option>
+                  <option value="minimal">미니멀형</option>
+                  <option value="list">리스트형</option>
+                  <option value="headline">에디토리얼형</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="cardnews-action-row">
+              <button id="btn-cardnews-fill-sample" class="btn btn-outline" type="button">샘플 적용</button>
+              <button id="btn-cardnews-reset" class="btn btn-outline" type="button">현재 카드 초기화</button>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="text">
+            <div class="section-heading">
+              <span class="section-kicker">Text</span>
+              <h3>텍스트</h3>
+              <p>텍스트를 자유롭게 추가하고, 클릭할 때마다 같은 컨트롤에서 내용과 스타일을 바꿉니다.</p>
+            </div>
+
+            <div class="cardnews-text-list" id="cardnews-text-list" aria-live="polite"></div>
+
+            <div class="cardnews-action-row cardnews-action-row--cards">
+              <button id="btn-cardnews-text-add" class="btn btn-outline" type="button">텍스트 추가</button>
+              <button id="btn-cardnews-text-copy" class="btn btn-outline" type="button">텍스트 복사</button>
+              <button id="btn-cardnews-text-remove" class="btn btn-outline" type="button">텍스트 삭제</button>
+            </div>
+
+            <div class="field-grid">
+              <label class="field full-span">
+                <span>텍스트 내용</span>
+                <textarea id="cardnews-text-input" rows="4" placeholder="텍스트를 입력하세요"></textarea>
+              </label>
+              <label class="field">
+                <span>글꼴</span>
+                <select id="cardnews-font">
+                  <option value="'Pretendard', sans-serif">프리텐다드</option>
+                  <option value="'Noto Sans KR', sans-serif">노토 산스</option>
+                  <option value="'Nanum Myeongjo', serif">나눔 명조</option>
+                  <option value="'Gowun Dodum', sans-serif">고운 돋움</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>정렬</span>
+                <select id="cardnews-text-align">
+                  <option value="left">좌측</option>
+                  <option value="center">가운데</option>
+                  <option value="right">우측</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>카드 배치 정렬</span>
+                <select id="cardnews-text-frame-align">
+                  <option value="left">카드 좌측</option>
+                  <option value="center">카드 가운데</option>
+                  <option value="right">카드 우측</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <div class="range-wrap">
+                <label>텍스트 크기 <span id="cardnews-text-size-value">64px</span></label>
+                <input type="range" id="cardnews-text-size" min="18" max="140" value="64">
+              </div>
+              <div class="range-wrap">
+                <label>텍스트 폭 <span id="cardnews-text-width-value">80%</span></label>
+                <input type="range" id="cardnews-text-width" min="20" max="100" value="80">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>텍스트 가로 위치 <span id="cardnews-text-x-value">50%</span></label>
+                <input type="range" id="cardnews-text-x" min="0" max="100" value="50">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>텍스트 세로 위치 <span id="cardnews-text-y-value">24%</span></label>
+                <input type="range" id="cardnews-text-y" min="0" max="100" value="24">
+              </div>
+            </div>
+
+            <div class="color-picker-group">
+              <div class="color-item">
+                <label>텍스트 색상</label>
+                <input type="color" id="cardnews-text-color" value="#111827">
+              </div>
+            </div>
+
+            <div class="cardnews-toggle-grid">
+              <label class="cardnews-toggle-row">
+                <span>텍스트 배경</span>
+                <input type="checkbox" id="cardnews-text-bg-enabled">
+              </label>
+              <label class="cardnews-toggle-row">
+                <span>외곽선</span>
+                <input type="checkbox" id="cardnews-text-outline-enabled">
+              </label>
+              <label class="cardnews-toggle-row">
+                <span>그림자</span>
+                <input type="checkbox" id="cardnews-text-shadow-enabled">
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <div class="range-wrap">
+                <label>텍스트 불투명도 <span id="cardnews-text-opacity-value">1.00</span></label>
+                <input type="range" id="cardnews-text-opacity" min="0" max="1" step="0.05" value="1">
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-text-bg-panel" hidden>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>텍스트 배경색</label>
+                  <input type="color" id="cardnews-text-bg-color" value="#111827">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>텍스트 배경 불투명도 <span id="cardnews-text-bg-opacity-value">0.00</span></label>
+                  <input type="range" id="cardnews-text-bg-opacity" min="0" max="1" step="0.05" value="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-text-outline-panel" hidden>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>외곽선 색상</label>
+                  <input type="color" id="cardnews-text-outline-color" value="#ffffff">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>외곽선 불투명도 <span id="cardnews-text-outline-opacity-value">1.00</span></label>
+                  <input type="range" id="cardnews-text-outline-opacity" min="0" max="1" step="0.05" value="1">
+                </div>
+                <div class="range-wrap">
+                  <label>외곽선 두께 <span id="cardnews-text-outline-width-value">0px</span></label>
+                  <input type="range" id="cardnews-text-outline-width" min="0" max="8" step="0.5" value="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-text-shadow-panel" hidden>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>그림자 색상</label>
+                  <input type="color" id="cardnews-text-shadow-color" value="#111827">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>그림자 번짐 <span id="cardnews-text-shadow-blur-value">18px</span></label>
+                  <input type="range" id="cardnews-text-shadow-blur" min="0" max="60" value="18">
+                </div>
+                <div class="range-wrap">
+                  <label>그림자 불투명도 <span id="cardnews-text-shadow-opacity-value">0.18</span></label>
+                  <input type="range" id="cardnews-text-shadow-opacity" min="0" max="1" step="0.05" value="0.18">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="background">
+            <div class="section-heading">
+              <span class="section-kicker">Background</span>
+              <h3>배경과 오버레이</h3>
+              <p>단색 배경과 배경 이미지를 조합하고, 오버레이 색상과 투명도로 분위기를 잡습니다.</p>
+            </div>
+
+            <div class="color-picker-group">
+              <div class="color-item">
+                <label>배경색</label>
+                <input type="color" id="cardnews-bg-color" value="#ffffff">
+              </div>
+              <div class="color-item">
+                <label>오버레이 색상</label>
+                <input type="color" id="cardnews-overlay-color" value="#111827">
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <label class="field full-span">
+                <span>배경 이미지</span>
+                <small>PNG, JPG, WEBP / 최대 10MB</small>
+                <input type="file" id="cardnews-bg-image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
+              </label>
+            </div>
+
+            <div class="cardnews-action-row">
+              <button id="btn-cardnews-bg-image-clear" class="btn btn-outline" type="button">배경 이미지 삭제</button>
+              <label class="cardnews-inline-check">
+                <input type="checkbox" id="cardnews-overlay-enabled" checked>
+                <span>오버레이 사용</span>
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <div class="range-wrap">
+                <label>배경색 불투명도 <span id="cardnews-bg-opacity-value">1.00</span></label>
+                <input type="range" id="cardnews-bg-opacity" min="0" max="1" step="0.05" value="1">
+              </div>
+              <div class="range-wrap">
+                <label>배경 이미지 크기 <span id="cardnews-bg-scale-value">100%</span></label>
+                <input type="range" id="cardnews-bg-scale" min="60" max="180" value="100">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>배경 이미지 가로 위치 <span id="cardnews-bg-x-value">50%</span></label>
+                <input type="range" id="cardnews-bg-x" min="0" max="100" value="50">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>배경 이미지 세로 위치 <span id="cardnews-bg-y-value">50%</span></label>
+                <input type="range" id="cardnews-bg-y" min="0" max="100" value="50">
+              </div>
+              <div class="range-wrap">
+                <label>오버레이 투명도 <span id="cardnews-overlay-opacity-value">0.35</span></label>
+                <input type="range" id="cardnews-overlay-opacity" min="0" max="0.9" step="0.05" value="0.35">
+              </div>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="image">
+            <div class="section-heading">
+              <span class="section-kicker">Image</span>
+              <h3>메인 이미지</h3>
+              <p>메인 이미지를 업로드한 뒤 원본 비율은 유지하고, 크기와 카드 내 배치만 빠르게 조정합니다.</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field full-span">
+                <span>이미지 업로드</span>
+                <small>PNG, JPG, WEBP / 최대 8MB</small>
+                <input type="file" id="cardnews-main-image" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp">
+              </label>
+            </div>
+
+            <div class="cardnews-action-row">
+              <button id="btn-cardnews-main-image-clear" class="btn btn-outline" type="button">메인 이미지 삭제</button>
+              <label class="cardnews-inline-check">
+                <input type="checkbox" id="cardnews-image-mask-enabled">
+                <span>그라데이션 마스크</span>
+              </label>
+            </div>
+
+            <div class="cardnews-toggle-grid">
+              <label class="cardnews-toggle-row">
+                <span>이미지 외곽선</span>
+                <input type="checkbox" id="cardnews-image-outline-enabled">
+              </label>
+              <label class="cardnews-toggle-row">
+                <span>이미지 그림자</span>
+                <input type="checkbox" id="cardnews-image-shadow-enabled">
+              </label>
+            </div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>카드 배치 정렬</span>
+                <select id="cardnews-image-frame-align">
+                  <option value="left">카드 좌측</option>
+                  <option value="center">카드 가운데</option>
+                  <option value="right">카드 우측</option>
+                </select>
+              </label>
+              <div class="range-wrap">
+                <label>이미지 크기 <span id="cardnews-image-width-value">62%</span></label>
+                <input type="range" id="cardnews-image-width" min="20" max="100" value="62">
+                <small class="cardnews-range-note">원본 비율 유지</small>
+              </div>
+              <div class="range-wrap" hidden>
+                <label>이미지 높이 <span id="cardnews-image-height-value">42%</span></label>
+                <input type="range" id="cardnews-image-height" min="12" max="80" value="42">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>이미지 가로 위치 <span id="cardnews-image-x-value">50%</span></label>
+                <input type="range" id="cardnews-image-x" min="0" max="100" value="50">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>이미지 세로 위치 <span id="cardnews-image-y-value">72%</span></label>
+                <input type="range" id="cardnews-image-y" min="0" max="100" value="72">
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-image-mask-panel" hidden>
+              <div class="field-grid">
+                <label class="field">
+                  <span>마스크 방향</span>
+                  <select id="cardnews-image-mask-type">
+                    <option value="bottom">하단</option>
+                    <option value="top">상단</option>
+                    <option value="left">좌측</option>
+                    <option value="right">우측</option>
+                    <option value="diagonal-left">대각선 좌상단</option>
+                    <option value="diagonal-right">대각선 우상단</option>
+                    <option value="radial">중앙</option>
+                  </select>
+                </label>
+              </div>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>마스크 색상</label>
+                  <input type="color" id="cardnews-image-mask-color" value="#111827">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>마스크 범위 <span id="cardnews-image-mask-amount-value">65%</span></label>
+                  <input type="range" id="cardnews-image-mask-amount" min="20" max="95" value="65">
+                </div>
+                <div class="range-wrap">
+                  <label>마스크 불투명도 <span id="cardnews-image-mask-opacity-value">0.55</span></label>
+                  <input type="range" id="cardnews-image-mask-opacity" min="0" max="1" step="0.05" value="0.55">
+                </div>
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-image-outline-panel" hidden>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>이미지 외곽선 색상</label>
+                  <input type="color" id="cardnews-image-outline-color" value="#ffffff">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>이미지 외곽선 불투명도 <span id="cardnews-image-outline-opacity-value">1.00</span></label>
+                  <input type="range" id="cardnews-image-outline-opacity" min="0" max="1" step="0.05" value="1">
+                </div>
+                <div class="range-wrap">
+                  <label>이미지 외곽선 두께 <span id="cardnews-image-outline-width-value">0px</span></label>
+                  <input type="range" id="cardnews-image-outline-width" min="0" max="12" step="0.5" value="0">
+                </div>
+              </div>
+            </div>
+
+            <div class="cardnews-option-panel" id="cardnews-image-shadow-panel" hidden>
+              <div class="color-picker-group">
+                <div class="color-item">
+                  <label>이미지 그림자 색상</label>
+                  <input type="color" id="cardnews-image-shadow-color" value="#111827">
+                </div>
+              </div>
+              <div class="field-grid">
+                <div class="range-wrap">
+                  <label>이미지 그림자 번짐 <span id="cardnews-image-shadow-blur-value">0px</span></label>
+                  <input type="range" id="cardnews-image-shadow-blur" min="0" max="60" value="0">
+                </div>
+                <div class="range-wrap">
+                  <label>이미지 그림자 불투명도 <span id="cardnews-image-shadow-opacity-value">0.00</span></label>
+                  <input type="range" id="cardnews-image-shadow-opacity" min="0" max="1" step="0.05" value="0">
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="shape">
+            <div class="section-heading">
+              <span class="section-kicker">Shape</span>
+              <h3>도형</h3>
+              <p>사각형, 원, 선 중 하나를 선택해서 강조 배경이나 구분선을 만들 수 있습니다.</p>
+            </div>
+
+            <div class="cardnews-shape-list" id="cardnews-shape-list" aria-live="polite"></div>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>도형 타입</span>
+                <select id="cardnews-shape-type">
+                  <option value="rect">사각형</option>
+                  <option value="circle">원</option>
+                  <option value="line">선</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>카드 배치 정렬</span>
+                <select id="cardnews-shape-frame-align">
+                  <option value="left">카드 좌측</option>
+                  <option value="center">카드 가운데</option>
+                  <option value="right">카드 우측</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="cardnews-action-row">
+              <button id="btn-cardnews-shape-add" class="btn btn-outline" type="button">도형 추가</button>
+              <button id="btn-cardnews-shape-remove" class="btn btn-outline" type="button">도형 삭제</button>
+            </div>
+
+            <div class="color-picker-group">
+              <div class="color-item">
+                <label>도형 색상</label>
+                <input type="color" id="cardnews-shape-color" value="#2563eb">
+              </div>
+            </div>
+
+            <div class="field-grid">
+              <div class="range-wrap">
+                <label>도형 불투명도 <span id="cardnews-shape-opacity-value">1.00</span></label>
+                <input type="range" id="cardnews-shape-opacity" min="0" max="1" step="0.05" value="1">
+              </div>
+              <div class="range-wrap">
+                <label>도형 너비 <span id="cardnews-shape-width-value">84%</span></label>
+                <input type="range" id="cardnews-shape-width" min="8" max="100" value="84">
+              </div>
+              <div class="range-wrap">
+                <label>도형 높이 <span id="cardnews-shape-height-value">22%</span></label>
+                <input type="range" id="cardnews-shape-height" min="0.05" max="80" step="0.05" value="22">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>도형 가로 위치 <span id="cardnews-shape-x-value">50%</span></label>
+                <input type="range" id="cardnews-shape-x" min="0" max="100" value="50">
+              </div>
+              <div class="range-wrap cardnews-position-control" hidden>
+                <label>도형 세로 위치 <span id="cardnews-shape-y-value">74%</span></label>
+                <input type="range" id="cardnews-shape-y" min="0" max="100" value="74">
+              </div>
+            </div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="layer">
+            <div class="section-heading">
+              <span class="section-kicker">Layer</span>
+              <h3>레이어 순서</h3>
+              <p>선택한 레이어를 앞으로 보내거나 뒤로 보내서 겹침 순서를 조정합니다.</p>
+            </div>
+
+            <div class="field-grid">
+              <label class="field full-span">
+                <span>선택 레이어</span>
+                <select id="cardnews-active-layer">
+                  <option value="image">메인 이미지</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="cardnews-action-row cardnews-action-row--layer">
+              <button id="btn-cardnews-layer-back" class="btn btn-outline" type="button">뒤로</button>
+              <button id="btn-cardnews-layer-front" class="btn btn-outline" type="button">앞으로</button>
+              <button id="btn-cardnews-layer-bottom" class="btn btn-outline" type="button">맨 뒤</button>
+              <button id="btn-cardnews-layer-top" class="btn btn-outline" type="button">맨 앞</button>
+            </div>
+
+            <div class="cardnews-layer-list" id="cardnews-layer-list" aria-live="polite"></div>
+          </section>
+
+          <section class="control-group cardnews-group" data-cardnews-section="export">
+            <div class="section-heading">
+              <span class="section-kicker">Export</span>
+              <h3>저장</h3>
+              <p>현재 카드 한 장은 PNG로, 전체 카드는 ZIP으로 저장합니다.</p>
+            </div>
+
+            <div class="cardnews-action-row cardnews-action-row--cards">
+              <button id="btn-cardnews-download" class="btn btn-primary" type="button">현재 카드 PNG 저장</button>
+              <button id="btn-cardnews-download-zip" class="btn btn-outline" type="button">전체 카드 ZIP 저장</button>
+            </div>
+            <div class="status-box" id="cardnews-status-box" aria-live="polite">준비 완료</div>
+          </section>
+        </aside>
+
+        <div class="cardnews-preview">
+          <div class="cardnews-preview__meta">
+            <strong>실시간 카드뉴스 미리보기</strong>
+            <span id="cardnews-format-label">정사각형 1080 x 1080</span>
+            <span id="cardnews-card-counter">카드 1 / 1</span>
+            <span class="cardnews-preview__hint">텍스트와 이미지를 클릭하면 해당 컨트롤로 바로 연결되고, 드래그로 위치도 바로 바뀝니다.</span>
+          </div>
+          <div class="cardnews-canvas-shell">
+            <div class="cardnews-canvas" id="cardnews-canvas" data-format="square">
+              <div class="cardnews-canvas__bg" id="cardnews-canvas-bg"></div>
+              <img class="cardnews-canvas__bg-image cardnews-canvas__layer cardnews-canvas__layer--draggable" id="cardnews-canvas-bg-image" data-layer-key="bgImage" alt="카드뉴스 배경 이미지" crossorigin="anonymous" hidden>
+              <div class="cardnews-canvas__shapes" id="cardnews-canvas-shapes"></div>
+              <div class="cardnews-canvas__image-wrap cardnews-canvas__layer cardnews-canvas__layer--draggable" id="cardnews-canvas-image-wrap" data-layer-key="image" hidden>
+                <img class="cardnews-canvas__image" id="cardnews-canvas-image" alt="카드뉴스 메인 이미지" crossorigin="anonymous">
+                <div class="cardnews-canvas__image-mask" id="cardnews-canvas-image-mask" hidden></div>
+              </div>
+              <div class="cardnews-canvas__overlay cardnews-canvas__layer" id="cardnews-canvas-overlay" data-layer-key="overlay"></div>
+              <div class="cardnews-canvas__texts" id="cardnews-canvas-texts"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <div class="studio-about-modal" id="studio-about-modal" hidden aria-hidden="true">
+    <div class="studio-about-modal__backdrop" data-studio-about-close></div>
+    <div class="studio-about-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="studio-content-title">
+      <div class="studio-about-modal__head">
+        <strong>카드스튜디오 소개</strong>
+        <button type="button" class="studio-about-modal__close" id="btn-close-studio-about" data-studio-about-close>닫기</button>
+      </div>
+      <div class="studio-content__inner">
+      <div class="studio-content__hero">
+        <span class="studio-content__eyebrow">WHY CARDSTUDIO</span>
+        <h2 id="studio-content-title">처음 써도 어디부터 눌러야 할지 바로 보이게 만들었습니다</h2>
+        <p>명함은 이름·연락처 넣고 로고나 QR 붙여 저장하면 끝, 카드뉴스는 템플릿 고르고 여러 장을 이어서 편집한 뒤 한 번에 저장하면 끝입니다. 자주 쓰는 흐름만 먼저 꺼내놔서 작업 시작이 덜 헷갈리게 정리했습니다.</p>
+      </div>
+
+      <div class="studio-content__grid">
+        <article class="studio-info-card">
+          <span class="studio-info-card__tag">01</span>
+          <h3>명함 제작기</h3>
+          <p>이름, 연락처, 로고, QR 넣고 앞면·뒷면까지 정리한 뒤 PNG·PDF로 바로 저장할 수 있습니다.</p>
         </article>
-        <article class="seo-panel seo-panel--feature">
-          <h3>앞면과 뒷면 개별 편집</h3>
-          <p>회사명, 이름, 직책, 슬로건은 물론 로고, 이미지, QR까지 앞면과 뒷면 기준으로 나눠서 조정할 수 있습니다.</p>
+        <article class="studio-info-card">
+          <span class="studio-info-card__tag">02</span>
+          <h3>카드뉴스 제작기</h3>
+          <p>정사각형과 세로형 카드뉴스를 만들고, 여러 장을 이어서 편집한 뒤 ZIP으로 한 번에 저장할 수 있습니다.</p>
         </article>
-        <article class="seo-panel seo-panel--feature">
-          <h3>모바일과 PC 실시간 미리보기</h3>
-          <p>편집한 내용이 즉시 카드 미리보기에 반영되어, 인쇄 전이나 저장 전 최종 결과를 빠르게 확인할 수 있습니다.</p>
-        </article>
-        <article class="seo-panel seo-panel--feature">
-          <h3>PNG와 PDF 저장 지원</h3>
-          <p>완성한 명함은 앞면, 뒷면, 양면 PDF 형태로 저장할 수 있어 디지털 공유와 출력 준비까지 바로 이어집니다.</p>
+        <article class="studio-info-card">
+          <span class="studio-info-card__tag">03</span>
+          <h3>처음 써도 덜 복잡한 화면</h3>
+          <p>처음에는 제작기만 고르게 하고, 선택한 작업만 열리게 해서 화면이 산만하지 않도록 정리했습니다.</p>
         </article>
       </div>
 
-      <div class="seo-columns">
-        <section class="seo-panel">
-          <h3>이런 분께 적합합니다</h3>
-          <ul class="seo-list">
-            <li>프리랜서, 1인 브랜드, 소상공인처럼 빠르게 명함을 만들어야 하는 사용자</li>
-            <li>회사명, 직책, 이메일, 주소를 간단히 넣고 모바일에서 바로 저장하려는 사용자</li>
-            <li>QR 명함 만들기나 디지털 명함 제작이 필요한 영업, 상담, 현장 운영 인력</li>
-            <li>기본 템플릿을 바탕으로 로고와 색상만 빠르게 맞추려는 디자이너 및 마케터</li>
+      <div class="studio-content__split">
+        <section class="studio-detail-card">
+          <div class="studio-detail-card__head">
+            <span>FOR BUSINESS CARD</span>
+            <h3>이럴 때 바로 쓰기 좋습니다</h3>
+          </div>
+          <ul class="studio-list">
+            <li>처음 만나는 사람에게 바로 보낼 명함이 필요할 때</li>
+            <li>로고, QR, 브랜드색까지 넣어 깔끔하게 맞추고 싶을 때</li>
+            <li>앞면·뒷면까지 정리해서 PNG나 PDF로 저장해야 할 때</li>
           </ul>
+          <button type="button" class="studio-link-btn" data-studio-target="business">명함 제작기 열기</button>
         </section>
 
-        <section class="seo-panel">
-          <h3>주요 기능</h3>
-          <ul class="seo-list">
-            <li>명함 템플릿 추천 및 비교</li>
-            <li>회사명, 이름, 직책, 이메일, 주소 입력</li>
-            <li>앞면/뒷면 로고 업로드와 위치 조정</li>
-            <li>이미지 오버레이와 QR 코드 생성</li>
-            <li>색상, 폰트, 포인트 컬러, 텍스트 색상 조정</li>
-            <li>PNG 저장, PDF 저장, 프리셋 보관</li>
+        <section class="studio-detail-card">
+          <div class="studio-detail-card__head">
+            <span>FOR CARD NEWS</span>
+            <h3>이럴 때 바로 쓰기 좋습니다</h3>
+          </div>
+          <ul class="studio-list">
+            <li>브랜드 소개나 이벤트 안내 카드뉴스를 빠르게 만들고 싶을 때</li>
+            <li>표지부터 마지막 장까지 여러 장을 한 세트로 저장해야 할 때</li>
+            <li>텍스트, 이미지, 도형을 장별로 따로 다듬고 싶을 때</li>
           </ul>
+          <button type="button" class="studio-link-btn" data-studio-target="cardnews">카드뉴스 제작기 열기</button>
         </section>
       </div>
 
-      <section class="seo-panel seo-panel--faq" aria-labelledby="seo-faq-title">
-        <h3 id="seo-faq-title">자주 묻는 질문</h3>
-        <div class="seo-faq">
-          <details>
-            <summary>모바일에서도 명함을 만들 수 있나요?</summary>
-            <p>가능합니다. 모바일 전용 순차 편집 흐름을 통해 기본 정보 입력, 템플릿 선택, 스타일 설정, 미리보기 저장까지 이어서 진행할 수 있습니다.</p>
-          </details>
-          <details>
-            <summary>QR 명함 만들기도 지원하나요?</summary>
-            <p>지원합니다. 링크 또는 연락처 정보를 QR로 생성해서 앞면이나 뒷면에 배치할 수 있습니다.</p>
-          </details>
-          <details>
-            <summary>완성한 명함은 어떤 형식으로 저장할 수 있나요?</summary>
-            <p>앞면 PNG, 뒷면 PNG, 양면 PDF 저장을 지원합니다. 상황에 따라 디지털 공유와 출력 준비에 맞게 선택할 수 있습니다.</p>
-          </details>
-          <details>
-            <summary>회사 로고와 이미지를 함께 넣을 수 있나요?</summary>
-            <p>가능합니다. 로고와 이미지 오버레이를 각각 업로드하고 위치와 크기를 따로 조정할 수 있습니다.</p>
-          </details>
-          <details>
-            <summary>명함 템플릿을 바꿔도 기존 내용은 유지되나요?</summary>
-            <p>기본 정보와 주요 설정은 유지한 채 템플릿을 바꿔서 비교할 수 있도록 설계되어 있습니다. 필요하면 프리셋 저장으로 작업 상태를 따로 보관할 수도 있습니다.</p>
-          </details>
+      <section class="studio-faq-block" aria-labelledby="studio-faq-title">
+        <div class="studio-detail-card__head">
+          <span>GUIDE</span>
+          <h3 id="studio-faq-title">처음 써도 막히지 않게 핵심만 남겼습니다</h3>
+        </div>
+        <div class="studio-faq-grid">
+          <article>
+            <strong>시작이 단순함</strong>
+            <p>처음에는 제작기만 고르게 하고, 선택한 편집기만 열리게 해서 화면을 가볍게 시작할 수 있습니다.</p>
+          </article>
+          <article>
+            <strong>실시간 확인</strong>
+            <p>수정한 내용이 바로 미리보기에 반영되어 저장 전에 결과를 안정적으로 체크할 수 있습니다.</p>
+          </article>
+          <article>
+            <strong>저장까지 마무리</strong>
+            <p>명함은 PNG·PDF, 카드뉴스는 PNG·ZIP 저장까지 이어지는 실전형 흐름으로 구성했습니다.</p>
+          </article>
         </div>
       </section>
     </div>
-  </section>
+    </div>
+  </div>
 
   <div class="partners-desktop" aria-label="쿠팡 파트너스 PC">
     <div class="partners-desktop__inner">
@@ -902,17 +1476,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <footer class="site-footer">
     <div class="site-footer__inner">
       <div class="site-footer__brand">
-        <span class="site-footer__eyebrow">카드스튜디오</span>
+        <span class="site-footer__eyebrow">CARDSTUDIO</span>
         <strong>CardStudio</strong>
-        <p>간편한 무료 명함 · 썸네일 · 카드뉴스 제작</p>
+        <p>명함, 카드뉴스(썸네일) 제작을 더 빠르게 시작할 수 있는 작업 공간</p>
       </div>
-      <div class="site-footer__contact">
-        <a href="mailto:roadfor@kakao.com">roadfor@kakao.com</a>
+
+      <div class="site-footer__meta">
+        <a href="mailto:roadfor@kakao.com" class="site-footer__email">roadfor@kakao.com</a>
         <p>대표 김도윤 · 사업자번호 538-42-01450</p>
+      </div>
+
+      <div class="site-footer__utility">
+        <button type="button" class="site-footer__about-btn" id="btn-open-studio-about">카드스튜디오 소개</button>
       </div>
     </div>
   </footer>
 
-  <script type="module" src="./main.js?v=20260410-card-standard-110"></script>
+<script type="module" src="./main.js?v=20260412-card-standard-111"></script>
+<script type="module" src="./cardnews/card-news.js?v=20260414-cardnews-template-fix-3"></script>
 </body>
 </html>
