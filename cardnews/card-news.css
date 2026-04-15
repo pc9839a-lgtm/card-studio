@@ -1,4 +1,4 @@
-﻿.cardnews-lab {
+.cardnews-lab {
   padding: 18px 20px 8px;
 }
 
@@ -994,4 +994,165 @@
   margin-top: 4px;
   font-size: 12px;
   color: #64748b;
+}
+
+/* ===== MOBILE SAFE PATCH: cardnews compact flow ===== */
+.cardnews-mobile-quicknav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .cardnews-lab.is-mobile-compact {
+    padding-bottom: 10px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: -4px;
+    margin-bottom: 10px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__btn,
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__preview-btn {
+    flex: 0 0 auto;
+    min-height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(203, 213, 225, 0.92);
+    background: rgba(255, 255, 255, 0.96);
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__btn.is-active {
+    border-color: #0f172a;
+    background: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.14);
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quicknav__preview-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-studio {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-preview {
+    order: -1;
+    position: sticky;
+    top: 8px;
+    z-index: 32;
+    gap: 10px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta {
+    padding: 14px 16px;
+    border-radius: 18px;
+    gap: 4px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta strong {
+    font-size: 18px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta span {
+    font-size: 12px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-preview__hint {
+    width: 100%;
+    min-height: 0;
+    padding: 10px 12px;
+    border-radius: 14px;
+    white-space: normal;
+    line-height: 1.45;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-canvas-shell {
+    padding: 12px;
+    border-radius: 18px;
+    min-height: auto;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-canvas {
+    width: min(100%, 280px);
+    border-radius: 18px;
+  }
+
+  .cardnews-lab.is-mobile-compact.is-mobile-preview-collapsed .cardnews-canvas-shell {
+    display: none !important;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-panel {
+    gap: 12px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group {
+    scroll-margin-top: 158px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading {
+    padding-right: 34px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading p {
+    display: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading h3 {
+    font-size: 20px !important;
+    margin-top: 2px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-kicker,
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading .section-kicker {
+    font-size: 11px !important;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading::after {
+    top: 2px;
+    font-size: 15px !important;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group.is-collapsed > :not(.section-heading) {
+    display: none !important;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-card-list,
+  .cardnews-lab.is-mobile-compact .cardnews-text-list,
+  .cardnews-lab.is-mobile-compact .cardnews-shape-list,
+  .cardnews-lab.is-mobile-compact .cardnews-layer-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-card-list::-webkit-scrollbar,
+  .cardnews-lab.is-mobile-compact .cardnews-text-list::-webkit-scrollbar,
+  .cardnews-lab.is-mobile-compact .cardnews-shape-list::-webkit-scrollbar,
+  .cardnews-lab.is-mobile-compact .cardnews-layer-list::-webkit-scrollbar {
+    display: none;
+  }
 }
