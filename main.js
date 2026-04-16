@@ -4736,23 +4736,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// ===== studio home menu + about modal hotfix =====
+// ===== main screen studio mode navigation =====
 document.addEventListener('DOMContentLoaded', () => {
-  const body = document.body;
-  const home = document.getElementById('studio-home');
   const buttons = Array.from(document.querySelectorAll('[data-studio-target]'));
   const panels = Array.from(document.querySelectorAll('[data-studio-panel]'));
+  if (!buttons.length || !panels.length) return;
 
-  if (!body || !buttons.length || !panels.length) return;
+  const body = document.body;
 
-  const normalizeMode = (mode) => {
-    if (mode === 'business' || mode === 'cardnews') return mode;
-    return 'home';
-  };
-
-  const setStudioMode = (mode, options = {}) => {
-    const safeMode = normalizeMode(mode);
-    const scroll = options.scroll === true;
+  const setMode = (mode, { scroll = false } = {}) => {
+    const safeMode = mode === 'cardnews'
+      ? 'cardnews'
+      : (mode === 'business' ? 'business' : 'home');
 
     body.dataset.studioMode = safeMode;
 
@@ -4764,59 +4759,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
     panels.forEach((panel) => {
       const active = safeMode !== 'home' && panel.dataset.studioPanel === safeMode;
-      panel.hidden = !active;
       panel.classList.toggle('is-active', active);
+      panel.hidden = !active;
     });
-
-    if (home) {
-      home.hidden = false;
-    }
 
     if (scroll && safeMode !== 'home') {
       const targetPanel = panels.find((panel) => panel.dataset.studioPanel === safeMode);
-      if (targetPanel) {
-        window.requestAnimationFrame(() => {
-          targetPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      }
+      targetPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  window.setStudioMode = setStudioMode;
-
   buttons.forEach((button) => {
-    button.addEventListener('click', (event) => {
-      event.preventDefault();
-      setStudioMode(button.dataset.studioTarget, { scroll: true });
-    });
+    button.addEventListener('click', () => setMode(button.dataset.studioTarget, { scroll: true }));
   });
 
   let initialMode = 'home';
+
   if (window.location.hash.includes('cardnews')) {
     initialMode = 'cardnews';
   } else if (window.location.hash.includes('business')) {
     initialMode = 'business';
-  } else if (body.dataset.studioMode) {
-    initialMode = body.dataset.studioMode;
   }
 
-  setStudioMode(initialMode, { scroll: false });
+  setMode(initialMode, { scroll: false });
 });
 
+
+// ===== footer about modal =====
 document.addEventListener('DOMContentLoaded', () => {
-  const body = document.body;
   const aboutModal = document.getElementById('studio-about-modal');
   const openButton = document.getElementById('btn-open-studio-about');
   const closeButtons = Array.from(document.querySelectorAll('[data-studio-about-close]'));
 
-  if (!body || !aboutModal) return;
+  if (!aboutModal || !openButton) return;
 
   let lastFocusedElement = null;
 
   const closeAboutModal = () => {
     aboutModal.hidden = true;
     aboutModal.setAttribute('aria-hidden', 'true');
-    body.classList.remove('is-studio-about-open');
+    document.body.classList.remove('is-studio-about-open');
     if (lastFocusedElement instanceof HTMLElement) {
       lastFocusedElement.focus();
     }
@@ -4826,27 +4808,17 @@ document.addEventListener('DOMContentLoaded', () => {
     lastFocusedElement = document.activeElement;
     aboutModal.hidden = false;
     aboutModal.setAttribute('aria-hidden', 'false');
-    body.classList.add('is-studio-about-open');
+    document.body.classList.add('is-studio-about-open');
   };
 
-  if (openButton) {
-    openButton.addEventListener('click', (event) => {
-      event.preventDefault();
-      openAboutModal();
-    });
-  }
+  openButton.addEventListener('click', openAboutModal);
 
   closeButtons.forEach((button) => {
-    button.addEventListener('click', (event) => {
-      event.preventDefault();
-      closeAboutModal();
-    });
+    button.addEventListener('click', closeAboutModal);
   });
 
   aboutModal.querySelectorAll('[data-studio-target]').forEach((button) => {
-    button.addEventListener('click', () => {
-      closeAboutModal();
-    });
+    button.addEventListener('click', closeAboutModal);
   });
 
   document.addEventListener('keydown', (event) => {
@@ -4854,4 +4826,82 @@ document.addEventListener('DOMContentLoaded', () => {
       closeAboutModal();
     }
   });
+});
+
+
+// ===== phase 2 future patch: mobile preview state stabilizer =====
+// 목적:
+// 1) 모바일 명함 편집기에서 preview-area가 보이는 구간이면 sticky 준비 상태를 안정적으로 유지
+// 2) 비교보기 / 숨김 상태일 때는 sticky 준비 상태를 자동 해제
+// 적용 방식:
+// - 현재 main.js 맨 아래에 append 하는 미래 반영용 패치
+// 주의:
+// - 기존 명함 위자드 함수 직접 수정 없음
+// - cardnews/card-news.js 로직은 건드리지 않음
+
+document.addEventListener('DOMContentLoaded', () => {
+  const body = document.body;
+  const previewArea = document.getElementById('preview-area') || document.querySelector('.preview-area');
+
+  if (!body || !previewArea) return;
+
+  const isMobileViewportHotfix = () => window.matchMedia('(max-width: 767px)').matches;
+
+  const isElementActuallyVisible = (element) => {
+    if (!element) return false;
+    if (element.hidden) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  };
+
+  const syncMobilePreviewStickyState = () => {
+    const isMobile = isMobileViewportHotfix();
+    const isCompare = body.classList.contains('is-compare-mode');
+    const isPreviewVisible = isElementActuallyVisible(previewArea);
+    const shouldEnable = isMobile && !isCompare && isPreviewVisible;
+
+    body.classList.toggle('is-mobile-preview-sticky-ready', shouldEnable);
+
+    // 모바일에서 preview가 실제로 보이는데 숨김 상태 클래스가 남아 있으면 정리
+    if (isMobile && isPreviewVisible && body.classList.contains('is-wizard-preview-hidden')) {
+      body.classList.remove('is-wizard-preview-hidden');
+    }
+  };
+
+  const syncSoon = () => {
+    window.requestAnimationFrame(() => {
+      syncMobilePreviewStickyState();
+    });
+  };
+
+  syncSoon();
+
+  const bodyObserver = new MutationObserver(() => syncSoon());
+  bodyObserver.observe(body, {
+    attributes: true,
+    attributeFilter: ['class']
+  });
+
+  const previewObserver = new MutationObserver(() => syncSoon());
+  previewObserver.observe(previewArea, {
+    attributes: true,
+    attributeFilter: ['class', 'style', 'hidden']
+  });
+
+  window.addEventListener('resize', syncSoon);
+  window.addEventListener('orientationchange', syncSoon);
+  window.addEventListener('pageshow', syncSoon);
+  window.addEventListener('load', syncSoon);
+
+  // 사용자 조작 직후에도 한 번 더 동기화
+  document.addEventListener('click', (event) => {
+    const trigger = event.target.closest(
+      '#btn-wizard-next, #btn-wizard-prev, #btn-mobile-face-front, #btn-mobile-face-back, #btn-mobile-toggle-preview, #btn-compare'
+    );
+    if (!trigger) return;
+    setTimeout(syncSoon, 40);
+    setTimeout(syncSoon, 180);
+  }, true);
 });
