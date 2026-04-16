@@ -4828,16 +4828,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-
-// ===== phase 2 future patch: mobile preview state stabilizer =====
+// ===== phase 2 clean patch: mobile preview state stabilizer =====
 // 목적:
 // 1) 모바일 명함 편집기에서 preview-area가 보이는 구간이면 sticky 준비 상태를 안정적으로 유지
 // 2) 비교보기 / 숨김 상태일 때는 sticky 준비 상태를 자동 해제
-// 적용 방식:
-// - 현재 main.js 맨 아래에 append 하는 미래 반영용 패치
-// 주의:
-// - 기존 명함 위자드 함수 직접 수정 없음
-// - cardnews/card-news.js 로직은 건드리지 않음
+// 3) 기존 cardnews compact navigator 강제 로직은 포함하지 않음
 
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body;
@@ -4864,7 +4859,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     body.classList.toggle('is-mobile-preview-sticky-ready', shouldEnable);
 
-    // 모바일에서 preview가 실제로 보이는데 숨김 상태 클래스가 남아 있으면 정리
     if (isMobile && isPreviewVisible && body.classList.contains('is-wizard-preview-hidden')) {
       body.classList.remove('is-wizard-preview-hidden');
     }
@@ -4895,7 +4889,6 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('pageshow', syncSoon);
   window.addEventListener('load', syncSoon);
 
-  // 사용자 조작 직후에도 한 번 더 동기화
   document.addEventListener('click', (event) => {
     const trigger = event.target.closest(
       '#btn-wizard-next, #btn-wizard-prev, #btn-mobile-face-front, #btn-mobile-face-back, #btn-mobile-toggle-preview, #btn-compare'
