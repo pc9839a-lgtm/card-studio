@@ -5274,6 +5274,7 @@ body.is-studio-about-open {
     text-align: center;
   }
 }
+
 /* ===== Footer full-width redesign patch ===== */
 .site-footer {
   width: 100%;
@@ -5521,5 +5522,61 @@ body.is-studio-about-open {
     z-index: auto;
     padding: 12px 10px 0;
     background: transparent;
+  }
+}
+
+/* ===== CardStudio cardnews mobile emergency restore patch ===== */
+/* 목적: 모바일에서 카드뉴스 편집 패널(control-group)이 전역 위자드 규칙에 같이 숨는 문제 복구 */
+/* 적용 위치: 현재 style.css 맨 아래에 그대로 추가 */
+
+@media (max-width: 767px) {
+  /* 카드뉴스 모드에서는 business 위자드용 전역 숨김보다 카드뉴스 패널 표시를 우선 */
+  body[data-studio-mode="cardnews"] .cardnews-studio {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-preview {
+    order: 1;
+    position: static !important;
+    top: auto !important;
+    width: 100%;
+    display: flex !important;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-panel {
+    order: 2;
+    width: 100%;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  /* 핵심 복구: cardnews용 control-group는 다시 표시 */
+  body[data-studio-mode="cardnews"] .control-group.cardnews-group {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* collapse 기능은 유지해야 하므로 heading 외 하위 숨김 규칙은 건드리지 않음 */
+
+  body[data-studio-mode="cardnews"] .cardnews-group .section-heading {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-lab {
+    padding: 14px 12px 12px;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-lab__inner {
+    gap: 16px;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-canvas-shell {
+    min-height: auto;
   }
 }
