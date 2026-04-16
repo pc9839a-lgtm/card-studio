@@ -1005,29 +1005,27 @@
 }
 
 
-/* ===== mobile sticky + panel restore (phase 2 step 1) ===== */
-/* 목적: card-news.css만으로 모바일 preview sticky 복구 + 편집패널 숨김 충돌 방어 */
-
+/* ===== mobile cardnews restore ===== */
 @media (max-width: 767px) {
   body[data-studio-mode="cardnews"] .cardnews-studio {
-    display: flex !important;
-    flex-direction: column !important;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
     align-items: stretch;
   }
 
   body[data-studio-mode="cardnews"] .cardnews-preview {
-    position: sticky !important;
+    position: sticky;
     top: 8px;
     z-index: 34;
     order: 1;
-    display: flex !important;
+    display: flex;
     width: 100%;
   }
 
   body[data-studio-mode="cardnews"] .cardnews-panel {
-    display: flex !important;
-    flex-direction: column !important;
+    display: flex;
+    flex-direction: column;
     gap: 14px;
     order: 2;
     width: 100%;
@@ -1036,7 +1034,11 @@
 
   body[data-studio-mode="cardnews"] .control-group.cardnews-group {
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: column;
+  }
+
+  body[data-studio-mode="cardnews"] .cardnews-group.is-collapsed > :not(.section-heading) {
+    display: block;
   }
 
   body[data-studio-mode="cardnews"] .cardnews-group .section-heading {
@@ -1045,7 +1047,7 @@
   }
 
   body[data-studio-mode="cardnews"] .cardnews-preview__meta {
-    padding: 16px 16px;
+    padding: 16px;
     border-radius: 18px;
     gap: 4px;
   }
