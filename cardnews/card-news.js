@@ -8,12 +8,18 @@ import {
   triggerBlobDownload,
   triggerImageSave
 } from '../scripts/utils.js';
-import { SAMPLE_BACKGROUNDS, getTemplateSeed } from './card-news-templates.js';
 
 const CARDNEWS_STORAGE_KEY = 'cardstudio_cardnews_lab_v7';
 const CARDNEWS_LEGACY_STORAGE_KEY = 'cardstudio_cardnews_lab_v6';
 const STATIC_LAYER_KEYS = ['bgImage', 'image', 'overlay'];
 const TEMPLATE_KEYS = ['cover', 'split', 'minimal', 'list', 'headline'];
+const SAMPLE_BACKGROUNDS = {
+  cover: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80',
+  split: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80',
+  minimal: '',
+  list: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=80',
+  headline: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80'
+};
 const IMAGE_UPLOAD_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const IMAGE_UPLOAD_RULES = {
   background: { maxBytes: 10 * 1024 * 1024, label: '배경 이미지' },
@@ -328,6 +334,329 @@ function getRecommendedImagePlacement(template = 'cover', format = 'square', asp
   }
 
   return base;
+}
+
+function getTemplateSeed(template, format) {
+  const isPortrait = format === 'portrait';
+
+  switch (template) {
+    case 'split':
+      return {
+        background: {
+          color: '#f8fafc',
+          imageUrl: SAMPLE_BACKGROUNDS.split,
+          isSample: true,
+          scale: isPortrait ? 118 : 110,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#0f172a',
+          opacity: 0.18
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 50,
+          y: isPortrait ? 60 : 58,
+          width: 34,
+          height: 0.35
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '제품 핵심만\n짧게 먼저 전달',
+            x: 50,
+            y: isPortrait ? 26 : 28,
+            width: 74,
+            size: isPortrait ? 54 : 48,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.34, blur: 22 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '상단 이미지는 분위기를 만들고, 하단 정보 블록은 메시지를 정리합니다.',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 70,
+            size: 18,
+            color: '#f8fafc',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#020617',
+              opacity: 0.52,
+              paddingX: 20,
+              paddingY: 12,
+              radius: 24
+            }
+          }
+        ]
+      };
+    case 'minimal':
+      return {
+        background: {
+          color: '#ffffff',
+          imageUrl: '',
+          isSample: false
+        },
+        overlay: {
+          enabled: false,
+          color: '#111827',
+          opacity: 0
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#2563eb',
+          x: 16,
+          y: 50,
+          width: 18,
+          height: 0.25
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 14 : 13,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '정보를 정리하는\n가장 깔끔한 카드',
+            x: 12,
+            y: 22,
+            width: 46,
+            size: isPortrait ? 48 : 44,
+            color: '#0f172a',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '텍스트와 여백 중심으로 설계해 제목이 먼저 읽히게 만듭니다.',
+            x: 14,
+            y: 40,
+            width: 42,
+            size: 18,
+            color: '#64748b',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          }
+        ]
+      };
+    case 'list':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS.list,
+          isSample: true,
+          scale: isPortrait ? 120 : 110,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.48
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 62 : 60,
+          width: 32,
+          height: 0.35
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0,
+          outline: {
+            color: '#ffffff',
+            width: 0
+          }
+        },
+        texts: [
+          {
+            content: '카드뉴스 한 장에\n3포인트를 정리하세요',
+            x: 12,
+            y: 20,
+            width: 62,
+            size: isPortrait ? 46 : 42,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.26, blur: 20 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '1. 문제 제시\n2. 해결 포인트\n3. 행동 유도',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 72,
+            size: 18,
+            color: '#dbeafe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.18, blur: 14 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.58,
+              paddingX: 18,
+              paddingY: 12,
+              radius: 22
+            }
+          }
+        ]
+      };
+    case 'headline':
+      return {
+        background: {
+          color: '#eef4ff',
+          imageUrl: SAMPLE_BACKGROUNDS.headline,
+          isSample: true,
+          scale: isPortrait ? 124 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#eff6ff',
+          opacity: 0.18
+        },
+        shape: {
+          visible: true,
+          type: 'circle',
+          color: '#2563eb',
+          x: 80,
+          y: 24,
+          width: 14,
+          height: 14
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '한 줄 임팩트로\n스크롤을 멈추게',
+            x: 50,
+            y: isPortrait ? 24 : 26,
+            width: 74,
+            size: isPortrait ? 56 : 50,
+            color: '#1d4ed8',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.1, blur: 12 },
+            outline: { color: '#ffffff', width: 1.5 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '강한 제목과 이미지 포인트를 분리해 시선 흐름을 만듭니다.',
+            x: 50,
+            y: isPortrait ? 76 : 74,
+            width: 68,
+            size: 18,
+            color: '#334155',
+            align: 'center',
+            frameAlign: 'center',
+            background: {
+              color: '#ffffff',
+              opacity: 0.72,
+              paddingX: 18,
+              paddingY: 12,
+              radius: 999
+            }
+          }
+        ]
+      };
+    case 'cover':
+    default:
+      return {
+        background: {
+          color: '#081120',
+          imageUrl: SAMPLE_BACKGROUNDS.cover,
+          isSample: true,
+          scale: isPortrait ? 122 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.42
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 50,
+          y: isPortrait ? 63 : 61,
+          width: 34,
+          height: 0.25
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '브랜드 메시지를\n한 장에 압축하세요',
+            x: 50,
+            y: isPortrait ? 26 : 28,
+            width: 74,
+            size: isPortrait ? 58 : 52,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.32, blur: 24 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '텍스트와 이미지를 분리해 핵심 메시지를 더 또렷하게 전달할 수 있습니다.',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 70,
+            size: 18,
+            color: '#f8fafc',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.2, blur: 16 },
+            background: {
+              color: '#020617',
+              opacity: 0.5,
+              paddingX: 20,
+              paddingY: 12,
+              radius: 22
+            }
+          }
+        ]
+      };
+  }
 }
 
 function createCardFromTemplate(index, template = 'cover', format = 'square') {
@@ -913,6 +1242,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let dragState = null;
   let activeSectionKey = 'format';
 
+  function isMobileCardnewsViewport() {
+    return window.matchMedia('(max-width: 767px)').matches;
+  }
+  const activeOptionPanels = {
+    text: '',
+    image: ''
+  };
+
   function findSection(sectionKey) {
     return ui.sections.find((section) => section.dataset.cardnewsSection === sectionKey) || null;
   }
@@ -947,34 +1284,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return enabled;
   }
 
-  function syncOptionPanels(card = getActiveCard(), activeText = getActiveText(card)) {
+  function syncExclusiveOptionPanels(card = getActiveCard(), activeText = getActiveText(card)) {
     const enabledTextPanels = getEnabledTextOptionKeys(activeText);
     const enabledImagePanels = getEnabledImageOptionKeys(card);
 
-    if (controls.textBgPanel) controls.textBgPanel.hidden = !enabledTextPanels.includes('bg');
-    if (controls.textOutlinePanel) controls.textOutlinePanel.hidden = !enabledTextPanels.includes('outline');
-    if (controls.textShadowPanel) controls.textShadowPanel.hidden = !enabledTextPanels.includes('shadow');
-    if (controls.imageMaskPanel) controls.imageMaskPanel.hidden = !enabledImagePanels.includes('mask');
-    if (controls.imageOutlinePanel) controls.imageOutlinePanel.hidden = !enabledImagePanels.includes('outline');
-    if (controls.imageShadowPanel) controls.imageShadowPanel.hidden = !enabledImagePanels.includes('shadow');
+    if (!enabledTextPanels.includes(activeOptionPanels.text)) {
+      activeOptionPanels.text = enabledTextPanels[0] || '';
+    }
+    if (!enabledImagePanels.includes(activeOptionPanels.image)) {
+      activeOptionPanels.image = enabledImagePanels[0] || '';
+    }
+
+    if (controls.textBgPanel) controls.textBgPanel.hidden = activeOptionPanels.text !== 'bg';
+    if (controls.textOutlinePanel) controls.textOutlinePanel.hidden = activeOptionPanels.text !== 'outline';
+    if (controls.textShadowPanel) controls.textShadowPanel.hidden = activeOptionPanels.text !== 'shadow';
+    if (controls.imageMaskPanel) controls.imageMaskPanel.hidden = activeOptionPanels.image !== 'mask';
+    if (controls.imageOutlinePanel) controls.imageOutlinePanel.hidden = activeOptionPanels.image !== 'outline';
+    if (controls.imageShadowPanel) controls.imageShadowPanel.hidden = activeOptionPanels.image !== 'shadow';
   }
 
-  function syncToggleVisual(control) {
-    const toggleRow = control?.closest('.cardnews-toggle-row, .cardnews-inline-check');
-    if (!toggleRow) return;
-    toggleRow.classList.toggle('is-active', !!control.checked);
-  }
-
-  function syncToggleVisualStates() {
-    [
-      controls.textBgEnabled,
-      controls.textOutlineEnabled,
-      controls.textShadowEnabled,
-      controls.imageMaskEnabled,
-      controls.imageOutlineEnabled,
-      controls.imageShadowEnabled,
-      controls.overlayEnabled
-    ].forEach(syncToggleVisual);
+  function openOptionPanel(scope, panelKey) {
+    activeOptionPanels[scope] = panelKey;
   }
 
   function getSectionKeyForLayer(layerKey) {
@@ -989,14 +1319,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const target = findSection(sectionKey) || findSection(activeSectionKey) || findSection('format') || ui.sections[0];
     if (!target) return;
 
-    const isMobileViewport = window.matchMedia('(max-width: 767px)').matches;
     activeSectionKey = target.dataset.cardnewsSection || sectionKey || 'format';
 
-    ui.sections.forEach((section) => {
-      const isTarget = section === target;
-      section.classList.toggle('is-linked', isTarget);
-      setSectionCollapsed(section, isMobileViewport ? false : !isTarget);
-    });
+    if (isMobileCardnewsViewport()) {
+      ui.sections.forEach((section) => {
+        const isTarget = section === target;
+        section.classList.toggle('is-linked', isTarget);
+        setSectionCollapsed(section, false);
+      });
+    } else {
+      ui.sections.forEach((section) => {
+        const isTarget = section === target;
+        section.classList.toggle('is-linked', isTarget);
+        setSectionCollapsed(section, !isTarget);
+      });
+    }
 
     if (scroll) {
       target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -1014,7 +1351,13 @@ document.addEventListener('DOMContentLoaded', () => {
       toggle.setAttribute('aria-expanded', section.dataset.cardnewsSection === activeSectionKey ? 'true' : 'false');
 
       const openCurrent = () => {
-        focusSection(section.dataset.cardnewsSection, { scroll: window.matchMedia('(max-width: 767px)').matches });
+        if (isMobileCardnewsViewport()) {
+          activeSectionKey = section.dataset.cardnewsSection || activeSectionKey;
+          section.classList.add('is-linked');
+          setSectionCollapsed(section, false);
+          return;
+        }
+        focusSection(section.dataset.cardnewsSection);
       };
       toggle.addEventListener('click', (event) => {
         if (event.target.closest('a, button, input, select, label, textarea')) return;
@@ -1134,139 +1477,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function waitForCanvasAssets(targetCanvas = preview.canvas) {
-    if (!targetCanvas) {
-      return Promise.resolve();
-    }
-
-    const targetBgImage = targetCanvas.querySelector('#cardnews-canvas-bg-image, .cardnews-canvas__bg-image');
-    const targetMainImage = targetCanvas.querySelector('#cardnews-canvas-image, .cardnews-canvas__image');
-
+  function waitForCanvasAssets() {
     return Promise.all([
-      waitForImageElement(targetBgImage),
-      waitForImageElement(targetMainImage)
+      waitForImageElement(preview.bgImage),
+      waitForImageElement(preview.image)
     ]);
-  }
-
-  function waitForRenderStability() {
-    return new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(resolve);
-        });
-      });
-    });
-  }
-
-  function getHtml2CanvasApi() {
-    if (typeof window.html2canvas !== 'function') {
-      const error = new Error('HTML2CANVAS_UNAVAILABLE');
-      error.code = 'HTML2CANVAS_UNAVAILABLE';
-      throw error;
-    }
-
-    return window.html2canvas;
-  }
-
-  function freezeLayerRectForExport(sourceElement, cloneElement, sourceCanvasRect, targetWidth, targetHeight) {
-    if (!sourceElement || !cloneElement || sourceElement.hidden) return;
-
-    const sourceRect = sourceElement.getBoundingClientRect();
-    if (!sourceRect.width || !sourceRect.height || !sourceCanvasRect.width || !sourceCanvasRect.height) return;
-
-    const left = ((sourceRect.left - sourceCanvasRect.left) / sourceCanvasRect.width) * targetWidth;
-    const top = ((sourceRect.top - sourceCanvasRect.top) / sourceCanvasRect.height) * targetHeight;
-    const width = (sourceRect.width / sourceCanvasRect.width) * targetWidth;
-    const height = (sourceRect.height / sourceCanvasRect.height) * targetHeight;
-
-    cloneElement.style.left = `${left}px`;
-    cloneElement.style.top = `${top}px`;
-    cloneElement.style.width = `${width}px`;
-    cloneElement.style.height = `${height}px`;
-    cloneElement.style.maxWidth = `${width}px`;
-    cloneElement.style.maxHeight = `${height}px`;
-    cloneElement.style.transform = 'none';
-  }
-
-  async function prepareExportCapture(card = getActiveCard()) {
-    const meta = formatMeta[card.format] || formatMeta.square;
-    const sourceCanvas = preview.canvas;
-    const sourceCanvasRect = sourceCanvas.getBoundingClientRect();
-    const sourceWidth = Math.max(1, Math.round(sourceCanvasRect.width));
-    const sourceHeight = Math.max(1, Math.round(sourceCanvasRect.height));
-    const renderScale = Math.max(1, meta.width / sourceWidth);
-    const stage = document.createElement('div');
-    const clone = sourceCanvas.cloneNode(true);
-
-    stage.className = 'cardnews-export-stage';
-    stage.style.position = 'fixed';
-    stage.style.left = '-20000px';
-    stage.style.top = '0';
-    stage.style.width = `${sourceWidth}px`;
-    stage.style.height = `${sourceHeight}px`;
-    stage.style.pointerEvents = 'none';
-    stage.style.opacity = '1';
-    stage.style.zIndex = '-1';
-    stage.style.overflow = 'hidden';
-
-    clone.removeAttribute('id');
-    clone.classList.add('is-exporting', 'is-export-clone');
-    clone.dataset.format = card.format;
-    clone.style.width = `${sourceWidth}px`;
-    clone.style.height = `${sourceHeight}px`;
-    clone.style.minWidth = `${sourceWidth}px`;
-    clone.style.maxWidth = `${sourceWidth}px`;
-    clone.style.minHeight = `${sourceHeight}px`;
-    clone.style.maxHeight = `${sourceHeight}px`;
-    clone.style.aspectRatio = 'auto';
-    clone.style.margin = '0';
-    clone.style.transform = 'none';
-    clone.style.left = 'auto';
-    clone.style.top = 'auto';
-    clone.style.position = 'relative';
-    clone.style.boxShadow = 'none';
-
-    stage.appendChild(clone);
-    document.body.appendChild(stage);
-
-    const cloneBgImage = clone.querySelector('#cardnews-canvas-bg-image, .cardnews-canvas__bg-image');
-    const cloneImageWrap = clone.querySelector('#cardnews-canvas-image-wrap, .cardnews-canvas__image-wrap');
-    const cloneImage = clone.querySelector('#cardnews-canvas-image, .cardnews-canvas__image');
-
-    freezeLayerRectForExport(preview.bgImage, cloneBgImage, sourceCanvasRect, sourceWidth, sourceHeight);
-    freezeLayerRectForExport(preview.imageWrap, cloneImageWrap, sourceCanvasRect, sourceWidth, sourceHeight);
-
-    if (cloneImageWrap && !cloneImageWrap.hidden) {
-      cloneImageWrap.style.aspectRatio = '';
-    }
-
-    if (cloneImage && !cloneImage.hidden) {
-      cloneImage.style.position = 'absolute';
-      cloneImage.style.inset = '0';
-      cloneImage.style.width = '100%';
-      cloneImage.style.height = '100%';
-      cloneImage.style.maxWidth = '100%';
-      cloneImage.style.maxHeight = '100%';
-      cloneImage.style.left = '0';
-      cloneImage.style.top = '0';
-      cloneImage.style.transform = 'none';
-      cloneImage.style.display = 'block';
-    }
-
-    await waitForCanvasAssets(clone);
-    await waitForRenderStability();
-
-    return {
-      element: clone,
-      width: sourceWidth,
-      height: sourceHeight,
-      renderScale,
-      outputWidth: meta.width,
-      outputHeight: meta.height,
-      cleanup: () => {
-        stage.remove();
-      }
-    };
   }
 
   function setControlGroupVisible(control, visible) {
@@ -1403,8 +1618,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setControlGroupVisible(controls.imageMaskEnabled, imagePresent);
     setControlGroupVisible(controls.imageOutlineEnabled, imagePresent);
     setControlGroupVisible(controls.imageShadowEnabled, imagePresent);
-    syncOptionPanels(card, activeText);
-    syncToggleVisualStates();
+    syncExclusiveOptionPanels(card, activeText);
     if (controls.shapeRemove) controls.shapeRemove.hidden = !shapePresent;
     if (controls.mainImageClear) {
       controls.mainImageClear.disabled = !imagePresent;
@@ -2003,33 +2217,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function captureCurrentCardBlob() {
     const card = getActiveCard();
-    const exportRenderer = getHtml2CanvasApi();
+    const meta = formatMeta[card.format] || formatMeta.square;
+
+    if (typeof window.html2canvas !== 'function') {
+      throw new Error('HTML2CANVAS_UNAVAILABLE');
+    }
 
     await waitForPaint();
     await waitForCanvasAssets();
     preview.canvas.classList.add('is-exporting');
 
-    let exportCapture = null;
-
     try {
-      exportCapture = await prepareExportCapture(card);
-      const canvas = await exportRenderer(exportCapture.element, {
+      const rect = preview.canvas.getBoundingClientRect();
+      const scale = Math.max(meta.width / Math.max(rect.width, 1), 2);
+      const canvas = await window.html2canvas(preview.canvas, {
         backgroundColor: null,
-        scale: exportCapture.renderScale || 1,
+        scale,
         useCORS: true,
-        logging: false,
-        width: exportCapture.width,
-        height: exportCapture.height,
-        windowWidth: exportCapture.width,
-        windowHeight: exportCapture.height,
-        scrollX: 0,
-        scrollY: 0,
-        removeContainer: true
+        logging: false
       });
       const blob = await canvasToBlob(canvas);
       return { canvas, blob };
     } finally {
-      exportCapture?.cleanup?.();
       preview.canvas.classList.remove('is-exporting');
     }
   }
@@ -2320,6 +2529,11 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textBgEnabled.addEventListener('change', () => {
     const activeText = getActiveText();
     activeText.background.opacity = controls.textBgEnabled.checked ? Math.max(activeText.background.opacity, 0.35) : 0;
+    if (controls.textBgEnabled.checked) {
+      openOptionPanel('text', 'bg');
+    } else if (activeOptionPanels.text === 'bg') {
+      activeOptionPanels.text = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.textBgColor.addEventListener('input', () => { getActiveText().background.color = controls.textBgColor.value; renderWorkspace({ persist: true }); });
@@ -2327,6 +2541,11 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textOutlineEnabled.addEventListener('change', () => {
     const activeText = getActiveText();
     activeText.outline.width = controls.textOutlineEnabled.checked ? Math.max(activeText.outline.width, 1) : 0;
+    if (controls.textOutlineEnabled.checked) {
+      openOptionPanel('text', 'outline');
+    } else if (activeOptionPanels.text === 'outline') {
+      activeOptionPanels.text = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.textOutlineColor.addEventListener('input', () => { getActiveText().outline.color = controls.textOutlineColor.value; renderWorkspace({ persist: true }); });
@@ -2337,9 +2556,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (controls.textShadowEnabled.checked) {
       activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
       activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
+      openOptionPanel('text', 'shadow');
     } else {
       activeText.shadow.blur = 0;
       activeText.shadow.opacity = 0;
+      if (activeOptionPanels.text === 'shadow') {
+        activeOptionPanels.text = '';
+      }
     }
     renderWorkspace({ persist: true });
   });
@@ -2416,6 +2639,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   controls.imageMaskEnabled.addEventListener('change', () => {
     getActiveCard().image.mask.enabled = controls.imageMaskEnabled.checked;
+    if (controls.imageMaskEnabled.checked) {
+      openOptionPanel('image', 'mask');
+    } else if (activeOptionPanels.image === 'mask') {
+      activeOptionPanels.image = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.imageFrameAlign.addEventListener('change', () => {
@@ -2430,6 +2658,11 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.imageOutlineEnabled.addEventListener('change', () => {
     const card = getActiveCard();
     card.image.outline.width = controls.imageOutlineEnabled.checked ? Math.max(card.image.outline.width, 2) : 0;
+    if (controls.imageOutlineEnabled.checked) {
+      openOptionPanel('image', 'outline');
+    } else if (activeOptionPanels.image === 'outline') {
+      activeOptionPanels.image = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.imageOutlineColor.addEventListener('input', () => { getActiveCard().image.outline.color = controls.imageOutlineColor.value; renderWorkspace({ persist: true }); });
@@ -2440,9 +2673,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (controls.imageShadowEnabled.checked) {
       card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
       card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
+      openOptionPanel('image', 'shadow');
     } else {
       card.image.shadow.blur = 0;
       card.image.shadow.opacity = 0;
+      if (activeOptionPanels.image === 'shadow') {
+        activeOptionPanels.image = '';
+      }
     }
     renderWorkspace({ persist: true });
   });
