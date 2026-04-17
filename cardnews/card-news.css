@@ -1241,3 +1241,24 @@
   }
 }
 
+
+/* ===== 기능유지형 최소 패치 ===== */
+.cardnews-toggle-row.is-disabled,
+.cardnews-inline-check.is-disabled,
+.range-wrap.is-disabled,
+.color-item.is-disabled,
+.field.is-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+#btn-cardnews-bg-image-lock.is-active {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.16);
+}
+
+.cardnews-canvas__bg-image.is-locked {
+  cursor: not-allowed !important;
+}
