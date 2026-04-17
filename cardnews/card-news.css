@@ -997,164 +997,247 @@
 }
 
 
-/* ===== 1차패치: 카드뉴스 모바일 골격 안정화 ===== */
+/* ===== 2차패치 준비용: 카드뉴스 모바일 compact/tabs 구조 ===== */
 /* 목적:
-   - 기존 기능은 건드리지 않고 모바일 레이아웃만 먼저 안정화
-   - 카드뉴스 패널/미리보기 우선순위 정리
-   - 미리보기 크기 축소
-   - 단계형 UI로 가기 전, 모바일에서 덜 복잡하게 보이도록 1차 정리
+   - JS 3차패치에서 붙일 상태 클래스(.is-mobile-compact, .is-mobile-panel-*)를 미리 수용
+   - 현재 기능은 유지하고, JS가 붙기 전까지는 동작을 깨지 않음
+   - 모바일에서 카드 / 내용 / 꾸미기 / 저장 4개 작업군 UI를 받을 틀만 먼저 구성
 */
 
+.cardnews-mobile-quickbar {
+  display: none;
+}
+
+.cardnews-mobile-preview-toggle {
+  display: none;
+}
+
 @media (max-width: 767px) {
-  .cardnews-lab {
-    padding: 12px 12px 6px;
-  }
-
-  .cardnews-lab__inner {
-    gap: 14px;
-  }
-
-  .cardnews-lab__intro {
+  .cardnews-lab.is-mobile-compact .cardnews-lab__intro {
     padding: 18px 16px;
     border-radius: 20px;
     gap: 10px;
   }
 
-  .cardnews-lab__intro h2 {
+  .cardnews-lab.is-mobile-compact .cardnews-lab__intro h2 {
     font-size: 22px;
     line-height: 1.18;
   }
 
-  .cardnews-lab__intro p {
+  .cardnews-lab.is-mobile-compact .cardnews-lab__intro p {
     font-size: 14px;
-    line-height: 1.7;
+    line-height: 1.65;
   }
 
-  .cardnews-studio {
+  .cardnews-lab.is-mobile-compact .cardnews-studio {
     display: flex;
     flex-direction: column;
     gap: 14px;
     align-items: stretch;
   }
 
-  .cardnews-panel {
-    order: 1;
+  .cardnews-lab.is-mobile-compact .cardnews-panel {
+    order: 2;
+    display: flex;
+    flex-direction: column;
     gap: 14px;
   }
 
-  .cardnews-preview {
-    order: 2;
+  .cardnews-lab.is-mobile-compact .cardnews-preview {
+    order: 1;
     position: sticky;
     top: 8px;
-    z-index: 20;
+    z-index: 24;
     gap: 10px;
   }
 
-  .cardnews-lab .control-group.cardnews-group {
-    padding: 14px;
-    border-radius: 18px;
-  }
-
-  .cardnews-group {
-    gap: 12px;
-  }
-
-  .cardnews-group .section-heading {
-    padding-right: 28px;
-  }
-
-  .cardnews-group .section-heading::after {
-    top: 2px;
-    right: 2px;
-    font-size: 14px;
-  }
-
-  .cardnews-preview__meta {
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta {
     padding: 14px 16px;
     border-radius: 18px;
     gap: 4px;
   }
 
-  .cardnews-preview__meta strong {
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta strong {
     font-size: 18px;
     line-height: 1.15;
   }
 
-  .cardnews-preview__meta span {
+  .cardnews-lab.is-mobile-compact .cardnews-preview__meta span {
     font-size: 12px;
     line-height: 1.45;
   }
 
-  .cardnews-preview__hint {
+  .cardnews-lab.is-mobile-compact .cardnews-preview__hint {
     width: 100%;
     min-height: auto;
+    justify-content: flex-start;
     padding: 9px 12px;
     border-radius: 14px;
-    justify-content: flex-start;
+    white-space: normal;
     font-size: 11px;
     line-height: 1.45;
-    white-space: normal;
   }
 
-  .cardnews-canvas-shell {
-    padding: 14px;
+  .cardnews-lab.is-mobile-compact .cardnews-canvas-shell {
+    padding: 12px;
     min-height: auto;
     border-radius: 20px;
   }
 
-  .cardnews-canvas {
-    width: min(100%, 320px);
-    border-radius: 18px;
+  .cardnews-lab.is-mobile-compact .cardnews-canvas {
+    width: min(100%, 296px);
     margin-inline: auto;
+    border-radius: 18px;
   }
 
-  .cardnews-action-row,
-  .cardnews-action-row--cards,
-  .cardnews-action-row--layer,
-  .cardnews-toggle-grid {
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quickbar {
+    display: block;
+    order: 1;
+    padding: 0;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quickbar__scroll {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quickbar__btn {
+    flex: 0 0 auto;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(203, 213, 225, 0.92);
+    background: #ffffff;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-quickbar__btn.is-active {
+    background: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.14);
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-mobile-preview-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(191, 219, 254, 0.9);
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .cardnews-lab.is-mobile-compact.is-mobile-preview-collapsed .cardnews-preview .cardnews-canvas-shell {
+    display: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group {
+    gap: 12px;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading {
+    padding-right: 0;
+    cursor: default;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group .section-heading::after {
+    display: none;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group.is-collapsed > :not(.section-heading) {
+    display: none !important;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) > :not(.section-heading) {
+    display: block;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .field-grid,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-action-row,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-toggle-grid,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-option-panel {
+    display: grid;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) textarea,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-text-list,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-shape-list,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-layer-list,
+  .cardnews-lab.is-mobile-compact .cardnews-group:not(.is-collapsed) .cardnews-card-list {
+    display: flex;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-card-list,
+  .cardnews-lab.is-mobile-compact .cardnews-text-list,
+  .cardnews-lab.is-mobile-compact .cardnews-shape-list,
+  .cardnews-lab.is-mobile-compact .cardnews-layer-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-card-chip,
+  .cardnews-lab.is-mobile-compact .cardnews-text-chip,
+  .cardnews-lab.is-mobile-compact .cardnews-shape-chip,
+  .cardnews-lab.is-mobile-compact .cardnews-layer-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .cardnews-lab.is-mobile-compact .cardnews-action-row,
+  .cardnews-lab.is-mobile-compact .cardnews-action-row--cards,
+  .cardnews-lab.is-mobile-compact .cardnews-action-row--layer,
+  .cardnews-lab.is-mobile-compact .cardnews-toggle-grid,
+  .cardnews-lab.is-mobile-compact .field-grid {
     grid-template-columns: 1fr;
     gap: 8px;
   }
 
-  .cardnews-toggle-row,
-  .cardnews-inline-check {
+  .cardnews-lab.is-mobile-compact .cardnews-toggle-row,
+  .cardnews-lab.is-mobile-compact .cardnews-inline-check {
     min-height: 44px;
     padding: 0 12px;
     border-radius: 14px;
     font-size: 12px;
   }
 
-  .cardnews-card-list,
-  .cardnews-text-list,
-  .cardnews-shape-list,
-  .cardnews-layer-list {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
+  /* JS 3차패치가 작업군 클래스를 붙였을 때만 해당 그룹만 노출 */
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-cards .cardnews-group,
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-content .cardnews-group,
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design .cardnews-group,
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-export .cardnews-group {
+    display: none !important;
   }
 
-  .cardnews-card-chip,
-  .cardnews-text-chip,
-  .cardnews-layer-chip {
-    white-space: nowrap;
-    flex: 0 0 auto;
-  }
-
-  #cardnews-card-counter {
-    min-height: 30px;
-    font-size: 11px;
-  }
-
-  .cardnews-canvas__title {
-    font-size: 38px;
-    line-height: 1.08;
-  }
-
-  .cardnews-canvas__body {
-    font-size: 18px;
-    line-height: 1.4;
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-cards [data-cardnews-section="cards"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-content [data-cardnews-section="text"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-content [data-cardnews-section="image"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="format"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="background"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="shape"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="layer"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-export [data-cardnews-section="export"] {
+    display: flex !important;
   }
 }
 
