@@ -117,6 +117,7 @@ function createDefaultBackground() {
     opacity: 1,
     imageUrl: '',
     isSample: false,
+    locked: false,
     x: 50,
     y: 50,
     scale: 100
@@ -826,6 +827,7 @@ function normalizeCard(card, index) {
   nextCard.template = TEMPLATE_KEYS.includes(nextCard.template) ? nextCard.template : 'cover';
   nextCard.format = nextCard.format === 'portrait' ? 'portrait' : 'square';
   nextCard.background.opacity = clamp(Number(nextCard.background.opacity ?? 1), 0, 1);
+  nextCard.background.locked = !!nextCard.background.locked;
   nextCard.background.scale = clamp(Number(nextCard.background.scale || 100), 60, 180);
   nextCard.background.x = clamp(Number(nextCard.background.x || 50), 0, 100);
   nextCard.background.y = clamp(Number(nextCard.background.y || 50), 0, 100);
@@ -1246,6 +1248,190 @@ document.addEventListener('DOMContentLoaded', () => {
     image: ''
   };
 
+  function isBackgroundLocked(card = getActiveCard()) {
+    return !!card?.background?.locked;
+  }
+
+  function setControlDisabled(control, disabled) {
+    if (!control) return;
+    control.disabled = !!disabled;
+    const wrapper = control.closest('.range-wrap, .color-item, .field, .cardnews-toggle-row, .cardnews-inline-check');
+    if (wrapper) {
+      wrapper.classList.toggle('is-disabled', !!disabled);
+    }
+  }
+
+  function setToggleRowActive(control, isActive = !!control?.checked) {
+    if (!control) return;
+    const wrapper = control.closest('.cardnews-toggle-row, .cardnews-inline-check');
+    if (wrapper) {
+      wrapper.classList.toggle('is-active', !!isActive);
+    }
+  }
+
+  function syncToggleVisualStates() {
+    [
+      controls.textBgEnabled,
+      controls.textOutlineEnabled,
+      controls.textShadowEnabled,
+      controls.overlayEnabled,
+      controls.imageMaskEnabled,
+      controls.imageOutlineEnabled,
+      controls.imageShadowEnabled
+    ].forEach((control) => setToggleRowActive(control));
+  }
+
+  function setExclusiveTextOption(optionKey, enabled) {
+    const activeText = getActiveText();
+
+    if (enabled) {
+      activeText.background.opacity = optionKey === 'bg' ? Math.max(activeText.background.opacity, 0.35) : 0;
+      activeText.outline.width = optionKey === 'outline' ? Math.max(activeText.outline.width, 1) : 0;
+
+      if (optionKey === 'shadow') {
+        activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
+        activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
+      } else {
+        activeText.shadow.blur = 0;
+        activeText.shadow.opacity = 0;
+      }
+
+      openOptionPanel('text', optionKey);
+      return;
+    }
+
+    if (optionKey === 'bg') {
+      activeText.background.opacity = 0;
+    } else if (optionKey === 'outline') {
+      activeText.outline.width = 0;
+    } else if (optionKey === 'shadow') {
+      activeText.shadow.blur = 0;
+      activeText.shadow.opacity = 0;
+    }
+
+    if (activeOptionPanels.text === optionKey) {
+      activeOptionPanels.text = '';
+    }
+  }
+
+  function setExclusiveImageOption(optionKey, enabled) {
+    const card = getActiveCard();
+
+    if (enabled) {
+      card.image.mask.enabled = optionKey === 'mask';
+      card.image.outline.width = optionKey === 'outline' ? Math.max(card.image.outline.width, 2) : 0;
+
+      if (optionKey === 'shadow') {
+        card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
+        card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
+      } else {
+        card.image.shadow.blur = 0;
+        card.image.shadow.opacity = 0;
+      }
+
+      openOptionPanel('image', optionKey);
+      return;
+    }
+
+    if (optionKey === 'mask') {
+      card.image.mask.enabled = false;
+    } else if (optionKey === 'outline') {
+      card.image.outline.width = 0;
+    } else if (optionKey === 'shadow') {
+      card.image.shadow.blur = 0;
+      card.image.shadow.opacity = 0;
+    }
+
+    if (activeOptionPanels.image === optionKey) {
+      activeOptionPanels.image = '';
+    }
+  }
+
+  function syncOverlayControlState(card = getActiveCard()) {
+    const overlayEnabled = !!card.overlay.enabled;
+    setControlDisabled(controls.overlayColor, !overlayEnabled);
+    setControlDisabled(controls.overlayOpacity, !overlayEnabled);
+    setToggleRowActive(controls.overlayEnabled, overlayEnabled);
+  }
+
+  function syncBackgroundLockUI(card = getActiveCard()) {
+    const locked = isBackgroundLocked(card);
+    const backgroundImagePresent = !!card.background.imageUrl;
+
+    if (controls.bgLockButton) {
+      controls.bgLockButton.textContent = locked ? '배경 잠금 해제' : '배경 잠금';
+      controls.bgLockButton.classList.toggle('is-active', locked);
+      controls.bgLockButton.setAttribute('aria-pressed', locked ? 'true' : 'false');
+    }
+
+    [controls.bgImage, controls.bgScale, controls.bgX, controls.bgY].forEach((control) => {
+      setControlDisabled(control, locked);
+    });
+
+    if (controls.bgImageClear) {
+      setControlDisabled(controls.bgImageClear, locked || !backgroundImagePresent);
+      controls.bgImageClear.hidden = false;
+    }
+
+    if (preview?.bgImage) {
+      preview.bgImage.classList.toggle('is-locked', locked);
+    }
+  }
+
+  function ensureBackgroundLockButton() {
+    if (controls.bgLockButton) return;
+
+    const existingButton = document.getElementById('btn-cardnews-bg-image-lock');
+    const anchor = controls.bgImageClear || controls.bgImage;
+
+    if (!anchor) return;
+
+    const button = existingButton || document.createElement('button');
+    button.type = 'button';
+    button.id = 'btn-cardnews-bg-image-lock';
+
+    if (!existingButton) {
+      button.className = anchor.className || 'btn btn-outline';
+      button.textContent = '배경 잠금';
+      anchor.insertAdjacentElement('afterend', button);
+    }
+
+    button.addEventListener('click', () => {
+      const card = getActiveCard();
+      card.background.locked = !card.background.locked;
+      renderWorkspace({
+        persist: true,
+        statusMessage: card.background.locked ? '배경 이미지를 잠궜습니다.' : '배경 이미지 잠금을 해제했습니다.'
+      });
+    });
+
+    controls.bgLockButton = button;
+  }
+
+  function isTemplateSeedTextMatch(textItem, seedText) {
+    if (!textItem || !seedText) return false;
+
+    return (
+      String(textItem.content || '').trim() === String(seedText.content || '').trim()
+      && Number(textItem.size || 0) === Number(seedText.size || 0)
+      && Number(textItem.width || 0) === Number(seedText.width || 0)
+      && String(textItem.align || 'center') === String(seedText.align || 'center')
+      && String(textItem.frameAlign || 'center') === String(seedText.frameAlign || 'center')
+    );
+  }
+
+  function getTemplateCarryOverTexts(currentCard, seededCard) {
+    const currentTexts = currentCard.texts || [];
+    const oldSeedCard = createCardFromTemplate(getActiveCardIndex() + 1, currentCard.template, currentCard.format);
+    const carryOverTexts = currentTexts.slice(seededCard.texts.length);
+
+    return carryOverTexts.filter((textItem, extraIndex) => {
+      const oldSeedText = oldSeedCard.texts[seededCard.texts.length + extraIndex];
+      if (!oldSeedText) return true;
+      return !isTemplateSeedTextMatch(textItem, oldSeedText);
+    });
+  }
+
   function findSection(sectionKey) {
     return ui.sections.find((section) => section.dataset.cardnewsSection === sectionKey) || null;
   }
@@ -1598,6 +1784,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setControlGroupVisible(controls.imageOutlineEnabled, imagePresent);
     setControlGroupVisible(controls.imageShadowEnabled, imagePresent);
     syncExclusiveOptionPanels(card, activeText);
+    syncOverlayControlState(card);
+    syncBackgroundLockUI(card);
+    syncToggleVisualStates();
     if (controls.shapeRemove) controls.shapeRemove.hidden = !shapePresent;
     if (controls.mainImageClear) {
       controls.mainImageClear.disabled = !imagePresent;
@@ -2039,11 +2228,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }, index);
     });
 
-    if (currentTexts.length > seededCard.texts.length) {
-      currentTexts.slice(seededCard.texts.length).forEach((textItem, index) => {
-        nextCard.texts.push(normalizeTextItem(textItem, seededCard.texts.length + index));
-      });
-    }
+    const carryOverTexts = getTemplateCarryOverTexts(currentCard, seededCard);
+    carryOverTexts.forEach((textItem, index) => {
+      nextCard.texts.push(normalizeTextItem(textItem, seededCard.texts.length + index));
+    });
 
     ensureTextNames(nextCard);
 
@@ -2301,6 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (layerKey === 'bgImage') {
+      if (isBackgroundLocked(card)) return false;
       card.background.x = Number(nextX.toFixed(1));
       card.background.y = Number(nextY.toFixed(1));
       preview.bgImage.style.left = `${card.background.x}%`;
@@ -2360,6 +2549,7 @@ document.addEventListener('DOMContentLoaded', () => {
       anchorY = targetShape.y;
       card.activeShapeId = shapeId;
     } else if (layerKey === 'bgImage') {
+      if (isBackgroundLocked(card)) return;
       anchorX = card.background.x;
       anchorY = card.background.y;
     } else if (layerKey === 'image') {
@@ -2506,43 +2696,20 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textColor.addEventListener('input', () => { getActiveText().color = controls.textColor.value; renderWorkspace({ persist: true }); });
   controls.textOpacity.addEventListener('input', () => { getActiveText().opacity = clamp(Number(controls.textOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textBgEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
-    activeText.background.opacity = controls.textBgEnabled.checked ? Math.max(activeText.background.opacity, 0.35) : 0;
-    if (controls.textBgEnabled.checked) {
-      openOptionPanel('text', 'bg');
-    } else if (activeOptionPanels.text === 'bg') {
-      activeOptionPanels.text = '';
-    }
+    setExclusiveTextOption('bg', controls.textBgEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.textBgColor.addEventListener('input', () => { getActiveText().background.color = controls.textBgColor.value; renderWorkspace({ persist: true }); });
   controls.textBgOpacity.addEventListener('input', () => { getActiveText().background.opacity = clamp(Number(controls.textBgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
-    activeText.outline.width = controls.textOutlineEnabled.checked ? Math.max(activeText.outline.width, 1) : 0;
-    if (controls.textOutlineEnabled.checked) {
-      openOptionPanel('text', 'outline');
-    } else if (activeOptionPanels.text === 'outline') {
-      activeOptionPanels.text = '';
-    }
+    setExclusiveTextOption('outline', controls.textOutlineEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.textOutlineColor.addEventListener('input', () => { getActiveText().outline.color = controls.textOutlineColor.value; renderWorkspace({ persist: true }); });
   controls.textOutlineOpacity.addEventListener('input', () => { getActiveText().outline.opacity = clamp(Number(controls.textOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineWidth.addEventListener('input', () => { getActiveText().outline.width = clamp(Number(controls.textOutlineWidth.value), 0, 8); renderWorkspace({ persist: true }); });
   controls.textShadowEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
-    if (controls.textShadowEnabled.checked) {
-      activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
-      activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
-      openOptionPanel('text', 'shadow');
-    } else {
-      activeText.shadow.blur = 0;
-      activeText.shadow.opacity = 0;
-      if (activeOptionPanels.text === 'shadow') {
-        activeOptionPanels.text = '';
-      }
-    }
+    setExclusiveTextOption('shadow', controls.textShadowEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.textShadowColor.addEventListener('input', () => { getActiveText().shadow.color = controls.textShadowColor.value; renderWorkspace({ persist: true }); });
@@ -2552,21 +2719,44 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.bgColor.addEventListener('input', () => { getActiveCard().background.color = controls.bgColor.value; renderWorkspace({ persist: true }); });
   controls.bgOpacity.addEventListener('input', () => { getActiveCard().background.opacity = clamp(Number(controls.bgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.overlayColor.addEventListener('input', () => { getActiveCard().overlay.color = controls.overlayColor.value; renderWorkspace({ persist: true }); });
-  controls.overlayEnabled.addEventListener('change', () => { getActiveCard().overlay.enabled = controls.overlayEnabled.checked; renderWorkspace({ persist: true }); });
-  controls.bgScale.addEventListener('input', () => { getActiveCard().background.scale = clamp(Number(controls.bgScale.value), 60, 180); renderWorkspace({ persist: true }); });
-  controls.bgX.addEventListener('input', () => { getActiveCard().background.x = Number(controls.bgX.value); renderWorkspace({ persist: true }); });
-  controls.bgY.addEventListener('input', () => { getActiveCard().background.y = Number(controls.bgY.value); renderWorkspace({ persist: true }); });
+  controls.overlayEnabled.addEventListener('change', () => {
+    getActiveCard().overlay.enabled = controls.overlayEnabled.checked;
+    renderWorkspace({ persist: true });
+  });
+  controls.bgScale.addEventListener('input', () => {
+    const card = getActiveCard();
+    if (isBackgroundLocked(card)) return;
+    card.background.scale = clamp(Number(controls.bgScale.value), 60, 180);
+    renderWorkspace({ persist: true });
+  });
+  controls.bgX.addEventListener('input', () => {
+    const card = getActiveCard();
+    if (isBackgroundLocked(card)) return;
+    card.background.x = Number(controls.bgX.value);
+    renderWorkspace({ persist: true });
+  });
+  controls.bgY.addEventListener('input', () => {
+    const card = getActiveCard();
+    if (isBackgroundLocked(card)) return;
+    card.background.y = Number(controls.bgY.value);
+    renderWorkspace({ persist: true });
+  });
   controls.overlayOpacity.addEventListener('input', () => { getActiveCard().overlay.opacity = clamp(Number(controls.overlayOpacity.value), 0, 0.9); renderWorkspace({ persist: true }); });
 
   controls.bgImage.addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const card = getActiveCard();
+    if (isBackgroundLocked(card)) {
+      event.target.value = '';
+      setStatus('배경 이미지 잠금을 해제한 뒤 변경할 수 있습니다.', 'info');
+      return;
+    }
     if (!validateImageFile(file, IMAGE_UPLOAD_RULES.background)) {
       event.target.value = '';
       return;
     }
     try {
-      const card = getActiveCard();
       card.background.imageUrl = await readFileAsDataUrl(file);
       card.background.isSample = false;
       renderWorkspace({ persist: true, statusMessage: '배경 이미지를 적용했습니다.' });
@@ -2579,6 +2769,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   controls.bgImageClear.addEventListener('click', () => {
     const card = getActiveCard();
+    if (isBackgroundLocked(card)) {
+      setStatus('배경 이미지 잠금을 해제한 뒤 삭제할 수 있습니다.', 'info');
+      return;
+    }
     const sampleUrl = SAMPLE_BACKGROUNDS[card.template] || '';
     card.background.imageUrl = sampleUrl;
     card.background.isSample = !!sampleUrl;
@@ -2617,12 +2811,7 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.mainImageClear.addEventListener('click', () => { getActiveCard().image.src = ''; renderWorkspace({ persist: true, statusMessage: '메인 이미지를 삭제했습니다.' }); });
 
   controls.imageMaskEnabled.addEventListener('change', () => {
-    getActiveCard().image.mask.enabled = controls.imageMaskEnabled.checked;
-    if (controls.imageMaskEnabled.checked) {
-      openOptionPanel('image', 'mask');
-    } else if (activeOptionPanels.image === 'mask') {
-      activeOptionPanels.image = '';
-    }
+    setExclusiveImageOption('mask', controls.imageMaskEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.imageFrameAlign.addEventListener('change', () => {
@@ -2635,31 +2824,14 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.imageMaskColor.addEventListener('input', () => { getActiveCard().image.mask.color = controls.imageMaskColor.value; renderWorkspace({ persist: true }); });
   controls.imageMaskOpacity.addEventListener('input', () => { getActiveCard().image.mask.opacity = clamp(Number(controls.imageMaskOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineEnabled.addEventListener('change', () => {
-    const card = getActiveCard();
-    card.image.outline.width = controls.imageOutlineEnabled.checked ? Math.max(card.image.outline.width, 2) : 0;
-    if (controls.imageOutlineEnabled.checked) {
-      openOptionPanel('image', 'outline');
-    } else if (activeOptionPanels.image === 'outline') {
-      activeOptionPanels.image = '';
-    }
+    setExclusiveImageOption('outline', controls.imageOutlineEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.imageOutlineColor.addEventListener('input', () => { getActiveCard().image.outline.color = controls.imageOutlineColor.value; renderWorkspace({ persist: true }); });
   controls.imageOutlineOpacity.addEventListener('input', () => { getActiveCard().image.outline.opacity = clamp(Number(controls.imageOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineWidth.addEventListener('input', () => { getActiveCard().image.outline.width = clamp(Number(controls.imageOutlineWidth.value), 0, 12); renderWorkspace({ persist: true }); });
   controls.imageShadowEnabled.addEventListener('change', () => {
-    const card = getActiveCard();
-    if (controls.imageShadowEnabled.checked) {
-      card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
-      card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
-      openOptionPanel('image', 'shadow');
-    } else {
-      card.image.shadow.blur = 0;
-      card.image.shadow.opacity = 0;
-      if (activeOptionPanels.image === 'shadow') {
-        activeOptionPanels.image = '';
-      }
-    }
+    setExclusiveImageOption('shadow', controls.imageShadowEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.imageShadowColor.addEventListener('input', () => { getActiveCard().image.shadow.color = controls.imageShadowColor.value; renderWorkspace({ persist: true }); });
@@ -2777,6 +2949,7 @@ document.addEventListener('DOMContentLoaded', () => {
   preview.canvas.addEventListener('pointerup', finishCanvasDrag);
   preview.canvas.addEventListener('pointercancel', finishCanvasDrag);
 
+  ensureBackgroundLockButton();
   bindSectionAccordions();
   renderWorkspace({ persist: false });
   setStatus('카드뉴스 제작기 준비 완료');
