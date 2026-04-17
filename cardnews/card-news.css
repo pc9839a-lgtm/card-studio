@@ -996,78 +996,165 @@
   color: #64748b;
 }
 
-/* ===== mobile sticky + panel restore (phase 2 step 1 corrected) ===== */
+
+/* ===== 1차패치: 카드뉴스 모바일 골격 안정화 ===== */
 /* 목적:
-   1) 모바일에서 편집 패널이 preview 아래로 밀려 안 보이는 문제 수정
-   2) 모바일에서는 panel을 먼저, preview를 아래에 배치
-   3) preview는 작게 유지하면서 sticky 동작 */
+   - 기존 기능은 건드리지 않고 모바일 레이아웃만 먼저 안정화
+   - 카드뉴스 패널/미리보기 우선순위 정리
+   - 미리보기 크기 축소
+   - 단계형 UI로 가기 전, 모바일에서 덜 복잡하게 보이도록 1차 정리
+*/
 
 @media (max-width: 767px) {
-  body[data-studio-mode="cardnews"] .cardnews-studio {
-    display: flex !important;
-    flex-direction: column !important;
+  .cardnews-lab {
+    padding: 12px 12px 6px;
+  }
+
+  .cardnews-lab__inner {
+    gap: 14px;
+  }
+
+  .cardnews-lab__intro {
+    padding: 18px 16px;
+    border-radius: 20px;
+    gap: 10px;
+  }
+
+  .cardnews-lab__intro h2 {
+    font-size: 22px;
+    line-height: 1.18;
+  }
+
+  .cardnews-lab__intro p {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .cardnews-studio {
+    display: flex;
+    flex-direction: column;
     gap: 14px;
     align-items: stretch;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-panel {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 14px;
+  .cardnews-panel {
     order: 1;
-    width: 100%;
-    min-width: 0;
+    gap: 14px;
   }
 
-  body[data-studio-mode="cardnews"] .control-group.cardnews-group {
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  body[data-studio-mode="cardnews"] .cardnews-group .section-heading {
-    display: flex !important;
-    flex-direction: column;
-  }
-
-  body[data-studio-mode="cardnews"] .cardnews-preview {
-    position: sticky !important;
-    top: 8px;
-    z-index: 34;
+  .cardnews-preview {
     order: 2;
-    display: flex !important;
-    width: 100%;
+    position: sticky;
+    top: 8px;
+    z-index: 20;
+    gap: 10px;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-preview__meta {
-    padding: 14px 14px;
+  .cardnews-lab .control-group.cardnews-group {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .cardnews-group {
+    gap: 12px;
+  }
+
+  .cardnews-group .section-heading {
+    padding-right: 28px;
+  }
+
+  .cardnews-group .section-heading::after {
+    top: 2px;
+    right: 2px;
+    font-size: 14px;
+  }
+
+  .cardnews-preview__meta {
+    padding: 14px 16px;
     border-radius: 18px;
     gap: 4px;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-preview__meta strong {
+  .cardnews-preview__meta strong {
     font-size: 18px;
+    line-height: 1.15;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-preview__meta span {
+  .cardnews-preview__meta span {
     font-size: 12px;
+    line-height: 1.45;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-preview__hint {
-    min-height: 30px;
+  .cardnews-preview__hint {
+    width: 100%;
+    min-height: auto;
+    padding: 9px 12px;
+    border-radius: 14px;
+    justify-content: flex-start;
     font-size: 11px;
-    padding: 0 10px;
+    line-height: 1.45;
+    white-space: normal;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-canvas-shell {
-    padding: 12px;
+  .cardnews-canvas-shell {
+    padding: 14px;
     min-height: auto;
     border-radius: 20px;
   }
 
-  body[data-studio-mode="cardnews"] .cardnews-canvas {
-    width: min(100%, 300px);
+  .cardnews-canvas {
+    width: min(100%, 320px);
     border-radius: 18px;
     margin-inline: auto;
+  }
+
+  .cardnews-action-row,
+  .cardnews-action-row--cards,
+  .cardnews-action-row--layer,
+  .cardnews-toggle-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .cardnews-toggle-row,
+  .cardnews-inline-check {
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 14px;
+    font-size: 12px;
+  }
+
+  .cardnews-card-list,
+  .cardnews-text-list,
+  .cardnews-shape-list,
+  .cardnews-layer-list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cardnews-card-chip,
+  .cardnews-text-chip,
+  .cardnews-layer-chip {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  #cardnews-card-counter {
+    min-height: 30px;
+    font-size: 11px;
+  }
+
+  .cardnews-canvas__title {
+    font-size: 38px;
+    line-height: 1.08;
+  }
+
+  .cardnews-canvas__body {
+    font-size: 18px;
+    line-height: 1.4;
   }
 }
 
