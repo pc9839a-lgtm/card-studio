@@ -1241,14 +1241,133 @@ document.addEventListener('DOMContentLoaded', () => {
   let appState = loadState();
   let dragState = null;
   let activeSectionKey = 'format';
-
-  function isMobileCardnewsViewport() {
-    return window.matchMedia('(max-width: 767px)').matches;
-  }
   const activeOptionPanels = {
     text: '',
     image: ''
   };
+
+  const MOBILE_PANEL_MAP = {
+    cards: ['cards'],
+    content: ['text', 'image'],
+    design: ['format', 'background', 'shape', 'layer'],
+    export: ['export']
+  };
+  const MOBILE_PANEL_ORDER = ['cards', 'content', 'design', 'export'];
+  let activeMobilePanelKey = 'cards';
+
+  function getMobilePanelKeyForSection(sectionKey) {
+    return MOBILE_PANEL_ORDER.find((panelKey) => MOBILE_PANEL_MAP[panelKey].includes(sectionKey)) || 'cards';
+  }
+
+  function clearMobilePanelClasses() {
+    root.classList.remove(
+      'is-mobile-panel-cards',
+      'is-mobile-panel-content',
+      'is-mobile-panel-design',
+      'is-mobile-panel-export'
+    );
+  }
+
+  function ensureMobileQuickbar() {
+    let quickbar = root.querySelector('.cardnews-mobile-quickbar');
+    if (quickbar) return quickbar;
+
+    const inner = root.querySelector('.cardnews-lab__inner');
+    const studio = root.querySelector('.cardnews-studio');
+    if (!inner || !studio) return null;
+
+    quickbar = document.createElement('div');
+    quickbar.className = 'cardnews-mobile-quickbar';
+    quickbar.innerHTML = `
+      <div class="cardnews-mobile-quickbar__scroll">
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="cards">카드</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="content">내용</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="design">꾸미기</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="export">저장</button>
+        <button type="button" class="cardnews-mobile-preview-toggle" data-cardnews-preview-toggle>미리보기 숨기기</button>
+      </div>
+    `;
+
+    quickbar.addEventListener('click', (event) => {
+      const panelButton = event.target.closest('[data-mobile-panel]');
+      if (panelButton) {
+        const panelKey = panelButton.dataset.mobilePanel || 'cards';
+        const fallbackSection = MOBILE_PANEL_MAP[panelKey]?.[0] || 'cards';
+        activeSectionKey = MOBILE_PANEL_MAP[panelKey]?.includes(activeSectionKey) ? activeSectionKey : fallbackSection;
+        applyMobilePanelState(panelKey, activeSectionKey);
+        return;
+      }
+
+      const previewToggle = event.target.closest('[data-cardnews-preview-toggle]');
+      if (previewToggle) {
+        root.classList.toggle('is-mobile-preview-collapsed');
+        syncMobileQuickbarState();
+      }
+    });
+
+    inner.insertBefore(quickbar, studio);
+    return quickbar;
+  }
+
+  function syncMobileQuickbarState() {
+    const quickbar = root.querySelector('.cardnews-mobile-quickbar');
+    if (!quickbar) return;
+
+    quickbar.querySelectorAll('[data-mobile-panel]').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.mobilePanel === activeMobilePanelKey);
+    });
+
+    const previewToggle = quickbar.querySelector('[data-cardnews-preview-toggle]');
+    if (previewToggle) {
+      previewToggle.textContent = root.classList.contains('is-mobile-preview-collapsed')
+        ? '미리보기 보기'
+        : '미리보기 숨기기';
+    }
+  }
+
+  function applyMobilePanelState(panelKey, sectionKey = activeSectionKey) {
+    const normalizedPanelKey = MOBILE_PANEL_ORDER.includes(panelKey) ? panelKey : 'cards';
+    const allowedSections = MOBILE_PANEL_MAP[normalizedPanelKey] || MOBILE_PANEL_MAP.cards;
+    const normalizedSectionKey = allowedSections.includes(sectionKey) ? sectionKey : allowedSections[0];
+
+    activeMobilePanelKey = normalizedPanelKey;
+    activeSectionKey = normalizedSectionKey;
+
+    clearMobilePanelClasses();
+    root.classList.add(`is-mobile-panel-${normalizedPanelKey}`);
+
+    ui.sections.forEach((section) => {
+      const key = section.dataset.cardnewsSection || '';
+      const isInPanel = allowedSections.includes(key);
+      const isTarget = key === normalizedSectionKey;
+
+      section.classList.toggle('is-linked', isTarget);
+      setSectionCollapsed(section, !isInPanel);
+    });
+
+    syncMobileQuickbarState();
+  }
+
+  function syncMobileCompactMode() {
+    const isMobile = isMobileCardnewsViewport();
+    root.classList.toggle('is-mobile-compact', isMobile);
+
+    if (!isMobile) {
+      clearMobilePanelClasses();
+      root.classList.remove('is-mobile-preview-collapsed');
+      activeMobilePanelKey = getMobilePanelKeyForSection(activeSectionKey || 'format');
+      return;
+    }
+
+    ensureMobileQuickbar();
+
+    if (!root.dataset.mobileCompactInitialized) {
+      activeMobilePanelKey = getMobilePanelKeyForSection(activeSectionKey || 'cards');
+      root.dataset.mobileCompactInitialized = 'true';
+    }
+
+    applyMobilePanelState(activeMobilePanelKey, activeSectionKey || MOBILE_PANEL_MAP[activeMobilePanelKey][0]);
+  }
 
   function findSection(sectionKey) {
     return ui.sections.find((section) => section.dataset.cardnewsSection === sectionKey) || null;
@@ -1322,11 +1441,7 @@ document.addEventListener('DOMContentLoaded', () => {
     activeSectionKey = target.dataset.cardnewsSection || sectionKey || 'format';
 
     if (isMobileCardnewsViewport()) {
-      ui.sections.forEach((section) => {
-        const isTarget = section === target;
-        section.classList.toggle('is-linked', isTarget);
-        setSectionCollapsed(section, false);
-      });
+      applyMobilePanelState(getMobilePanelKeyForSection(activeSectionKey), activeSectionKey);
     } else {
       ui.sections.forEach((section) => {
         const isTarget = section === target;
@@ -1340,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function bindSectionAccordions() {
+  function bindSectionAccordions() {() {
     ui.sections.forEach((section) => {
       const toggle = getSectionToggle(section);
       if (!toggle) return;
@@ -1353,8 +1468,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const openCurrent = () => {
         if (isMobileCardnewsViewport()) {
           activeSectionKey = section.dataset.cardnewsSection || activeSectionKey;
-          section.classList.add('is-linked');
-          setSectionCollapsed(section, false);
+          applyMobilePanelState(getMobilePanelKeyForSection(activeSectionKey), activeSectionKey);
           return;
         }
         focusSection(section.dataset.cardnewsSection);
@@ -2800,5 +2914,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   bindSectionAccordions();
   renderWorkspace({ persist: false });
+  syncMobileCompactMode();
+  window.addEventListener('resize', syncMobileCompactMode);
   setStatus('카드뉴스 제작기 준비 완료');
 });
