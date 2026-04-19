@@ -1897,12 +1897,20 @@ document.addEventListener('DOMContentLoaded', () => {
     nextCard.format = format;
     nextCard.font = currentCard.font || seededCard.font;
 
+    const oldSeedCard = createCardFromTemplate(getActiveCardIndex() + 1, currentCard.template, currentCard.format);
+
     nextCard.texts = seededCard.texts.map((seedText, index) => {
       const existingText = currentTexts[index];
+      const oldSeedText = oldSeedCard.texts?.[index];
+
+      const shouldPreserveContent = existingText
+        && oldSeedText
+        && !isTemplateSeedTextMatch(existingText, oldSeedText);
+
       return normalizeTextItem({
         ...seedText,
         id: existingText?.id || seedText.id,
-        content: existingText?.content || seedText.content
+        content: shouldPreserveContent ? existingText.content : seedText.content
       }, index);
     });
 
