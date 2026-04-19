@@ -14,7 +14,7 @@ import {
   SAMPLE_BACKGROUNDS,
   syncTemplateSelectOptions,
   getTemplateSeed
-} from './cardnews-templates.js';
+} from './card-news-templates.js';
 
 const CARDNEWS_STORAGE_KEY = 'cardstudio_cardnews_lab_v7';
 const CARDNEWS_LEGACY_STORAGE_KEY = 'cardstudio_cardnews_lab_v6';
