@@ -1237,6 +1237,7 @@
   .cardnews-lab.is-mobile-compact.is-mobile-panel-content [data-cardnews-section="background"],
   .cardnews-lab.is-mobile-compact.is-mobile-panel-content [data-cardnews-section="image"],
   .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="format"],
+  .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="background"],
   .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="shape"],
   .cardnews-lab.is-mobile-compact.is-mobile-panel-design [data-cardnews-section="layer"],
   .cardnews-lab.is-mobile-compact.is-mobile-panel-export [data-cardnews-section="export"] {
