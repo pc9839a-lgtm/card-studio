@@ -2744,7 +2744,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentTexts.length > seededCard.texts.length) {
       currentTexts.slice(seededCard.texts.length).forEach((textItem, index) => {
-        nextCard.texts.push(normalizeTextItem(textItem, seededCard.texts.length + index));
+        const sourceIndex = seededCard.texts.length + index;
+        const oldSeedText = oldSeedCard.texts?.[sourceIndex];
+        const oldSeedLength = oldSeedCard.texts?.length || 0;
+        const isUserAddedText = sourceIndex >= oldSeedLength;
+        const isEditedOldSeedText = oldSeedText ? !isTemplateSeedTextMatch(textItem, oldSeedText) : true;
+
+        if (isUserAddedText || isEditedOldSeedText) {
+          nextCard.texts.push(normalizeTextItem(textItem, sourceIndex));
+        }
       });
     }
 
