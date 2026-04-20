@@ -8,23 +8,61 @@ import {
   triggerBlobDownload,
   triggerImageSave
 } from '../scripts/utils.js';
-import {
-  TEMPLATE_KEYS,
-  SAMPLE_BACKGROUNDS,
-  getTemplateSeed,
-  syncTemplateSelectOptions
-} from './card-news-templates.js';
-
-import {
-  TEMPLATE_KEYS,
-  SAMPLE_BACKGROUNDS,
-  syncTemplateSelectOptions,
-  getTemplateSeed
-} from './card-news-templates.js';
 
 const CARDNEWS_STORAGE_KEY = 'cardstudio_cardnews_lab_v7';
 const CARDNEWS_LEGACY_STORAGE_KEY = 'cardstudio_cardnews_lab_v6';
 const STATIC_LAYER_KEYS = ['bgImage', 'image', 'overlay'];
+const TEMPLATE_KEYS = ['cover', 'split', 'minimal', 'list', 'headline', 'spotlight', 'premium', 'collage', 'quote', 'deal'];
+const TEMPLATE_OPTION_META = {
+  cover: '브랜딩형',
+  split: '이벤트형',
+  minimal: '공지형',
+  list: '정보정리형',
+  headline: '프로모션형',
+  spotlight: '스포트라이트형',
+  premium: '프리미엄형',
+  collage: '콜라주형',
+  quote: '한줄강조형',
+  deal: '혜택배너형'
+};
+const SAMPLE_BACKGROUNDS = {
+  cover: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80',
+  split: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80',
+  minimal: '',
+  list: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=80',
+  headline: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80',
+  spotlight: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80',
+  premium: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80',
+  collage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80',
+  quote: '',
+  deal: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1600&q=80'
+};
+
+function syncTemplateSelectOptions(selectElement) {
+  if (!selectElement) return;
+
+  const existingOptions = Array.from(selectElement.options || []);
+  const existingByValue = new Map(existingOptions.map((option) => [option.value, option]));
+
+  TEMPLATE_KEYS.forEach((templateKey) => {
+    const existingOption = existingByValue.get(templateKey);
+    if (existingOption) {
+      existingOption.textContent = TEMPLATE_OPTION_META[templateKey] || templateKey;
+      return;
+    }
+
+    const option = document.createElement('option');
+    option.value = templateKey;
+    option.textContent = TEMPLATE_OPTION_META[templateKey] || templateKey;
+    selectElement.appendChild(option);
+  });
+
+  existingOptions.forEach((option) => {
+    if (!TEMPLATE_KEYS.includes(option.value)) {
+      option.remove();
+    }
+  });
+}
 const IMAGE_UPLOAD_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const IMAGE_UPLOAD_RULES = {
   background: { maxBytes: 10 * 1024 * 1024, label: '배경 이미지' },
@@ -122,7 +160,6 @@ function createDefaultBackground() {
     opacity: 1,
     imageUrl: '',
     isSample: false,
-    locked: false,
     x: 50,
     y: 50,
     scale: 100
@@ -342,6 +379,873 @@ function getRecommendedImagePlacement(template = 'cover', format = 'square', asp
   return base;
 }
 
+function getTemplateSeed(template, format) {
+  const isPortrait = format === 'portrait';
+
+  switch (template) {
+    case 'split':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS.split,
+          isSample: true,
+          scale: isPortrait ? 124 : 116,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.52
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 18,
+          y: isPortrait ? 60 : 57,
+          width: 18,
+          height: 0.45
+        },
+        image: {
+          x: 82,
+          y: isPortrait ? 14 : 12,
+          width: isPortrait ? 18 : 20,
+          height: 12,
+          radius: 16
+        },
+        texts: [
+          {
+            content: 'EVENT',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 22,
+            size: isPortrait ? 16 : 14,
+            color: '#dbeafe',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.46,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '이번 주
+프로모션',
+            x: 14,
+            y: isPortrait ? 34 : 32,
+            width: isPortrait ? 48 : 46,
+            size: isPortrait ? 54 : 48,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.24, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '혜택과 일정만 짧고 강하게 보여주는
+정사각형 이벤트형 템플릿',
+            x: 14,
+            y: isPortrait ? 55 : 53,
+            width: isPortrait ? 44 : 42,
+            size: 18,
+            color: '#dbe4f0',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '신청 마감 전
+혜택 확인',
+            x: 14,
+            y: isPortrait ? 83 : 80,
+            width: isPortrait ? 30 : 28,
+            size: 19,
+            color: '#0f172a',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#ffffff',
+              opacity: 0.96,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 20
+            }
+          }
+        ]
+      };
+    case 'minimal':
+      return {
+        background: {
+          color: '#ffffff',
+          imageUrl: '',
+          isSample: false
+        },
+        overlay: {
+          enabled: false,
+          color: '#111827',
+          opacity: 0
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#2563eb',
+          x: 14,
+          y: isPortrait ? 18 : 16,
+          width: 12,
+          height: 0.35
+        },
+        image: {
+          x: 84,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 16
+        },
+        texts: [
+          {
+            content: 'NOTICE',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 24,
+            size: isPortrait ? 15 : 14,
+            color: '#2563eb',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#eff6ff',
+              opacity: 1,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '운영 안내
+변경 사항',
+            x: 14,
+            y: isPortrait ? 34 : 32,
+            width: isPortrait ? 44 : 42,
+            size: isPortrait ? 50 : 46,
+            color: '#0f172a',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '문구가 많아도 깔끔하게 정리되는
+공지형 기본 템플릿',
+            x: 14,
+            y: isPortrait ? 55 : 53,
+            width: isPortrait ? 44 : 42,
+            size: 18,
+            color: '#64748b',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '변경 일시  06.30
+문의 채널  DM 또는 링크',
+            x: 14,
+            y: isPortrait ? 82 : 79,
+            width: isPortrait ? 42 : 40,
+            size: 18,
+            color: '#0f172a',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#f8fafc',
+              opacity: 1,
+              paddingX: 18,
+              paddingY: 16,
+              radius: 22
+            }
+          }
+        ]
+      };
+    case 'list':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS.list,
+          isSample: true,
+          scale: isPortrait ? 122 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.56
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#38bdf8',
+          x: 50,
+          y: isPortrait ? 22 : 20,
+          width: 22,
+          height: 0.4
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 14 : 12,
+          width: 22,
+          height: 12,
+          radius: 0,
+          outline: {
+            color: '#ffffff',
+            width: 0
+          }
+        },
+        texts: [
+          {
+            content: '핵심만 보는
+3가지 포인트',
+            x: 50,
+            y: isPortrait ? 34 : 32,
+            width: isPortrait ? 66 : 64,
+            size: isPortrait ? 48 : 44,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.24, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '• 문제를 짧게 정리하기
+• 해결 포인트를 또렷하게 보여주기
+• 마지막 행동 유도 넣기',
+            x: 50,
+            y: isPortrait ? 75 : 73,
+            width: isPortrait ? 76 : 72,
+            size: 20,
+            color: '#dbeafe',
+            align: 'left',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.72,
+              paddingX: 22,
+              paddingY: 18,
+              radius: 24
+            }
+          }
+        ]
+      };
+    case 'headline':
+      return {
+        background: {
+          color: '#052e16',
+          imageUrl: SAMPLE_BACKGROUNDS.headline,
+          isSample: true,
+          scale: isPortrait ? 124 : 116,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#052e16',
+          opacity: 0.46
+        },
+        shape: {
+          visible: true,
+          type: 'circle',
+          color: '#22c55e',
+          x: 82,
+          y: isPortrait ? 16 : 14,
+          width: 12,
+          height: 12
+        },
+        image: {
+          x: 18,
+          y: isPortrait ? 14 : 12,
+          width: 20,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'PROMOTION',
+            x: 50,
+            y: isPortrait ? 14 : 12,
+            width: 28,
+            size: isPortrait ? 16 : 14,
+            color: '#bbf7d0',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#14532d',
+              opacity: 0.82,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '오픈 소식
+지금 확인',
+            x: 50,
+            y: isPortrait ? 42 : 40,
+            width: isPortrait ? 68 : 66,
+            size: isPortrait ? 56 : 50,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.22, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '런칭 · 모집 · 행사 공지처럼
+첫 시선이 중요한 카드에 맞춘 구성',
+            x: 50,
+            y: isPortrait ? 79 : 77,
+            width: 64,
+            size: 18,
+            color: '#e5e7eb',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.56,
+              paddingX: 20,
+              paddingY: 12,
+              radius: 999
+            }
+          }
+        ]
+      };
+    case 'spotlight':
+      return {
+        background: {
+          color: '#0b1120',
+          imageUrl: SAMPLE_BACKGROUNDS.spotlight,
+          isSample: true,
+          scale: isPortrait ? 126 : 118,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.62
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 78 : 76,
+          width: 62,
+          height: isPortrait ? 18 : 17
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 14 : 12,
+          width: 22,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: 'SPOTLIGHT',
+            x: 50,
+            y: isPortrait ? 18 : 16,
+            width: 28,
+            size: 15,
+            color: '#bfdbfe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '오늘의 핵심
+한 장 요약',
+            x: 50,
+            y: isPortrait ? 42 : 40,
+            width: 70,
+            size: isPortrait ? 58 : 52,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.3, blur: 20 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '눈에 띄는 한 줄 제목과
+하단 강조 박스를 함께 쓰는 스포트라이트형',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 56,
+            size: 18,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.42,
+              paddingX: 18,
+              paddingY: 10,
+              radius: 20
+            }
+          }
+        ]
+      };
+    case 'premium':
+      return {
+        background: {
+          color: '#faf5ef',
+          imageUrl: SAMPLE_BACKGROUNDS.premium,
+          isSample: true,
+          scale: isPortrait ? 122 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#24180e',
+          opacity: 0.22
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#d4a373',
+          x: 16,
+          y: isPortrait ? 18 : 16,
+          width: 14,
+          height: 0.35
+        },
+        image: {
+          x: 84,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'PREMIUM',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 26,
+            size: 15,
+            color: '#7c4f2d',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#fff6ed',
+              opacity: 0.9,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '한 단계 더
+고급스럽게',
+            x: 14,
+            y: isPortrait ? 34 : 32,
+            width: 48,
+            size: isPortrait ? 50 : 46,
+            color: '#1f2937',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '브랜드 소개, 서비스 가치,
+프리미엄 혜택 안내에 맞춘 템플릿',
+            x: 14,
+            y: isPortrait ? 56 : 54,
+            width: 44,
+            size: 18,
+            color: '#5b4636',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '멤버십 · 클래스 · 케어 서비스',
+            x: 14,
+            y: isPortrait ? 83 : 80,
+            width: 40,
+            size: 18,
+            color: '#1f2937',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#ffffff',
+              opacity: 0.9,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 20
+            }
+          }
+        ]
+      };
+    case 'collage':
+      return {
+        background: {
+          color: '#111827',
+          imageUrl: SAMPLE_BACKGROUNDS.collage,
+          isSample: true,
+          scale: isPortrait ? 128 : 118,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#0f172a',
+          opacity: 0.38
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#ffffff',
+          x: 78,
+          y: isPortrait ? 18 : 16,
+          width: 16,
+          height: 16
+        },
+        image: {
+          x: 20,
+          y: isPortrait ? 20 : 18,
+          width: 24,
+          height: 14,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'COLLAGE',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 24,
+            size: 15,
+            color: '#dbeafe',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.62,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '분위기와 정보
+동시에 담기',
+            x: 14,
+            y: isPortrait ? 70 : 68,
+            width: 52,
+            size: isPortrait ? 50 : 46,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.22, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '배경 사진 중심으로 감도를 살리면서
+타이틀과 포인트를 분리하는 콜라주형',
+            x: 14,
+            y: isPortrait ? 86 : 83,
+            width: 54,
+            size: 18,
+            color: '#e2e8f0',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.52,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 22
+            }
+          }
+        ]
+      };
+    case 'quote':
+      return {
+        background: {
+          color: '#f8fafc',
+          imageUrl: '',
+          isSample: false
+        },
+        overlay: {
+          enabled: false,
+          color: '#111827',
+          opacity: 0
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#dbeafe',
+          x: 50,
+          y: isPortrait ? 50 : 48,
+          width: 72,
+          height: isPortrait ? 50 : 46
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 18 : 16,
+          width: 18,
+          height: 12,
+          radius: 999
+        },
+        texts: [
+          {
+            content: 'QUOTE',
+            x: 50,
+            y: isPortrait ? 24 : 22,
+            width: 20,
+            size: 15,
+            color: '#2563eb',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '가장 중요한 말은
+짧게 남아요',
+            x: 50,
+            y: isPortrait ? 46 : 44,
+            width: 58,
+            size: isPortrait ? 46 : 42,
+            color: '#0f172a',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#ffffff',
+              opacity: 0.88,
+              paddingX: 20,
+              paddingY: 18,
+              radius: 24
+            }
+          },
+          {
+            content: '후기 한 줄, 대표 멘트, 슬로건처럼
+짧은 메시지를 크게 강조하는 정사각형 템플릿',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 66,
+            size: 18,
+            color: '#475569',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          }
+        ]
+      };
+    case 'deal':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS.deal,
+          isSample: true,
+          scale: isPortrait ? 124 : 116,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.58
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 82 : 80,
+          width: 74,
+          height: isPortrait ? 16 : 15
+        },
+        image: {
+          x: 16,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'SPECIAL DEAL',
+            x: 50,
+            y: isPortrait ? 16 : 14,
+            width: 34,
+            size: 15,
+            color: '#dbeafe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#1d4ed8',
+              opacity: 0.84,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '이번 혜택
+가장 먼저 보기',
+            x: 50,
+            y: isPortrait ? 40 : 38,
+            width: 68,
+            size: isPortrait ? 54 : 48,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.24, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '가격, 보너스, 일정 안내를
+한 번에 묶어주는 혜택배너형',
+            x: 50,
+            y: isPortrait ? 80 : 78,
+            width: 60,
+            size: 18,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.32,
+              paddingX: 16,
+              paddingY: 10,
+              radius: 18
+            }
+          }
+        ]
+      };
+    case 'cover':
+    default:
+      return {
+        background: {
+          color: '#081120',
+          imageUrl: SAMPLE_BACKGROUNDS.cover,
+          isSample: true,
+          scale: isPortrait ? 124 : 116,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.48
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 16,
+          y: isPortrait ? 58 : 56,
+          width: 18,
+          height: 0.4
+        },
+        image: {
+          x: 82,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'BRAND',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 22,
+            size: isPortrait ? 15 : 14,
+            color: '#bfdbfe',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.42,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '브랜드를
+더 선명하게',
+            x: 14,
+            y: isPortrait ? 36 : 34,
+            width: isPortrait ? 46 : 44,
+            size: isPortrait ? 56 : 50,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.26, blur: 20 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '첫 장에서 분위기와 메시지를
+한 번에 전달하는 브랜딩형 템플릿',
+            x: 14,
+            y: isPortrait ? 58 : 56,
+            width: isPortrait ? 42 : 40,
+            size: 18,
+            color: '#dbe4f0',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '핵심 문장 · 일정 안내 · 문의 유도',
+            x: 14,
+            y: isPortrait ? 84 : 81,
+            width: isPortrait ? 44 : 42,
+            size: 18,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#020617',
+              opacity: 0.52,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 22
+            }
+          }
+        ]
+      };
+  }
+}
+
 function createCardFromTemplate(index, template = 'cover', format = 'square') {
   const seed = getTemplateSeed(template, format);
   const texts = (seed.texts || []).map((textSeed, textIndex) => createDefaultTextItem({
@@ -509,7 +1413,6 @@ function normalizeCard(card, index) {
   nextCard.template = TEMPLATE_KEYS.includes(nextCard.template) ? nextCard.template : 'cover';
   nextCard.format = nextCard.format === 'portrait' ? 'portrait' : 'square';
   nextCard.background.opacity = clamp(Number(nextCard.background.opacity ?? 1), 0, 1);
-  nextCard.background.locked = !!nextCard.background.locked;
   nextCard.background.scale = clamp(Number(nextCard.background.scale || 100), 60, 180);
   nextCard.background.x = clamp(Number(nextCard.background.x || 50), 0, 100);
   nextCard.background.y = clamp(Number(nextCard.background.y || 50), 0, 100);
@@ -924,8 +1827,6 @@ document.addEventListener('DOMContentLoaded', () => {
     portrait: { label: '세로형 1080 x 1350', width: 1080, height: 1350 }
   };
 
-  syncTemplateSelectOptions(controls.template);
-
   let appState = loadState();
   let dragState = null;
   let activeSectionKey = 'format';
@@ -933,13 +1834,18 @@ document.addEventListener('DOMContentLoaded', () => {
     text: '',
     image: ''
   };
-
   const mobileUi = {
     mediaQuery: typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 767px)') : null,
     quickbar: null,
-    quickbarButtons: [],
     previewToggle: null,
     currentPanel: 'cards'
+  };
+
+  const MOBILE_PANEL_CLASS_MAP = {
+    cards: 'is-mobile-panel-cards',
+    content: 'is-mobile-panel-content',
+    design: 'is-mobile-panel-design',
+    export: 'is-mobile-panel-export'
   };
 
   const MOBILE_PANEL_SECTION_MAP = {
@@ -957,130 +1863,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'cards';
   }
 
-  function styleMobileQuickbarButton(button, isActive = false) {
-    if (!button) return;
-    button.style.display = 'inline-flex';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.style.minHeight = '40px';
-    button.style.padding = '0 14px';
-    button.style.borderRadius = '999px';
-    button.style.border = isActive ? '1px solid #0f172a' : '1px solid rgba(203, 213, 225, 0.92)';
-    button.style.background = isActive ? '#0f172a' : '#ffffff';
-    button.style.color = isActive ? '#ffffff' : '#334155';
-    button.style.fontSize = '12px';
-    button.style.fontWeight = '800';
-    button.style.whiteSpace = 'nowrap';
-    button.style.cursor = 'pointer';
-    button.style.boxShadow = isActive ? '0 10px 22px rgba(15, 23, 42, 0.14)' : 'none';
+  function clearMobilePanelClasses() {
+    Object.values(MOBILE_PANEL_CLASS_MAP).forEach((className) => root.classList.remove(className));
   }
 
   function syncMobileQuickbarState() {
-    mobileUi.quickbarButtons.forEach((button) => {
-      styleMobileQuickbarButton(button, button.dataset.mobilePanel === mobileUi.currentPanel);
-    });
+    if (mobileUi.quickbar) {
+      mobileUi.quickbar.querySelectorAll('[data-mobile-panel]').forEach((button) => {
+        button.classList.toggle('is-active', button.dataset.mobilePanel === mobileUi.currentPanel);
+      });
+    }
 
     if (mobileUi.previewToggle) {
-      const collapsed = root.classList.contains('is-mobile-preview-collapsed');
-      mobileUi.previewToggle.textContent = collapsed ? '미리보기 펼치기' : '미리보기 접기';
-      mobileUi.previewToggle.setAttribute('aria-pressed', collapsed ? 'true' : 'false');
+      const isCollapsed = root.classList.contains('is-mobile-preview-collapsed');
+      mobileUi.previewToggle.textContent = isCollapsed ? '미리보기 펼치기' : '미리보기 접기';
+      mobileUi.previewToggle.setAttribute('aria-pressed', isCollapsed ? 'true' : 'false');
     }
   }
 
-  function ensureMobileQuickbar() {
-    if (mobileUi.quickbar) return mobileUi.quickbar;
-
-    const studio = root.querySelector('.cardnews-studio');
-    const panel = root.querySelector('.cardnews-panel');
-    if (!studio || !panel) return null;
-
-    const wrapper = document.createElement('div');
-    wrapper.className = 'cardnews-mobile-quickbar';
-    wrapper.style.display = 'none';
-    wrapper.style.padding = '0';
-    wrapper.style.borderRadius = '18px';
-    wrapper.style.background = 'rgba(255, 255, 255, 0.96)';
-    wrapper.style.border = '1px solid rgba(226, 232, 240, 0.92)';
-    wrapper.style.boxShadow = '0 12px 28px rgba(15, 23, 42, 0.08)';
-    wrapper.style.overflow = 'hidden';
-
-    const scroll = document.createElement('div');
-    scroll.className = 'cardnews-mobile-quickbar__scroll';
-    scroll.style.display = 'flex';
-    scroll.style.gap = '8px';
-    scroll.style.padding = '10px';
-    scroll.style.overflowX = 'auto';
-    scroll.style.webkitOverflowScrolling = 'touch';
-
-    const items = [
-      ['cards', '카드'],
-      ['content', '내용'],
-      ['design', '꾸미기'],
-      ['export', '저장']
-    ];
-
-    mobileUi.quickbarButtons = items.map(([panelKey, label]) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'cardnews-mobile-quickbar__btn';
-      button.dataset.mobilePanel = panelKey;
-      button.textContent = label;
-      styleMobileQuickbarButton(button, false);
-      button.addEventListener('click', () => {
-        setMobilePanel(panelKey, { focus: true });
-      });
-      scroll.appendChild(button);
-      return button;
-    });
-
-    wrapper.appendChild(scroll);
-    studio.insertBefore(wrapper, panel);
-    mobileUi.quickbar = wrapper;
-    return wrapper;
-  }
-
-  function ensureMobilePreviewToggle() {
-    if (mobileUi.previewToggle) return mobileUi.previewToggle;
-
-    const previewMeta = root.querySelector('.cardnews-preview__meta');
-    if (!previewMeta) return null;
-
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'cardnews-mobile-preview-toggle';
-    button.style.display = 'none';
-    button.style.alignItems = 'center';
-    button.style.justifyContent = 'center';
-    button.style.minHeight = '40px';
-    button.style.padding = '0 14px';
-    button.style.borderRadius = '999px';
-    button.style.border = '1px solid rgba(191, 219, 254, 0.9)';
-    button.style.background = '#eff6ff';
-    button.style.color = '#1d4ed8';
-    button.style.fontSize = '12px';
-    button.style.fontWeight = '800';
-    button.style.cursor = 'pointer';
-    button.style.whiteSpace = 'nowrap';
-    button.addEventListener('click', () => {
-      root.classList.toggle('is-mobile-preview-collapsed');
-      const shell = root.querySelector('.cardnews-canvas-shell');
-      if (shell) {
-        shell.style.display = root.classList.contains('is-mobile-preview-collapsed') ? 'none' : '';
-      }
-      syncMobileQuickbarState();
-    });
-
-    previewMeta.appendChild(button);
-    mobileUi.previewToggle = button;
-    return button;
-  }
-
-  function applyMobileLayoutStyles(isMobile) {
+  function applyMobileLayoutOverrides(isMobile) {
     const studio = root.querySelector('.cardnews-studio');
     const panel = root.querySelector('.cardnews-panel');
     const previewBox = root.querySelector('.cardnews-preview');
-    const canvasShell = root.querySelector('.cardnews-canvas-shell');
-    const canvas = root.querySelector('.cardnews-canvas');
 
     if (!studio || !panel || !previewBox) return;
 
@@ -1093,28 +1897,13 @@ document.addEventListener('DOMContentLoaded', () => {
       previewBox.style.removeProperty('position');
       previewBox.style.removeProperty('top');
       previewBox.style.removeProperty('z-index');
-      if (canvasShell) {
-        canvasShell.style.removeProperty('padding');
-        canvasShell.style.removeProperty('border-radius');
-      }
-      if (canvas) {
-        canvas.style.removeProperty('width');
-        canvas.style.removeProperty('margin-inline');
-      }
       if (mobileUi.quickbar) {
-        mobileUi.quickbar.style.display = 'none';
         mobileUi.quickbar.style.removeProperty('order');
         mobileUi.quickbar.style.removeProperty('position');
         mobileUi.quickbar.style.removeProperty('top');
         mobileUi.quickbar.style.removeProperty('z-index');
+        mobileUi.quickbar.style.removeProperty('display');
       }
-      if (mobileUi.previewToggle) {
-        mobileUi.previewToggle.style.display = 'none';
-      }
-      if (canvasShell) {
-        canvasShell.style.removeProperty('display');
-      }
-      root.classList.remove('is-mobile-preview-collapsed');
       return;
     }
 
@@ -1122,37 +1911,24 @@ document.addEventListener('DOMContentLoaded', () => {
     studio.style.setProperty('flex-direction', 'column', 'important');
     studio.style.setProperty('gap', '14px', 'important');
 
-    panel.style.setProperty('order', '1', 'important');
-    previewBox.style.setProperty('order', '2', 'important');
-    previewBox.style.setProperty('position', 'static', 'important');
-    previewBox.style.setProperty('top', 'auto', 'important');
-    previewBox.style.setProperty('z-index', '1', 'important');
-
-    if (canvasShell) {
-      canvasShell.style.setProperty('padding', '12px', 'important');
-      canvasShell.style.setProperty('border-radius', '20px', 'important');
-      canvasShell.style.display = root.classList.contains('is-mobile-preview-collapsed') ? 'none' : '';
-    }
-    if (canvas) {
-      canvas.style.setProperty('width', 'min(100%, 300px)', 'important');
-      canvas.style.setProperty('margin-inline', 'auto', 'important');
-    }
-
     if (mobileUi.quickbar) {
-      mobileUi.quickbar.style.display = 'block';
+      mobileUi.quickbar.style.setProperty('display', 'block', 'important');
       mobileUi.quickbar.style.setProperty('order', '0', 'important');
       mobileUi.quickbar.style.setProperty('position', 'sticky', 'important');
       mobileUi.quickbar.style.setProperty('top', '8px', 'important');
       mobileUi.quickbar.style.setProperty('z-index', '40', 'important');
     }
-    if (mobileUi.previewToggle) {
-      mobileUi.previewToggle.style.display = 'inline-flex';
-    }
+
+    panel.style.setProperty('order', '1', 'important');
+    previewBox.style.setProperty('order', '2', 'important');
+    previewBox.style.setProperty('position', 'static', 'important');
+    previewBox.style.setProperty('top', 'auto', 'important');
+    previewBox.style.setProperty('z-index', '1', 'important');
   }
 
   function syncMobileSectionVisibility() {
     const isMobile = !!mobileUi.mediaQuery?.matches;
-    const visibleSectionKeys = new Set(MOBILE_PANEL_SECTION_MAP[mobileUi.currentPanel] || []);
+    const visibleSectionKeys = new Set((MOBILE_PANEL_SECTION_MAP[mobileUi.currentPanel] || []).map(String));
 
     ui.sections.forEach((section) => {
       if (!isMobile) {
@@ -1160,7 +1936,8 @@ document.addEventListener('DOMContentLoaded', () => {
         section.style.removeProperty('flex-direction');
         return;
       }
-      const sectionKey = section.dataset.cardnewsSection || '';
+
+      const sectionKey = String(section.dataset.cardnewsSection || '');
       const shouldShow = visibleSectionKeys.has(sectionKey);
       section.style.setProperty('display', shouldShow ? 'flex' : 'none', 'important');
       if (shouldShow) {
@@ -1172,8 +1949,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function setMobilePanel(panelKey, { focus = true } = {}) {
-    const nextPanel = MOBILE_PANEL_SECTION_MAP[panelKey] ? panelKey : 'cards';
+    const nextPanel = MOBILE_PANEL_CLASS_MAP[panelKey] ? panelKey : 'cards';
     mobileUi.currentPanel = nextPanel;
+    clearMobilePanelClasses();
+    root.classList.add(MOBILE_PANEL_CLASS_MAP[nextPanel]);
     syncMobileQuickbarState();
     syncMobileSectionVisibility();
 
@@ -1191,27 +1970,77 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function ensureMobileQuickbar() {
+    if (mobileUi.quickbar) return mobileUi.quickbar;
+
+    const studio = root.querySelector('.cardnews-studio');
+    const panel = root.querySelector('.cardnews-panel');
+    if (!studio || !panel) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cardnews-mobile-quickbar';
+    wrapper.innerHTML = `
+      <div class="cardnews-mobile-quickbar__scroll">
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="cards">카드</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="content">내용</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="design">꾸미기</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="export">저장</button>
+      </div>
+    `;
+    wrapper.querySelectorAll('[data-mobile-panel]').forEach((button) => {
+      button.addEventListener('click', () => setMobilePanel(button.dataset.mobilePanel, { focus: true }));
+    });
+
+    studio.insertBefore(wrapper, panel);
+    mobileUi.quickbar = wrapper;
+    return wrapper;
+  }
+
+  function ensureMobilePreviewToggle() {
+    if (mobileUi.previewToggle) return mobileUi.previewToggle;
+
+    const previewMeta = root.querySelector('.cardnews-preview__meta');
+    if (!previewMeta) return null;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cardnews-mobile-preview-toggle';
+    button.textContent = '미리보기 접기';
+    button.addEventListener('click', () => {
+      root.classList.toggle('is-mobile-preview-collapsed');
+      syncMobileQuickbarState();
+    });
+
+    previewMeta.appendChild(button);
+    mobileUi.previewToggle = button;
+    return button;
+  }
+
   function syncMobileCompactMode() {
     const isMobile = !!mobileUi.mediaQuery?.matches;
     root.classList.toggle('is-mobile-compact', isMobile);
-    ensureMobileQuickbar();
-    ensureMobilePreviewToggle();
-    applyMobileLayoutStyles(isMobile);
 
     if (!isMobile) {
+      clearMobilePanelClasses();
+      root.classList.remove('is-mobile-preview-collapsed');
+      applyMobileLayoutOverrides(false);
       syncMobileSectionVisibility();
       syncMobileQuickbarState();
       return;
     }
 
+    ensureMobileQuickbar();
+    ensureMobilePreviewToggle();
+    applyMobileLayoutOverrides(true);
     setMobilePanel(getMobilePanelFromSection(activeSectionKey || 'cards'), { focus: false });
-    syncMobileQuickbarState();
+    syncMobileSectionVisibility();
   }
 
   function bindMobileCompactMode() {
     syncMobileCompactMode();
 
     if (!mobileUi.mediaQuery) return;
+
     const handleChange = () => {
       syncMobileCompactMode();
       renderWorkspace({ persist: false });
@@ -1224,189 +2053,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function isBackgroundLocked(card = getActiveCard()) {
-    return !!card?.background?.locked;
-  }
-
-  function setControlDisabled(control, disabled) {
-    if (!control) return;
-    control.disabled = !!disabled;
-    const wrapper = control.closest('.range-wrap, .color-item, .field, .cardnews-toggle-row, .cardnews-inline-check');
-    if (wrapper) {
-      wrapper.classList.toggle('is-disabled', !!disabled);
-    }
-  }
-
-  function setToggleRowActive(control, isActive = !!control?.checked) {
-    if (!control) return;
-    const wrapper = control.closest('.cardnews-toggle-row, .cardnews-inline-check');
-    if (wrapper) {
-      wrapper.classList.toggle('is-active', !!isActive);
-    }
-  }
-
-  function syncToggleVisualStates() {
-    [
-      controls.textBgEnabled,
-      controls.textOutlineEnabled,
-      controls.textShadowEnabled,
-      controls.overlayEnabled,
-      controls.imageMaskEnabled,
-      controls.imageOutlineEnabled,
-      controls.imageShadowEnabled
-    ].forEach((control) => setToggleRowActive(control));
-  }
-
-  function setExclusiveTextOption(optionKey, enabled) {
-    const activeText = getActiveText();
-
-    if (enabled) {
-      activeText.background.opacity = optionKey === 'bg' ? Math.max(activeText.background.opacity, 0.35) : 0;
-      activeText.outline.width = optionKey === 'outline' ? Math.max(activeText.outline.width, 1) : 0;
-
-      if (optionKey === 'shadow') {
-        activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
-        activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
-      } else {
-        activeText.shadow.blur = 0;
-        activeText.shadow.opacity = 0;
-      }
-
-      openOptionPanel('text', optionKey);
-      return;
-    }
-
-    if (optionKey === 'bg') {
-      activeText.background.opacity = 0;
-    } else if (optionKey === 'outline') {
-      activeText.outline.width = 0;
-    } else if (optionKey === 'shadow') {
-      activeText.shadow.blur = 0;
-      activeText.shadow.opacity = 0;
-    }
-
-    if (activeOptionPanels.text === optionKey) {
-      activeOptionPanels.text = '';
-    }
-  }
-
-  function setExclusiveImageOption(optionKey, enabled) {
-    const card = getActiveCard();
-
-    if (enabled) {
-      card.image.mask.enabled = optionKey === 'mask';
-      card.image.outline.width = optionKey === 'outline' ? Math.max(card.image.outline.width, 2) : 0;
-
-      if (optionKey === 'shadow') {
-        card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
-        card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
-      } else {
-        card.image.shadow.blur = 0;
-        card.image.shadow.opacity = 0;
-      }
-
-      openOptionPanel('image', optionKey);
-      return;
-    }
-
-    if (optionKey === 'mask') {
-      card.image.mask.enabled = false;
-    } else if (optionKey === 'outline') {
-      card.image.outline.width = 0;
-    } else if (optionKey === 'shadow') {
-      card.image.shadow.blur = 0;
-      card.image.shadow.opacity = 0;
-    }
-
-    if (activeOptionPanels.image === optionKey) {
-      activeOptionPanels.image = '';
-    }
-  }
-
-  function syncOverlayControlState(card = getActiveCard()) {
-    const overlayEnabled = !!card.overlay.enabled;
-    setControlDisabled(controls.overlayColor, !overlayEnabled);
-    setControlDisabled(controls.overlayOpacity, !overlayEnabled);
-    setToggleRowActive(controls.overlayEnabled, overlayEnabled);
-  }
-
-  function syncBackgroundLockUI(card = getActiveCard()) {
-    const locked = isBackgroundLocked(card);
-    const backgroundImagePresent = !!card.background.imageUrl;
-
-    if (controls.bgLockButton) {
-      controls.bgLockButton.textContent = locked ? '배경 잠금 해제' : '배경 잠금';
-      controls.bgLockButton.classList.toggle('is-active', locked);
-      controls.bgLockButton.setAttribute('aria-pressed', locked ? 'true' : 'false');
-    }
-
-    [controls.bgImage, controls.bgScale, controls.bgX, controls.bgY].forEach((control) => {
-      setControlDisabled(control, locked);
-    });
-
-    if (controls.bgImageClear) {
-      setControlDisabled(controls.bgImageClear, locked || !backgroundImagePresent);
-      controls.bgImageClear.hidden = false;
-    }
-
-    if (preview?.bgImage) {
-      preview.bgImage.classList.toggle('is-locked', locked);
-    }
-  }
-
-  function ensureBackgroundLockButton() {
-    if (controls.bgLockButton) return;
-
-    const existingButton = document.getElementById('btn-cardnews-bg-image-lock');
-    const anchor = controls.bgImageClear || controls.bgImage;
-
-    if (!anchor) return;
-
-    const button = existingButton || document.createElement('button');
-    button.type = 'button';
-    button.id = 'btn-cardnews-bg-image-lock';
-
-    if (!existingButton) {
-      button.className = anchor.className || 'btn btn-outline';
-      button.textContent = '배경 잠금';
-      anchor.insertAdjacentElement('afterend', button);
-    }
-
-    button.addEventListener('click', () => {
-      const card = getActiveCard();
-      card.background.locked = !card.background.locked;
-      renderWorkspace({
-        persist: true,
-        statusMessage: card.background.locked ? '배경 이미지를 잠궜습니다.' : '배경 이미지 잠금을 해제했습니다.'
-      });
-    });
-
-    controls.bgLockButton = button;
-  }
-
-  function isTemplateSeedTextMatch(textItem, seedText) {
-    if (!textItem || !seedText) return false;
-
-    return (
-      String(textItem.content || '').trim() === String(seedText.content || '').trim()
-      && Number(textItem.size || 0) === Number(seedText.size || 0)
-      && Number(textItem.width || 0) === Number(seedText.width || 0)
-      && String(textItem.align || 'center') === String(seedText.align || 'center')
-      && String(textItem.frameAlign || 'center') === String(seedText.frameAlign || 'center')
-    );
-  }
-
-  function getTemplateCarryOverTexts(currentCard, seededCard) {
-    const currentTexts = currentCard.texts || [];
-    const oldSeedCard = createCardFromTemplate(getActiveCardIndex() + 1, currentCard.template, currentCard.format);
-    const carryOverTexts = currentTexts.slice(seededCard.texts.length);
-
-    return carryOverTexts.filter((textItem, extraIndex) => {
-      const oldSeedText = oldSeedCard.texts[seededCard.texts.length + extraIndex];
-      if (!oldSeedText) return true;
-      return !isTemplateSeedTextMatch(textItem, oldSeedText);
-    });
-  }
 
   function findSection(sectionKey) {
     return ui.sections.find((section) => section.dataset.cardnewsSection === sectionKey) || null;
@@ -1487,7 +2133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (root.classList.contains('is-mobile-compact')) {
       setMobilePanel(getMobilePanelFromSection(activeSectionKey), { focus: false });
     } else {
-      syncMobileSectionVisibility();
+      syncMobileQuickbarState();
     }
 
     if (scroll) {
@@ -1766,9 +2412,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setControlGroupVisible(controls.imageOutlineEnabled, imagePresent);
     setControlGroupVisible(controls.imageShadowEnabled, imagePresent);
     syncExclusiveOptionPanels(card, activeText);
-    syncOverlayControlState(card);
-    syncBackgroundLockUI(card);
-    syncToggleVisualStates();
     if (controls.shapeRemove) controls.shapeRemove.hidden = !shapePresent;
     if (controls.mainImageClear) {
       controls.mainImageClear.disabled = !imagePresent;
@@ -2214,9 +2857,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const existingText = currentTexts[index];
       const oldSeedText = oldSeedCard.texts?.[index];
       const shouldPreserveContent = !!(
-        existingText
-        && oldSeedText
-        && !isTemplateSeedTextMatch(existingText, oldSeedText)
+        existingText &&
+        oldSeedText &&
+        !isTemplateSeedTextMatch(existingText, oldSeedText)
       );
 
       return normalizeTextItem({
@@ -2488,7 +3131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (layerKey === 'bgImage') {
-      if (isBackgroundLocked(card)) return false;
       card.background.x = Number(nextX.toFixed(1));
       card.background.y = Number(nextY.toFixed(1));
       preview.bgImage.style.left = `${card.background.x}%`;
@@ -2548,7 +3190,6 @@ document.addEventListener('DOMContentLoaded', () => {
       anchorY = targetShape.y;
       card.activeShapeId = shapeId;
     } else if (layerKey === 'bgImage') {
-      if (isBackgroundLocked(card)) return;
       anchorX = card.background.x;
       anchorY = card.background.y;
     } else if (layerKey === 'image') {
@@ -2695,20 +3336,43 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textColor.addEventListener('input', () => { getActiveText().color = controls.textColor.value; renderWorkspace({ persist: true }); });
   controls.textOpacity.addEventListener('input', () => { getActiveText().opacity = clamp(Number(controls.textOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textBgEnabled.addEventListener('change', () => {
-    setExclusiveTextOption('bg', controls.textBgEnabled.checked);
+    const activeText = getActiveText();
+    activeText.background.opacity = controls.textBgEnabled.checked ? Math.max(activeText.background.opacity, 0.35) : 0;
+    if (controls.textBgEnabled.checked) {
+      openOptionPanel('text', 'bg');
+    } else if (activeOptionPanels.text === 'bg') {
+      activeOptionPanels.text = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.textBgColor.addEventListener('input', () => { getActiveText().background.color = controls.textBgColor.value; renderWorkspace({ persist: true }); });
   controls.textBgOpacity.addEventListener('input', () => { getActiveText().background.opacity = clamp(Number(controls.textBgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineEnabled.addEventListener('change', () => {
-    setExclusiveTextOption('outline', controls.textOutlineEnabled.checked);
+    const activeText = getActiveText();
+    activeText.outline.width = controls.textOutlineEnabled.checked ? Math.max(activeText.outline.width, 1) : 0;
+    if (controls.textOutlineEnabled.checked) {
+      openOptionPanel('text', 'outline');
+    } else if (activeOptionPanels.text === 'outline') {
+      activeOptionPanels.text = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.textOutlineColor.addEventListener('input', () => { getActiveText().outline.color = controls.textOutlineColor.value; renderWorkspace({ persist: true }); });
   controls.textOutlineOpacity.addEventListener('input', () => { getActiveText().outline.opacity = clamp(Number(controls.textOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineWidth.addEventListener('input', () => { getActiveText().outline.width = clamp(Number(controls.textOutlineWidth.value), 0, 8); renderWorkspace({ persist: true }); });
   controls.textShadowEnabled.addEventListener('change', () => {
-    setExclusiveTextOption('shadow', controls.textShadowEnabled.checked);
+    const activeText = getActiveText();
+    if (controls.textShadowEnabled.checked) {
+      activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
+      activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
+      openOptionPanel('text', 'shadow');
+    } else {
+      activeText.shadow.blur = 0;
+      activeText.shadow.opacity = 0;
+      if (activeOptionPanels.text === 'shadow') {
+        activeOptionPanels.text = '';
+      }
+    }
     renderWorkspace({ persist: true });
   });
   controls.textShadowColor.addEventListener('input', () => { getActiveText().shadow.color = controls.textShadowColor.value; renderWorkspace({ persist: true }); });
@@ -2718,44 +3382,21 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.bgColor.addEventListener('input', () => { getActiveCard().background.color = controls.bgColor.value; renderWorkspace({ persist: true }); });
   controls.bgOpacity.addEventListener('input', () => { getActiveCard().background.opacity = clamp(Number(controls.bgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.overlayColor.addEventListener('input', () => { getActiveCard().overlay.color = controls.overlayColor.value; renderWorkspace({ persist: true }); });
-  controls.overlayEnabled.addEventListener('change', () => {
-    getActiveCard().overlay.enabled = controls.overlayEnabled.checked;
-    renderWorkspace({ persist: true });
-  });
-  controls.bgScale.addEventListener('input', () => {
-    const card = getActiveCard();
-    if (isBackgroundLocked(card)) return;
-    card.background.scale = clamp(Number(controls.bgScale.value), 60, 180);
-    renderWorkspace({ persist: true });
-  });
-  controls.bgX.addEventListener('input', () => {
-    const card = getActiveCard();
-    if (isBackgroundLocked(card)) return;
-    card.background.x = Number(controls.bgX.value);
-    renderWorkspace({ persist: true });
-  });
-  controls.bgY.addEventListener('input', () => {
-    const card = getActiveCard();
-    if (isBackgroundLocked(card)) return;
-    card.background.y = Number(controls.bgY.value);
-    renderWorkspace({ persist: true });
-  });
+  controls.overlayEnabled.addEventListener('change', () => { getActiveCard().overlay.enabled = controls.overlayEnabled.checked; renderWorkspace({ persist: true }); });
+  controls.bgScale.addEventListener('input', () => { getActiveCard().background.scale = clamp(Number(controls.bgScale.value), 60, 180); renderWorkspace({ persist: true }); });
+  controls.bgX.addEventListener('input', () => { getActiveCard().background.x = Number(controls.bgX.value); renderWorkspace({ persist: true }); });
+  controls.bgY.addEventListener('input', () => { getActiveCard().background.y = Number(controls.bgY.value); renderWorkspace({ persist: true }); });
   controls.overlayOpacity.addEventListener('input', () => { getActiveCard().overlay.opacity = clamp(Number(controls.overlayOpacity.value), 0, 0.9); renderWorkspace({ persist: true }); });
 
   controls.bgImage.addEventListener('change', async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const card = getActiveCard();
-    if (isBackgroundLocked(card)) {
-      event.target.value = '';
-      setStatus('배경 이미지 잠금을 해제한 뒤 변경할 수 있습니다.', 'info');
-      return;
-    }
     if (!validateImageFile(file, IMAGE_UPLOAD_RULES.background)) {
       event.target.value = '';
       return;
     }
     try {
+      const card = getActiveCard();
       card.background.imageUrl = await readFileAsDataUrl(file);
       card.background.isSample = false;
       renderWorkspace({ persist: true, statusMessage: '배경 이미지를 적용했습니다.' });
@@ -2768,10 +3409,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   controls.bgImageClear.addEventListener('click', () => {
     const card = getActiveCard();
-    if (isBackgroundLocked(card)) {
-      setStatus('배경 이미지 잠금을 해제한 뒤 삭제할 수 있습니다.', 'info');
-      return;
-    }
     const sampleUrl = SAMPLE_BACKGROUNDS[card.template] || '';
     card.background.imageUrl = sampleUrl;
     card.background.isSample = !!sampleUrl;
@@ -2810,7 +3447,12 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.mainImageClear.addEventListener('click', () => { getActiveCard().image.src = ''; renderWorkspace({ persist: true, statusMessage: '메인 이미지를 삭제했습니다.' }); });
 
   controls.imageMaskEnabled.addEventListener('change', () => {
-    setExclusiveImageOption('mask', controls.imageMaskEnabled.checked);
+    getActiveCard().image.mask.enabled = controls.imageMaskEnabled.checked;
+    if (controls.imageMaskEnabled.checked) {
+      openOptionPanel('image', 'mask');
+    } else if (activeOptionPanels.image === 'mask') {
+      activeOptionPanels.image = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.imageFrameAlign.addEventListener('change', () => {
@@ -2823,14 +3465,31 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.imageMaskColor.addEventListener('input', () => { getActiveCard().image.mask.color = controls.imageMaskColor.value; renderWorkspace({ persist: true }); });
   controls.imageMaskOpacity.addEventListener('input', () => { getActiveCard().image.mask.opacity = clamp(Number(controls.imageMaskOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineEnabled.addEventListener('change', () => {
-    setExclusiveImageOption('outline', controls.imageOutlineEnabled.checked);
+    const card = getActiveCard();
+    card.image.outline.width = controls.imageOutlineEnabled.checked ? Math.max(card.image.outline.width, 2) : 0;
+    if (controls.imageOutlineEnabled.checked) {
+      openOptionPanel('image', 'outline');
+    } else if (activeOptionPanels.image === 'outline') {
+      activeOptionPanels.image = '';
+    }
     renderWorkspace({ persist: true });
   });
   controls.imageOutlineColor.addEventListener('input', () => { getActiveCard().image.outline.color = controls.imageOutlineColor.value; renderWorkspace({ persist: true }); });
   controls.imageOutlineOpacity.addEventListener('input', () => { getActiveCard().image.outline.opacity = clamp(Number(controls.imageOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineWidth.addEventListener('input', () => { getActiveCard().image.outline.width = clamp(Number(controls.imageOutlineWidth.value), 0, 12); renderWorkspace({ persist: true }); });
   controls.imageShadowEnabled.addEventListener('change', () => {
-    setExclusiveImageOption('shadow', controls.imageShadowEnabled.checked);
+    const card = getActiveCard();
+    if (controls.imageShadowEnabled.checked) {
+      card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
+      card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
+      openOptionPanel('image', 'shadow');
+    } else {
+      card.image.shadow.blur = 0;
+      card.image.shadow.opacity = 0;
+      if (activeOptionPanels.image === 'shadow') {
+        activeOptionPanels.image = '';
+      }
+    }
     renderWorkspace({ persist: true });
   });
   controls.imageShadowColor.addEventListener('input', () => { getActiveCard().image.shadow.color = controls.imageShadowColor.value; renderWorkspace({ persist: true }); });
@@ -2948,7 +3607,6 @@ document.addEventListener('DOMContentLoaded', () => {
   preview.canvas.addEventListener('pointerup', finishCanvasDrag);
   preview.canvas.addEventListener('pointercancel', finishCanvasDrag);
 
-  ensureBackgroundLockButton();
   bindSectionAccordions();
   bindMobileCompactMode();
   renderWorkspace({ persist: false });
