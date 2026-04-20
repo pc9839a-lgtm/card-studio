@@ -926,6 +926,161 @@ document.addEventListener('DOMContentLoaded', () => {
     image: ''
   };
 
+  const mobileUi = {
+    mediaQuery: typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 767px)') : null,
+    quickbar: null,
+    previewToggle: null,
+    currentPanel: 'cards'
+  };
+
+  const MOBILE_PANEL_CLASS_MAP = {
+    cards: 'is-mobile-panel-cards',
+    content: 'is-mobile-panel-content',
+    design: 'is-mobile-panel-design',
+    export: 'is-mobile-panel-export'
+  };
+
+  const MOBILE_PANEL_SECTION_MAP = {
+    cards: ['cards'],
+    content: ['text', 'image'],
+    design: ['format', 'background', 'shape', 'layer'],
+    export: ['export']
+  };
+
+  function getMobilePanelFromSection(sectionKey = '') {
+    if (MOBILE_PANEL_SECTION_MAP.cards.includes(sectionKey)) return 'cards';
+    if (MOBILE_PANEL_SECTION_MAP.content.includes(sectionKey)) return 'content';
+    if (MOBILE_PANEL_SECTION_MAP.design.includes(sectionKey)) return 'design';
+    if (MOBILE_PANEL_SECTION_MAP.export.includes(sectionKey)) return 'export';
+    return 'cards';
+  }
+
+  function clearMobilePanelClasses() {
+    Object.values(MOBILE_PANEL_CLASS_MAP).forEach((className) => root.classList.remove(className));
+  }
+
+  function syncMobileQuickbarState() {
+    if (!mobileUi.quickbar) return;
+
+    mobileUi.quickbar.querySelectorAll('[data-mobile-panel]').forEach((button) => {
+      button.classList.toggle('is-active', button.dataset.mobilePanel === mobileUi.currentPanel);
+    });
+
+    if (mobileUi.previewToggle) {
+      const isCollapsed = root.classList.contains('is-mobile-preview-collapsed');
+      mobileUi.previewToggle.textContent = isCollapsed ? '미리보기 펼치기' : '미리보기 접기';
+      mobileUi.previewToggle.setAttribute('aria-pressed', isCollapsed ? 'true' : 'false');
+    }
+  }
+
+  function setMobilePanel(panelKey, options = {}) {
+    const nextPanel = MOBILE_PANEL_CLASS_MAP[panelKey] ? panelKey : 'cards';
+    mobileUi.currentPanel = nextPanel;
+    clearMobilePanelClasses();
+    root.classList.add(MOBILE_PANEL_CLASS_MAP[nextPanel]);
+    syncMobileQuickbarState();
+
+    if (options.focus !== false) {
+      const firstSection = MOBILE_PANEL_SECTION_MAP[nextPanel]?.[0] || 'cards';
+      activeSectionKey = firstSection;
+      focusSection(firstSection);
+    }
+  }
+
+  function ensureMobileQuickbar() {
+    if (mobileUi.quickbar) return mobileUi.quickbar;
+
+    const studio = root.querySelector('.cardnews-studio');
+    const panel = root.querySelector('.cardnews-panel');
+    if (!studio || !panel) return null;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cardnews-mobile-quickbar';
+
+    const scroll = document.createElement('div');
+    scroll.className = 'cardnews-mobile-quickbar__scroll';
+
+    const items = [
+      ['cards', '카드'],
+      ['content', '내용'],
+      ['design', '꾸미기'],
+      ['export', '저장']
+    ];
+
+    items.forEach(([panelKey, label]) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'cardnews-mobile-quickbar__btn';
+      button.dataset.mobilePanel = panelKey;
+      button.textContent = label;
+      button.addEventListener('click', () => {
+        setMobilePanel(panelKey, { focus: true });
+      });
+      scroll.appendChild(button);
+    });
+
+    wrapper.appendChild(scroll);
+    studio.insertBefore(wrapper, panel);
+    mobileUi.quickbar = wrapper;
+    return wrapper;
+  }
+
+  function ensureMobilePreviewToggle() {
+    if (mobileUi.previewToggle) return mobileUi.previewToggle;
+
+    const previewMeta = root.querySelector('.cardnews-preview__meta');
+    if (!previewMeta) return null;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cardnews-mobile-preview-toggle';
+    button.textContent = '미리보기 접기';
+    button.addEventListener('click', () => {
+      root.classList.toggle('is-mobile-preview-collapsed');
+      syncMobileQuickbarState();
+    });
+
+    previewMeta.appendChild(button);
+    mobileUi.previewToggle = button;
+    return button;
+  }
+
+  function syncMobileCompactMode() {
+    const isMobile = !!mobileUi.mediaQuery?.matches;
+
+    root.classList.toggle('is-mobile-compact', isMobile);
+
+    if (!isMobile) {
+      clearMobilePanelClasses();
+      root.classList.remove('is-mobile-preview-collapsed');
+      syncMobileQuickbarState();
+      return;
+    }
+
+    ensureMobileQuickbar();
+    ensureMobilePreviewToggle();
+
+    const targetPanel = getMobilePanelFromSection(activeSectionKey || 'cards');
+    setMobilePanel(targetPanel, { focus: false });
+  }
+
+  function bindMobileCompactMode() {
+    syncMobileCompactMode();
+
+    if (!mobileUi.mediaQuery) return;
+
+    const handleChange = () => {
+      syncMobileCompactMode();
+      renderWorkspace({ persist: false });
+    };
+
+    if (typeof mobileUi.mediaQuery.addEventListener === 'function') {
+      mobileUi.mediaQuery.addEventListener('change', handleChange);
+    } else if (typeof mobileUi.mediaQuery.addListener === 'function') {
+      mobileUi.mediaQuery.addListener(handleChange);
+    }
+  }
+
   function isBackgroundLocked(card = getActiveCard()) {
     return !!card?.background?.locked;
   }
@@ -1185,6 +1340,8 @@ document.addEventListener('DOMContentLoaded', () => {
       section.classList.toggle('is-linked', isTarget);
       setSectionCollapsed(section, !isTarget);
     });
+
+    syncMobileCompactMode();
 
     if (scroll) {
       target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -2637,6 +2794,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   ensureBackgroundLockButton();
   bindSectionAccordions();
+  bindMobileCompactMode();
   renderWorkspace({ persist: false });
   setStatus('카드뉴스 제작기 준비 완료');
 });
