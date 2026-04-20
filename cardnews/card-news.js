@@ -1250,8 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mediaQuery: typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 767px)') : null,
     quickbar: null,
     previewToggle: null,
-    currentPanel: 'cards',
-    initialized: false
+    currentPanel: 'cards'
   };
 
   const MOBILE_PANEL_CLASS_MAP = {
@@ -1294,14 +1293,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function setMobilePanel(panelKey, options = {}) {
+  function setMobilePanel(panelKey, { focus = true } = {}) {
     const nextPanel = MOBILE_PANEL_CLASS_MAP[panelKey] ? panelKey : 'cards';
     mobileUi.currentPanel = nextPanel;
     clearMobilePanelClasses();
     root.classList.add(MOBILE_PANEL_CLASS_MAP[nextPanel]);
     syncMobileQuickbarState();
 
-    if (options.focus !== false) {
+    if (focus) {
       const firstSection = MOBILE_PANEL_SECTION_MAP[nextPanel]?.[0] || 'cards';
       activeSectionKey = firstSection;
       const target = findSection(firstSection);
@@ -1319,32 +1318,25 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileUi.quickbar) return mobileUi.quickbar;
 
     const studio = root.querySelector('.cardnews-studio');
-    const panel = root.querySelector('.cardnews-panel');
-    if (!studio || !panel) return null;
+    const preview = root.querySelector('.cardnews-preview');
+    if (!studio || !preview) return null;
 
     const wrapper = document.createElement('div');
     wrapper.className = 'cardnews-mobile-quickbar';
+    wrapper.innerHTML = `
+      <div class="cardnews-mobile-quickbar__scroll">
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="cards">카드</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="content">내용</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="design">꾸미기</button>
+        <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="export">저장</button>
+      </div>
+    `;
 
-    const scroll = document.createElement('div');
-    scroll.className = 'cardnews-mobile-quickbar__scroll';
-
-    [
-      ['cards', '카드'],
-      ['content', '내용'],
-      ['design', '꾸미기'],
-      ['export', '저장']
-    ].forEach(([panelKey, label]) => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'cardnews-mobile-quickbar__btn';
-      button.dataset.mobilePanel = panelKey;
-      button.textContent = label;
-      button.addEventListener('click', () => setMobilePanel(panelKey, { focus: true }));
-      scroll.appendChild(button);
+    wrapper.querySelectorAll('[data-mobile-panel]').forEach((button) => {
+      button.addEventListener('click', () => setMobilePanel(button.dataset.mobilePanel, { focus: true }));
     });
 
-    wrapper.appendChild(scroll);
-    studio.insertBefore(wrapper, panel);
+    studio.insertBefore(wrapper, preview);
     mobileUi.quickbar = wrapper;
     return wrapper;
   }
@@ -1382,15 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ensureMobileQuickbar();
     ensureMobilePreviewToggle();
-
-    if (!mobileUi.initialized) {
-      mobileUi.initialized = true;
-      setMobilePanel('cards', { focus: true });
-      return;
-    }
-
-    const targetPanel = getMobilePanelFromSection(activeSectionKey || 'cards');
-    setMobilePanel(targetPanel, { focus: false });
+    setMobilePanel(getMobilePanelFromSection(activeSectionKey || 'cards'), { focus: false });
   }
 
   function bindMobileCompactMode() {
