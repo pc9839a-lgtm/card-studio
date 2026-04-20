@@ -9,22 +9,23 @@ import {
   triggerImageSave
 } from '../scripts/utils.js';
 import {
-  TEMPLATE_KEYS,
-  SAMPLE_BACKGROUNDS,
-  getTemplateSeed,
-  syncTemplateSelectOptions
-} from './card-news-templates.js';
-
-import {
-  TEMPLATE_KEYS,
-  SAMPLE_BACKGROUNDS,
-  syncTemplateSelectOptions,
-  getTemplateSeed
+  TEMPLATE_KEYS as TEMPLATE_KEYS_MODULE,
+  SAMPLE_BACKGROUNDS as SAMPLE_BACKGROUNDS_MODULE,
+  getTemplateSeed as getTemplateSeedModule,
+  syncTemplateSelectOptions as syncTemplateSelectOptionsModule
 } from './card-news-templates.js';
 
 const CARDNEWS_STORAGE_KEY = 'cardstudio_cardnews_lab_v7';
 const CARDNEWS_LEGACY_STORAGE_KEY = 'cardstudio_cardnews_lab_v6';
 const STATIC_LAYER_KEYS = ['bgImage', 'image', 'overlay'];
+const TEMPLATE_KEYS = ['cover', 'split', 'minimal', 'list', 'headline'];
+const SAMPLE_BACKGROUNDS = {
+  cover: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80',
+  split: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1600&q=80',
+  minimal: '',
+  list: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=80',
+  headline: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80'
+};
 const IMAGE_UPLOAD_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const IMAGE_UPLOAD_RULES = {
   background: { maxBytes: 10 * 1024 * 1024, label: '배경 이미지' },
@@ -342,8 +343,331 @@ function getRecommendedImagePlacement(template = 'cover', format = 'square', asp
   return base;
 }
 
+function getTemplateSeed(template, format) {
+  const isPortrait = format === 'portrait';
+
+  switch (template) {
+    case 'split':
+      return {
+        background: {
+          color: '#f8fafc',
+          imageUrl: SAMPLE_BACKGROUNDS.split,
+          isSample: true,
+          scale: isPortrait ? 118 : 110,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#0f172a',
+          opacity: 0.18
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 50,
+          y: isPortrait ? 60 : 58,
+          width: 34,
+          height: 0.35
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '제품 핵심만\n짧게 먼저 전달',
+            x: 50,
+            y: isPortrait ? 26 : 28,
+            width: 74,
+            size: isPortrait ? 54 : 48,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.34, blur: 22 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '상단 이미지는 분위기를 만들고, 하단 정보 블록은 메시지를 정리합니다.',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 70,
+            size: 18,
+            color: '#f8fafc',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#020617',
+              opacity: 0.52,
+              paddingX: 20,
+              paddingY: 12,
+              radius: 24
+            }
+          }
+        ]
+      };
+    case 'minimal':
+      return {
+        background: {
+          color: '#ffffff',
+          imageUrl: '',
+          isSample: false
+        },
+        overlay: {
+          enabled: false,
+          color: '#111827',
+          opacity: 0
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#2563eb',
+          x: 16,
+          y: 50,
+          width: 18,
+          height: 0.25
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 14 : 13,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '정보를 정리하는\n가장 깔끔한 카드',
+            x: 12,
+            y: 22,
+            width: 46,
+            size: isPortrait ? 48 : 44,
+            color: '#0f172a',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '텍스트와 여백 중심으로 설계해 제목이 먼저 읽히게 만듭니다.',
+            x: 14,
+            y: 40,
+            width: 42,
+            size: 18,
+            color: '#64748b',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          }
+        ]
+      };
+    case 'list':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS.list,
+          isSample: true,
+          scale: isPortrait ? 120 : 110,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.48
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 62 : 60,
+          width: 32,
+          height: 0.35
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0,
+          outline: {
+            color: '#ffffff',
+            width: 0
+          }
+        },
+        texts: [
+          {
+            content: '카드뉴스 한 장에\n3포인트를 정리하세요',
+            x: 12,
+            y: 20,
+            width: 62,
+            size: isPortrait ? 46 : 42,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.26, blur: 20 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '1. 문제 제시\n2. 해결 포인트\n3. 행동 유도',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 72,
+            size: 18,
+            color: '#dbeafe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.18, blur: 14 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.58,
+              paddingX: 18,
+              paddingY: 12,
+              radius: 22
+            }
+          }
+        ]
+      };
+    case 'headline':
+      return {
+        background: {
+          color: '#eef4ff',
+          imageUrl: SAMPLE_BACKGROUNDS.headline,
+          isSample: true,
+          scale: isPortrait ? 124 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#eff6ff',
+          opacity: 0.18
+        },
+        shape: {
+          visible: true,
+          type: 'circle',
+          color: '#2563eb',
+          x: 80,
+          y: 24,
+          width: 14,
+          height: 14
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '한 줄 임팩트로\n스크롤을 멈추게',
+            x: 50,
+            y: isPortrait ? 24 : 26,
+            width: 74,
+            size: isPortrait ? 56 : 50,
+            color: '#1d4ed8',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.1, blur: 12 },
+            outline: { color: '#ffffff', width: 1.5 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '강한 제목과 이미지 포인트를 분리해 시선 흐름을 만듭니다.',
+            x: 50,
+            y: isPortrait ? 76 : 74,
+            width: 68,
+            size: 18,
+            color: '#334155',
+            align: 'center',
+            frameAlign: 'center',
+            background: {
+              color: '#ffffff',
+              opacity: 0.72,
+              paddingX: 18,
+              paddingY: 12,
+              radius: 999
+            }
+          }
+        ]
+      };
+    case 'cover':
+    default:
+      return {
+        background: {
+          color: '#081120',
+          imageUrl: SAMPLE_BACKGROUNDS.cover,
+          isSample: true,
+          scale: isPortrait ? 122 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.42
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#60a5fa',
+          x: 50,
+          y: isPortrait ? 63 : 61,
+          width: 34,
+          height: 0.25
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 12 : 11,
+          width: 26,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: '브랜드 메시지를\n한 장에 압축하세요',
+            x: 50,
+            y: isPortrait ? 26 : 28,
+            width: 74,
+            size: isPortrait ? 58 : 52,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.32, blur: 24 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '텍스트와 이미지를 분리해 핵심 메시지를 더 또렷하게 전달할 수 있습니다.',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 70,
+            size: 18,
+            color: '#f8fafc',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.2, blur: 16 },
+            background: {
+              color: '#020617',
+              opacity: 0.5,
+              paddingX: 20,
+              paddingY: 12,
+              radius: 22
+            }
+          }
+        ]
+      };
+  }
+}
+
 function createCardFromTemplate(index, template = 'cover', format = 'square') {
-  const seed = getTemplateSeed(template, format);
+  const seed = getTemplateSeedModule(template, format);
   const texts = (seed.texts || []).map((textSeed, textIndex) => createDefaultTextItem({
     name: `텍스트 ${textIndex + 1}`,
     ...textSeed
@@ -506,7 +830,7 @@ function normalizeCard(card, index) {
 
   nextCard.id = String(nextCard.id || generateId('card'));
   nextCard.name = String(nextCard.name || `카드 ${index + 1}`);
-  nextCard.template = TEMPLATE_KEYS.includes(nextCard.template) ? nextCard.template : 'cover';
+  nextCard.template = TEMPLATE_KEYS_MODULE.includes(nextCard.template) ? nextCard.template : 'cover';
   nextCard.format = nextCard.format === 'portrait' ? 'portrait' : 'square';
   nextCard.background.opacity = clamp(Number(nextCard.background.opacity ?? 1), 0, 1);
   nextCard.background.locked = !!nextCard.background.locked;
@@ -861,8 +1185,6 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadZip: document.getElementById('btn-cardnews-download-zip')
   };
 
-  syncTemplateSelectOptions(controls.template);
-
   const ui = {
     cardList: document.getElementById('cardnews-card-list'),
     textList: document.getElementById('cardnews-text-list'),
@@ -923,8 +1245,6 @@ document.addEventListener('DOMContentLoaded', () => {
     square: { label: '정사각형 1080 x 1080', width: 1080, height: 1080 },
     portrait: { label: '세로형 1080 x 1350', width: 1080, height: 1350 }
   };
-
-  syncTemplateSelectOptions(controls.template);
 
   let appState = loadState();
   let dragState = null;
@@ -1918,9 +2238,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const existingText = currentTexts[index];
       const oldSeedText = oldSeedCard.texts?.[index];
       const shouldPreserveContent = !!(
-        existingText
-        && oldSeedText
-        && !isTemplateSeedTextMatch(existingText, oldSeedText)
+        existingText &&
+        oldSeedText &&
+        !isTemplateSeedTextMatch(existingText, oldSeedText)
       );
 
       return normalizeTextItem({
@@ -2399,12 +2719,26 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textColor.addEventListener('input', () => { getActiveText().color = controls.textColor.value; renderWorkspace({ persist: true }); });
   controls.textOpacity.addEventListener('input', () => { getActiveText().opacity = clamp(Number(controls.textOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textBgEnabled.addEventListener('change', () => {
+    const activeText = getActiveText();
+    activeText.background.opacity = controls.textBgEnabled.checked ? Math.max(activeText.background.opacity, 0.35) : 0;
+    if (controls.textBgEnabled.checked) {
+      openOptionPanel('text', 'bg');
+    } else if (activeOptionPanels.text === 'bg') {
+      activeOptionPanels.text = '';
+    }
     setExclusiveTextOption('bg', controls.textBgEnabled.checked);
     renderWorkspace({ persist: true });
   });
   controls.textBgColor.addEventListener('input', () => { getActiveText().background.color = controls.textBgColor.value; renderWorkspace({ persist: true }); });
   controls.textBgOpacity.addEventListener('input', () => { getActiveText().background.opacity = clamp(Number(controls.textBgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineEnabled.addEventListener('change', () => {
+    const activeText = getActiveText();
+    activeText.outline.width = controls.textOutlineEnabled.checked ? Math.max(activeText.outline.width, 1) : 0;
+    if (controls.textOutlineEnabled.checked) {
+      openOptionPanel('text', 'outline');
+    } else if (activeOptionPanels.text === 'outline') {
+      activeOptionPanels.text = '';
+    }
     setExclusiveTextOption('outline', controls.textOutlineEnabled.checked);
     renderWorkspace({ persist: true });
   });
@@ -2412,6 +2746,18 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.textOutlineOpacity.addEventListener('input', () => { getActiveText().outline.opacity = clamp(Number(controls.textOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.textOutlineWidth.addEventListener('input', () => { getActiveText().outline.width = clamp(Number(controls.textOutlineWidth.value), 0, 8); renderWorkspace({ persist: true }); });
   controls.textShadowEnabled.addEventListener('change', () => {
+    const activeText = getActiveText();
+    if (controls.textShadowEnabled.checked) {
+      activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
+      activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
+      openOptionPanel('text', 'shadow');
+    } else {
+      activeText.shadow.blur = 0;
+      activeText.shadow.opacity = 0;
+      if (activeOptionPanels.text === 'shadow') {
+        activeOptionPanels.text = '';
+      }
+    }
     setExclusiveTextOption('shadow', controls.textShadowEnabled.checked);
     renderWorkspace({ persist: true });
   });
@@ -2422,6 +2768,10 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.bgColor.addEventListener('input', () => { getActiveCard().background.color = controls.bgColor.value; renderWorkspace({ persist: true }); });
   controls.bgOpacity.addEventListener('input', () => { getActiveCard().background.opacity = clamp(Number(controls.bgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.overlayColor.addEventListener('input', () => { getActiveCard().overlay.color = controls.overlayColor.value; renderWorkspace({ persist: true }); });
+  controls.overlayEnabled.addEventListener('change', () => { getActiveCard().overlay.enabled = controls.overlayEnabled.checked; renderWorkspace({ persist: true }); });
+  controls.bgScale.addEventListener('input', () => { getActiveCard().background.scale = clamp(Number(controls.bgScale.value), 60, 180); renderWorkspace({ persist: true }); });
+  controls.bgX.addEventListener('input', () => { getActiveCard().background.x = Number(controls.bgX.value); renderWorkspace({ persist: true }); });
+  controls.bgY.addEventListener('input', () => { getActiveCard().background.y = Number(controls.bgY.value); renderWorkspace({ persist: true }); });
   controls.overlayEnabled.addEventListener('change', () => {
     getActiveCard().overlay.enabled = controls.overlayEnabled.checked;
     renderWorkspace({ persist: true });
@@ -2460,6 +2810,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     try {
+      const card = getActiveCard();
       card.background.imageUrl = await readFileAsDataUrl(file);
       card.background.isSample = false;
       renderWorkspace({ persist: true, statusMessage: '배경 이미지를 적용했습니다.' });
@@ -2476,7 +2827,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setStatus('배경 이미지 잠금을 해제한 뒤 삭제할 수 있습니다.', 'info');
       return;
     }
-    const sampleUrl = SAMPLE_BACKGROUNDS[card.template] || '';
+    const sampleUrl = SAMPLE_BACKGROUNDS_MODULE[card.template] || '';
     card.background.imageUrl = sampleUrl;
     card.background.isSample = !!sampleUrl;
     renderWorkspace({ persist: true, statusMessage: sampleUrl ? '템플릿 배경 예시로 되돌렸습니다.' : '배경 이미지를 삭제했습니다.' });
@@ -2514,6 +2865,12 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.mainImageClear.addEventListener('click', () => { getActiveCard().image.src = ''; renderWorkspace({ persist: true, statusMessage: '메인 이미지를 삭제했습니다.' }); });
 
   controls.imageMaskEnabled.addEventListener('change', () => {
+    getActiveCard().image.mask.enabled = controls.imageMaskEnabled.checked;
+    if (controls.imageMaskEnabled.checked) {
+      openOptionPanel('image', 'mask');
+    } else if (activeOptionPanels.image === 'mask') {
+      activeOptionPanels.image = '';
+    }
     setExclusiveImageOption('mask', controls.imageMaskEnabled.checked);
     renderWorkspace({ persist: true });
   });
@@ -2527,6 +2884,13 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.imageMaskColor.addEventListener('input', () => { getActiveCard().image.mask.color = controls.imageMaskColor.value; renderWorkspace({ persist: true }); });
   controls.imageMaskOpacity.addEventListener('input', () => { getActiveCard().image.mask.opacity = clamp(Number(controls.imageMaskOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineEnabled.addEventListener('change', () => {
+    const card = getActiveCard();
+    card.image.outline.width = controls.imageOutlineEnabled.checked ? Math.max(card.image.outline.width, 2) : 0;
+    if (controls.imageOutlineEnabled.checked) {
+      openOptionPanel('image', 'outline');
+    } else if (activeOptionPanels.image === 'outline') {
+      activeOptionPanels.image = '';
+    }
     setExclusiveImageOption('outline', controls.imageOutlineEnabled.checked);
     renderWorkspace({ persist: true });
   });
@@ -2534,6 +2898,18 @@ document.addEventListener('DOMContentLoaded', () => {
   controls.imageOutlineOpacity.addEventListener('input', () => { getActiveCard().image.outline.opacity = clamp(Number(controls.imageOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
   controls.imageOutlineWidth.addEventListener('input', () => { getActiveCard().image.outline.width = clamp(Number(controls.imageOutlineWidth.value), 0, 12); renderWorkspace({ persist: true }); });
   controls.imageShadowEnabled.addEventListener('change', () => {
+    const card = getActiveCard();
+    if (controls.imageShadowEnabled.checked) {
+      card.image.shadow.blur = Math.max(card.image.shadow.blur, 24);
+      card.image.shadow.opacity = Math.max(card.image.shadow.opacity, 0.22);
+      openOptionPanel('image', 'shadow');
+    } else {
+      card.image.shadow.blur = 0;
+      card.image.shadow.opacity = 0;
+      if (activeOptionPanels.image === 'shadow') {
+        activeOptionPanels.image = '';
+      }
+    }
     setExclusiveImageOption('shadow', controls.imageShadowEnabled.checked);
     renderWorkspace({ persist: true });
   });
