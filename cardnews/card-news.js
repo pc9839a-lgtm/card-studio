@@ -20,6 +20,471 @@ const SAMPLE_BACKGROUNDS = {
   list: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1600&q=80',
   headline: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=1600&q=80'
 };
+
+const TEMPLATE_KEYS_EXTENDED = ['cover', 'split', 'minimal', 'list', 'headline', 'spotlight', 'premium', 'collage', 'quote', 'deal'];
+const TEMPLATE_OPTION_META = {
+  cover: '브랜딩형',
+  split: '이벤트형',
+  minimal: '공지형',
+  list: '정보정리형',
+  headline: '프로모션형',
+  spotlight: '스포트라이트형',
+  premium: '프리미엄형',
+  collage: '콜라주형',
+  quote: '한줄강조형',
+  deal: '혜택배너형'
+};
+const SAMPLE_BACKGROUNDS_EXTENDED = {
+  ...SAMPLE_BACKGROUNDS,
+  spotlight: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80',
+  premium: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1600&q=80',
+  collage: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80',
+  quote: '',
+  deal: 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1600&q=80'
+};
+
+function syncTemplateSelectOptions(selectElement) {
+  if (!selectElement) return;
+
+  const existingOptions = Array.from(selectElement.options || []);
+  const existingByValue = new Map(existingOptions.map((option) => [option.value, option]));
+
+  TEMPLATE_KEYS_EXTENDED.forEach((templateKey) => {
+    const existingOption = existingByValue.get(templateKey);
+    if (existingOption) {
+      existingOption.textContent = TEMPLATE_OPTION_META[templateKey] || templateKey;
+      return;
+    }
+
+    const option = document.createElement('option');
+    option.value = templateKey;
+    option.textContent = TEMPLATE_OPTION_META[templateKey] || templateKey;
+    selectElement.appendChild(option);
+  });
+
+  existingOptions.forEach((option) => {
+    if (!TEMPLATE_KEYS_EXTENDED.includes(option.value)) {
+      option.remove();
+    }
+  });
+}
+
+function getTemplateSeedExtended(template, format) {
+  const isPortrait = format === 'portrait';
+
+  switch (template) {
+    case 'spotlight':
+      return {
+        background: {
+          color: '#0b1120',
+          imageUrl: SAMPLE_BACKGROUNDS_EXTENDED.spotlight,
+          isSample: true,
+          scale: isPortrait ? 126 : 118,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.62
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 78 : 76,
+          width: 62,
+          height: isPortrait ? 18 : 17
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 14 : 12,
+          width: 22,
+          height: 12,
+          radius: 0
+        },
+        texts: [
+          {
+            content: 'SPOTLIGHT',
+            x: 50,
+            y: isPortrait ? 18 : 16,
+            width: 28,
+            size: 15,
+            color: '#bfdbfe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '오늘의 핵심\n한 장 요약',
+            x: 50,
+            y: isPortrait ? 42 : 40,
+            width: 70,
+            size: isPortrait ? 58 : 52,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.3, blur: 20 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '눈에 띄는 한 줄 제목과\n하단 강조 박스를 함께 쓰는 스포트라이트형',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 56,
+            size: 18,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.42,
+              paddingX: 18,
+              paddingY: 10,
+              radius: 20
+            }
+          }
+        ]
+      };
+    case 'premium':
+      return {
+        background: {
+          color: '#faf5ef',
+          imageUrl: SAMPLE_BACKGROUNDS_EXTENDED.premium,
+          isSample: true,
+          scale: isPortrait ? 122 : 114,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#24180e',
+          opacity: 0.22
+        },
+        shape: {
+          visible: true,
+          type: 'line',
+          color: '#d4a373',
+          x: 16,
+          y: isPortrait ? 18 : 16,
+          width: 14,
+          height: 0.35
+        },
+        image: {
+          x: 84,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'PREMIUM',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 26,
+            size: 15,
+            color: '#7c4f2d',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#fff6ed',
+              opacity: 0.9,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '한 단계 더\n고급스럽게',
+            x: 14,
+            y: isPortrait ? 34 : 32,
+            width: 48,
+            size: isPortrait ? 50 : 46,
+            color: '#1f2937',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '브랜드 소개, 서비스 가치,\n프리미엄 혜택 안내에 맞춘 템플릿',
+            x: 14,
+            y: isPortrait ? 56 : 54,
+            width: 44,
+            size: 18,
+            color: '#5b4636',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '멤버십 · 클래스 · 케어 서비스',
+            x: 14,
+            y: isPortrait ? 83 : 80,
+            width: 40,
+            size: 18,
+            color: '#1f2937',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#ffffff',
+              opacity: 0.9,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 20
+            }
+          }
+        ]
+      };
+    case 'collage':
+      return {
+        background: {
+          color: '#111827',
+          imageUrl: SAMPLE_BACKGROUNDS_EXTENDED.collage,
+          isSample: true,
+          scale: isPortrait ? 128 : 118,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#0f172a',
+          opacity: 0.38
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#ffffff',
+          x: 78,
+          y: isPortrait ? 18 : 16,
+          width: 16,
+          height: 16
+        },
+        image: {
+          x: 20,
+          y: isPortrait ? 20 : 18,
+          width: 24,
+          height: 14,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'COLLAGE',
+            x: 14,
+            y: isPortrait ? 14 : 12,
+            width: 24,
+            size: 15,
+            color: '#dbeafe',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.62,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '분위기와 정보\n동시에 담기',
+            x: 14,
+            y: isPortrait ? 70 : 68,
+            width: 52,
+            size: isPortrait ? 50 : 46,
+            color: '#ffffff',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0.22, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '배경 사진 중심으로 감도를 살리면서\n타이틀과 포인트를 분리하는 콜라주형',
+            x: 14,
+            y: isPortrait ? 86 : 83,
+            width: 54,
+            size: 18,
+            color: '#e2e8f0',
+            align: 'left',
+            frameAlign: 'left',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.52,
+              paddingX: 18,
+              paddingY: 14,
+              radius: 22
+            }
+          }
+        ]
+      };
+    case 'quote':
+      return {
+        background: {
+          color: '#f8fafc',
+          imageUrl: '',
+          isSample: false
+        },
+        overlay: {
+          enabled: false,
+          color: '#111827',
+          opacity: 0
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#dbeafe',
+          x: 50,
+          y: isPortrait ? 50 : 48,
+          width: 72,
+          height: isPortrait ? 50 : 46
+        },
+        image: {
+          x: 50,
+          y: isPortrait ? 18 : 16,
+          width: 18,
+          height: 12,
+          radius: 999
+        },
+        texts: [
+          {
+            content: 'QUOTE',
+            x: 50,
+            y: isPortrait ? 24 : 22,
+            width: 20,
+            size: 15,
+            color: '#2563eb',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '가장 중요한 말은\n짧게 남아요',
+            x: 50,
+            y: isPortrait ? 46 : 44,
+            width: 58,
+            size: isPortrait ? 46 : 42,
+            color: '#0f172a',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#ffffff',
+              opacity: 0.88,
+              paddingX: 20,
+              paddingY: 18,
+              radius: 24
+            }
+          },
+          {
+            content: '후기 한 줄, 대표 멘트, 슬로건처럼\n짧은 메시지를 크게 강조하는 정사각형 템플릿',
+            x: 50,
+            y: isPortrait ? 78 : 76,
+            width: 66,
+            size: 18,
+            color: '#475569',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: { opacity: 0 }
+          }
+        ]
+      };
+    case 'deal':
+      return {
+        background: {
+          color: '#0f172a',
+          imageUrl: SAMPLE_BACKGROUNDS_EXTENDED.deal,
+          isSample: true,
+          scale: isPortrait ? 124 : 116,
+          x: 50,
+          y: 50
+        },
+        overlay: {
+          enabled: true,
+          color: '#020617',
+          opacity: 0.58
+        },
+        shape: {
+          visible: true,
+          type: 'rect',
+          color: '#2563eb',
+          x: 50,
+          y: isPortrait ? 82 : 80,
+          width: 74,
+          height: isPortrait ? 16 : 15
+        },
+        image: {
+          x: 16,
+          y: isPortrait ? 14 : 12,
+          width: 18,
+          height: 12,
+          radius: 18
+        },
+        texts: [
+          {
+            content: 'SPECIAL DEAL',
+            x: 50,
+            y: isPortrait ? 16 : 14,
+            width: 34,
+            size: 15,
+            color: '#dbeafe',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#1d4ed8',
+              opacity: 0.84,
+              paddingX: 12,
+              paddingY: 8,
+              radius: 999
+            }
+          },
+          {
+            content: '이번 혜택\n가장 먼저 보기',
+            x: 50,
+            y: isPortrait ? 40 : 38,
+            width: 68,
+            size: isPortrait ? 54 : 48,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0.24, blur: 18 },
+            background: { opacity: 0 }
+          },
+          {
+            content: '가격, 보너스, 일정 안내를\n한 번에 묶어주는 혜택배너형',
+            x: 50,
+            y: isPortrait ? 80 : 78,
+            width: 60,
+            size: 18,
+            color: '#ffffff',
+            align: 'center',
+            frameAlign: 'center',
+            shadow: { opacity: 0, blur: 0 },
+            background: {
+              color: '#0f172a',
+              opacity: 0.32,
+              paddingX: 16,
+              paddingY: 10,
+              radius: 18
+            }
+          }
+        ]
+      };
+    default:
+      return getTemplateSeed(template, format);
+  }
+}
+
 const IMAGE_UPLOAD_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
 const IMAGE_UPLOAD_RULES = {
   background: { maxBytes: 10 * 1024 * 1024, label: '배경 이미지' },
@@ -662,7 +1127,7 @@ function getTemplateSeed(template, format) {
 }
 
 function createCardFromTemplate(index, template = 'cover', format = 'square') {
-  const seed = getTemplateSeed(template, format);
+  const seed = getTemplateSeedExtended(template, format);
   const texts = (seed.texts || []).map((textSeed, textIndex) => createDefaultTextItem({
     name: `텍스트 ${textIndex + 1}`,
     ...textSeed
@@ -837,7 +1302,7 @@ function normalizeCard(card, index) {
 
   nextCard.id = String(nextCard.id || generateId('card'));
   nextCard.name = String(nextCard.name || `카드 ${index + 1}`);
-  nextCard.template = TEMPLATE_KEYS.includes(nextCard.template) ? nextCard.template : 'cover';
+  nextCard.template = TEMPLATE_KEYS_EXTENDED.includes(nextCard.template) ? nextCard.template : 'cover';
   nextCard.format = nextCard.format === 'portrait' ? 'portrait' : 'square';
   nextCard.background.opacity = clamp(Number(nextCard.background.opacity ?? 1), 0, 1);
   nextCard.background.scale = clamp(Number(nextCard.background.scale || 100), 60, 180);
@@ -943,9 +1408,6 @@ function cloneCard(card, index) {
   });
 
   nextCard.activeTextId = textIdMap.get(card.activeTextId) || nextCard.texts[0].id;
-  nextCard.selectedTextIds = (Array.isArray(card.selectedTextIds) ? card.selectedTextIds : [card.activeTextId])
-    .map((textId) => textIdMap.get(textId))
-    .filter(Boolean);
   nextCard.activeShapeId = shapeIdMap.get(card.activeShapeId) || nextCard.shapes[0]?.id || '';
   if (parseTextLayerKey(card.activeLayer)) {
     nextCard.activeLayer = buildTextLayerKey(textIdMap.get(parseTextLayerKey(card.activeLayer)) || nextCard.activeTextId);
@@ -1194,6 +1656,8 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadZip: document.getElementById('btn-cardnews-download-zip')
   };
 
+  syncTemplateSelectOptions(controls.template);
+
   const ui = {
     cardList: document.getElementById('cardnews-card-list'),
     textList: document.getElementById('cardnews-text-list'),
@@ -1238,6 +1702,30 @@ document.addEventListener('DOMContentLoaded', () => {
     shapeY: document.getElementById('cardnews-shape-y-value')
   };
 
+  const preview = {
+    canvas: document.getElementById('cardnews-canvas'),
+    bg: document.getElementById('cardnews-canvas-bg'),
+    bgImage: document.getElementById('cardnews-canvas-bg-image'),
+    shapes: document.getElementById('cardnews-canvas-shapes'),
+    imageWrap: document.getElementById('cardnews-canvas-image-wrap'),
+    image: document.getElementById('cardnews-canvas-image'),
+    imageMask: document.getElementById('cardnews-canvas-image-mask'),
+    overlay: document.getElementById('cardnews-canvas-overlay'),
+    texts: document.getElementById('cardnews-canvas-texts')
+  };
+
+  const formatMeta = {
+    square: { label: '정사각형 1080 x 1080', width: 1080, height: 1080 },
+    portrait: { label: '세로형 1080 x 1350', width: 1080, height: 1350 }
+  };
+
+  let appState = loadState();
+  let dragState = null;
+  let activeSectionKey = 'format';
+  const activeOptionPanels = {
+    text: '',
+    image: ''
+  };
 
   const textUi = {
     selectionSummary: null,
@@ -1281,13 +1769,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function getTextControlTargets(card = getActiveCard()) {
-    return getSelectedTexts(card).length ? getSelectedTexts(card) : [getActiveText(card)];
-  }
-
   function applyToSelectedTexts(updater, { statusMessage = '' } = {}) {
     const card = getActiveCard();
-    const targets = getTextControlTargets(card);
+    const targets = getSelectedTexts(card);
     if (!targets.length) return;
     targets.forEach((textItem, index) => updater(textItem, index, card));
     activeSectionKey = 'text';
@@ -1297,7 +1781,9 @@ document.addEventListener('DOMContentLoaded', () => {
   function estimateTextHalfHeightPercent(card, textItem) {
     const meta = formatMeta[card?.format] || formatMeta.square;
     const lineHeightPx = Number(textItem?.size || 64) * 1.2;
-    const paddingPx = (textItem?.background?.opacity > 0 ? Number(textItem?.background?.paddingY || 0) * 2 : 0);
+    const paddingPx = (Number(textItem?.background?.opacity || 0) > 0)
+      ? Number(textItem?.background?.paddingY || 0) * 2
+      : 0;
     const totalPx = lineHeightPx + paddingPx;
     return ((totalPx / meta.height) * 100) / 2;
   }
@@ -1306,7 +1792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const card = getActiveCard();
     const targets = getSelectedTexts(card);
     if (targets.length < 2) {
-      setStatus('Shift 키로 텍스트 2개 이상 선택 후 정렬하세요.', 'info');
+      setStatus('Shift+클릭으로 텍스트 2개 이상 선택 후 정렬하세요.', 'info');
       return;
     }
 
@@ -1406,31 +1892,6 @@ document.addEventListener('DOMContentLoaded', () => {
     textUi.alignBottom?.addEventListener('click', () => alignSelectedTexts('bottom'));
   }
 
-  const preview = {
-    canvas: document.getElementById('cardnews-canvas'),
-    bg: document.getElementById('cardnews-canvas-bg'),
-    bgImage: document.getElementById('cardnews-canvas-bg-image'),
-    shapes: document.getElementById('cardnews-canvas-shapes'),
-    imageWrap: document.getElementById('cardnews-canvas-image-wrap'),
-    image: document.getElementById('cardnews-canvas-image'),
-    imageMask: document.getElementById('cardnews-canvas-image-mask'),
-    overlay: document.getElementById('cardnews-canvas-overlay'),
-    texts: document.getElementById('cardnews-canvas-texts')
-  };
-
-  const formatMeta = {
-    square: { label: '정사각형 1080 x 1080', width: 1080, height: 1080 },
-    portrait: { label: '세로형 1080 x 1350', width: 1080, height: 1350 }
-  };
-
-  let appState = loadState();
-  let dragState = null;
-  let activeSectionKey = 'format';
-  const activeOptionPanels = {
-    text: '',
-    image: ''
-  };
-
   const mobileUi = {
     mediaQuery: typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 767px)') : null,
     quickbar: null,
@@ -1439,14 +1900,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const MOBILE_PANEL_CLASS_MAP = {
-    cards: 'is-mobile-panel-cards',
-    format: 'is-mobile-panel-format',
-    text: 'is-mobile-panel-text',
-    background: 'is-mobile-panel-background',
-    image: 'is-mobile-panel-image',
-    shape: 'is-mobile-panel-shape',
-    layer: 'is-mobile-panel-layer',
-    export: 'is-mobile-panel-export'
+    cards: 'is-mobile-step-cards',
+    format: 'is-mobile-step-format',
+    text: 'is-mobile-step-text',
+    background: 'is-mobile-step-background',
+    image: 'is-mobile-step-image',
+    shape: 'is-mobile-step-shape',
+    layer: 'is-mobile-step-layer',
+    export: 'is-mobile-step-export'
   };
 
   const MOBILE_PANEL_SECTION_MAP = {
@@ -1461,7 +1922,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   function getMobilePanelFromSection(sectionKey = '') {
-    return MOBILE_PANEL_SECTION_MAP[sectionKey] ? sectionKey : 'cards';
+    return MOBILE_PANEL_CLASS_MAP[sectionKey] ? sectionKey : 'cards';
   }
 
   function clearMobilePanelClasses() {
@@ -1484,6 +1945,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function syncMobileSectionVisibility() {
     const isMobile = !!mobileUi.mediaQuery?.matches;
+    const visibleKeys = new Set((MOBILE_PANEL_SECTION_MAP[mobileUi.currentPanel] || []).map(String));
 
     ui.sections.forEach((section) => {
       if (!isMobile) {
@@ -1491,13 +1953,10 @@ document.addEventListener('DOMContentLoaded', () => {
         section.style.removeProperty('flex-direction');
         return;
       }
-
-      const sectionKey = String(section.dataset.cardnewsSection || '');
-      const visibleSectionKeys = new Set(MOBILE_PANEL_SECTION_MAP[mobileUi.currentPanel] || []);
-      const shouldShow = visibleSectionKeys.has(sectionKey);
-
-      section.style.setProperty('display', shouldShow ? 'flex' : 'none', 'important');
-      if (shouldShow) {
+      const key = String(section.dataset.cardnewsSection || '');
+      const show = visibleKeys.has(key);
+      section.style.setProperty('display', show ? 'flex' : 'none', 'important');
+      if (show) {
         section.style.setProperty('flex-direction', 'column', 'important');
       } else {
         section.style.removeProperty('flex-direction');
@@ -1520,12 +1979,12 @@ document.addEventListener('DOMContentLoaded', () => {
       previewBox.style.removeProperty('position');
       previewBox.style.removeProperty('top');
       previewBox.style.removeProperty('z-index');
-
       if (mobileUi.quickbar) {
         mobileUi.quickbar.style.removeProperty('order');
         mobileUi.quickbar.style.removeProperty('position');
         mobileUi.quickbar.style.removeProperty('top');
         mobileUi.quickbar.style.removeProperty('z-index');
+        mobileUi.quickbar.style.removeProperty('margin-top');
       }
       return;
     }
@@ -1542,7 +2001,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobileUi.quickbar) {
       mobileUi.quickbar.style.setProperty('order', '1', 'important');
       mobileUi.quickbar.style.setProperty('position', 'static', 'important');
+      mobileUi.quickbar.style.removeProperty('top');
       mobileUi.quickbar.style.setProperty('z-index', '10', 'important');
+      mobileUi.quickbar.style.setProperty('margin-top', '0', 'important');
     }
 
     panel.style.setProperty('order', '2', 'important');
@@ -1560,7 +2021,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstSection = MOBILE_PANEL_SECTION_MAP[nextPanel]?.[0] || 'cards';
       activeSectionKey = firstSection;
       const target = findSection(firstSection);
-
       if (target) {
         ui.sections.forEach((section) => {
           const isTarget = section === target;
@@ -1592,7 +2052,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <button type="button" class="cardnews-mobile-quickbar__btn" data-mobile-panel="export">저장</button>
       </div>
     `;
-
     wrapper.querySelectorAll('[data-mobile-panel]').forEach((button) => {
       button.addEventListener('click', () => setMobilePanel(button.dataset.mobilePanel, { focus: true }));
     });
@@ -1604,7 +2063,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function ensureMobilePreviewToggle() {
     if (mobileUi.previewToggle) return mobileUi.previewToggle;
-
     const previewMeta = root.querySelector('.cardnews-preview__meta');
     if (!previewMeta) return null;
 
@@ -2457,9 +2915,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWorkspace({ persist: true, statusMessage: '레이어 순서를 반영했습니다.' });
   }
 
+  function normalizeComparableTextContent(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function isTemplateSeedTextMatch(textItem, seedText) {
+    return normalizeComparableTextContent(textItem?.content) === normalizeComparableTextContent(seedText?.content);
+  }
+
   function applyTemplateToCurrentCard(template, format = getActiveCard().format) {
     const currentCard = getActiveCard();
     const seededCard = createCardFromTemplate(getActiveCardIndex() + 1, template, format);
+    const oldSeedCard = createCardFromTemplate(getActiveCardIndex() + 1, currentCard.template, currentCard.format);
     const nextCard = mergeDeep(currentCard, seededCard);
     const currentTexts = currentCard.texts || [];
 
@@ -2471,16 +2938,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     nextCard.texts = seededCard.texts.map((seedText, index) => {
       const existingText = currentTexts[index];
+      const oldSeedText = oldSeedCard.texts?.[index];
+      const shouldPreserveContent = !!(
+        existingText &&
+        oldSeedText &&
+        !isTemplateSeedTextMatch(existingText, oldSeedText)
+      );
+
       return normalizeTextItem({
         ...seedText,
         id: existingText?.id || seedText.id,
-        content: existingText?.content || seedText.content
+        content: shouldPreserveContent ? existingText.content : seedText.content
       }, index);
     });
 
     if (currentTexts.length > seededCard.texts.length) {
       currentTexts.slice(seededCard.texts.length).forEach((textItem, index) => {
-        nextCard.texts.push(normalizeTextItem(textItem, seededCard.texts.length + index));
+        const sourceIndex = seededCard.texts.length + index;
+        const oldSeedText = oldSeedCard.texts?.[sourceIndex];
+        const oldSeedLength = oldSeedCard.texts?.length || 0;
+        const isUserAddedText = sourceIndex >= oldSeedLength;
+        const isEditedOldSeedText = oldSeedText ? !isTemplateSeedTextMatch(textItem, oldSeedText) : true;
+
+        if (isUserAddedText || isEditedOldSeedText) {
+          nextCard.texts.push(normalizeTextItem(textItem, sourceIndex));
+        }
       });
     }
 
@@ -2789,17 +3271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetText = getTextById(card, textId);
       anchorX = targetText.x;
       anchorY = targetText.y;
-      if (event.shiftKey) {
-        const nextIds = new Set(ensureSelectedTextIds(card));
-        if (nextIds.has(textId) && nextIds.size > 1) {
-          nextIds.delete(textId);
-        } else {
-          nextIds.add(textId);
-        }
-        setSelectedTexts(card, Array.from(nextIds), textId);
-      } else {
-        setSelectedTexts(card, [textId], textId);
-      }
+      card.activeTextId = textId;
     } else if (shapeId) {
       const targetShape = getShapeById(card, shapeId);
       if (!targetShape) return;
@@ -2942,7 +3414,6 @@ document.addEventListener('DOMContentLoaded', () => {
   [['textSize', 'size'], ['textWidth', 'width'], ['textX', 'x'], ['textY', 'y']].forEach(([controlKey, property]) => {
     controls[controlKey].addEventListener('input', () => {
       const numericValue = Number(controls[controlKey].value);
-
       if (property === 'size' || property === 'width') {
         applyToSelectedTexts((textItem) => {
           textItem[property] = numericValue;
@@ -3080,7 +3551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   controls.bgImageClear.addEventListener('click', () => {
     const card = getActiveCard();
-    const sampleUrl = SAMPLE_BACKGROUNDS[card.template] || '';
+    const sampleUrl = SAMPLE_BACKGROUNDS_EXTENDED[card.template] || '';
     card.background.imageUrl = sampleUrl;
     card.background.isSample = !!sampleUrl;
     renderWorkspace({ persist: true, statusMessage: sampleUrl ? '템플릿 배경 예시로 되돌렸습니다.' : '배경 이미지를 삭제했습니다.' });
