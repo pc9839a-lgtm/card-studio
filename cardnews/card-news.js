@@ -552,6 +552,8 @@ function createDefaultTextItem(patch = {}) {
     y: 24,
     width: 80,
     size: 64,
+    fontFamily: '',
+    fontWeight: 800,
     color: '#111827',
     opacity: 1,
     align: 'center',
@@ -1156,6 +1158,7 @@ function createCardFromTemplate(index, template = 'cover', format = 'square') {
     font: "'Pretendard', sans-serif",
     texts: texts.length ? texts : [fallbackText],
     activeTextId: fallbackText.id,
+    selectedTextIds: [fallbackText.id],
     background: mergeDeep(createDefaultBackground(), seed.background),
     image: mergeDeep(createDefaultImageLayer(), seed.image),
     overlay: mergeDeep(createDefaultOverlay(), seed.overlay),
@@ -1196,6 +1199,8 @@ function normalizeTextItem(rawText, index) {
   normalized.name = `텍스트 ${index + 1}`;
   normalized.width = clamp(Number(normalized.width || 80), 20, 100);
   normalized.size = clamp(Number(normalized.size || 64), 18, 140);
+  normalized.fontFamily = String(normalized.fontFamily || '');
+  normalized.fontWeight = clamp(Number(normalized.fontWeight || 800), 300, 900);
   normalized.y = clamp(Number(normalized.y || 24), 0, 100);
   normalized.opacity = clamp(Number(normalized.opacity ?? 1), 0, 1);
   normalized.frameAlign = ['left', 'center', 'right'].includes(normalized.frameAlign) ? normalized.frameAlign : 'center';
@@ -1245,6 +1250,15 @@ function normalizeCard(card, index) {
   const shapeIds = new Set(nextCard.shapes.map((shapeItem) => shapeItem.id));
   if (!textIds.has(nextCard.activeTextId)) {
     nextCard.activeTextId = nextCard.texts[0].id;
+  }
+  nextCard.selectedTextIds = Array.isArray(nextCard.selectedTextIds)
+    ? Array.from(new Set(nextCard.selectedTextIds.filter((textId) => textIds.has(textId))))
+    : [];
+  if (!nextCard.selectedTextIds.length) {
+    nextCard.selectedTextIds = [nextCard.activeTextId];
+  } else if (!nextCard.selectedTextIds.includes(nextCard.activeTextId)) {
+    nextCard.selectedTextIds.unshift(nextCard.activeTextId);
+    nextCard.selectedTextIds = Array.from(new Set(nextCard.selectedTextIds));
   }
   if (!shapeIds.has(nextCard.activeShapeId)) {
     nextCard.activeShapeId = nextCard.shapes[0]?.id || '';
@@ -1687,6 +1701,174 @@ document.addEventListener('DOMContentLoaded', () => {
     shapeX: document.getElementById('cardnews-shape-x-value'),
     shapeY: document.getElementById('cardnews-shape-y-value')
   };
+
+  const textUi = {
+    selectionSummary: null,
+    textWeight: null,
+    alignTop: null,
+    alignMiddle: null,
+    alignBottom: null
+  };
+
+  function ensureSelectedTextIds(card = getActiveCard()) {
+    if (!card) return [];
+    const validIds = new Set((card.texts || []).map((textItem) => textItem.id));
+    let selectedIds = Array.isArray(card.selectedTextIds)
+      ? card.selectedTextIds.filter((textId) => validIds.has(textId))
+      : [];
+
+    if (!selectedIds.length && validIds.has(card.activeTextId)) {
+      selectedIds = [card.activeTextId];
+    }
+    if (validIds.has(card.activeTextId) && !selectedIds.includes(card.activeTextId)) {
+      selectedIds.unshift(card.activeTextId);
+    }
+
+    card.selectedTextIds = Array.from(new Set(selectedIds));
+    return card.selectedTextIds;
+  }
+
+  function getSelectedTexts(card = getActiveCard()) {
+    const selectedIds = new Set(ensureSelectedTextIds(card));
+    return (card?.texts || []).filter((textItem) => selectedIds.has(textItem.id));
+  }
+
+  function setSelectedTexts(card, textIds, activeId = '') {
+    const validIds = new Set((card?.texts || []).map((textItem) => textItem.id));
+    const nextIds = Array.from(new Set((textIds || []).filter((textId) => validIds.has(textId))));
+    const fallbackActiveId = validIds.has(activeId) ? activeId : (nextIds[0] || card?.texts?.[0]?.id || '');
+    card.selectedTextIds = nextIds.length ? nextIds : (fallbackActiveId ? [fallbackActiveId] : []);
+    card.activeTextId = fallbackActiveId;
+    if (fallbackActiveId) {
+      card.activeLayer = buildTextLayerKey(fallbackActiveId);
+    }
+  }
+
+  function applyToSelectedTexts(updater, { statusMessage = '' } = {}) {
+    const card = getActiveCard();
+    const targets = getSelectedTexts(card);
+    if (!targets.length) return;
+    targets.forEach((textItem, index) => updater(textItem, index, card));
+    activeSectionKey = 'text';
+    renderWorkspace({ persist: true, statusMessage });
+  }
+
+  function getTextControlTargets(card = getActiveCard()) {
+    return getSelectedTexts(card).length ? getSelectedTexts(card) : [getActiveText(card)];
+  }
+
+  function estimateTextHalfHeightPercent(card, textItem) {
+    const meta = formatMeta[card?.format] || formatMeta.square;
+    const lineHeightPx = Number(textItem?.size || 64) * 1.2;
+    const paddingPx = (textItem?.background?.opacity > 0 ? Number(textItem?.background?.paddingY || 0) * 2 : 0);
+    const totalPx = lineHeightPx + paddingPx;
+    return ((totalPx / meta.height) * 100) / 2;
+  }
+
+  function alignSelectedTexts(mode) {
+    const card = getActiveCard();
+    const targets = getSelectedTexts(card);
+    if (targets.length < 2) {
+      setStatus('Shift 키로 텍스트 2개 이상 선택 후 정렬하세요.', 'info');
+      return;
+    }
+
+    const tops = targets.map((textItem) => textItem.y - estimateTextHalfHeightPercent(card, textItem));
+    const bottoms = targets.map((textItem) => textItem.y + estimateTextHalfHeightPercent(card, textItem));
+    const minTop = Math.min(...tops);
+    const maxBottom = Math.max(...bottoms);
+    const centerLine = (minTop + maxBottom) / 2;
+
+    targets.forEach((textItem) => {
+      const halfHeight = estimateTextHalfHeightPercent(card, textItem);
+      if (mode === 'top') {
+        textItem.y = clamp(minTop + halfHeight, 0, 100);
+      } else if (mode === 'middle') {
+        textItem.y = clamp(centerLine, 0, 100);
+      } else {
+        textItem.y = clamp(maxBottom - halfHeight, 0, 100);
+      }
+    });
+
+    activeSectionKey = 'text';
+    renderWorkspace({ persist: true, statusMessage: '선택한 텍스트 정렬을 반영했습니다.' });
+  }
+
+  function updateTextSelectionSummary(card = getActiveCard()) {
+    if (!textUi.selectionSummary) return;
+    const count = getSelectedTexts(card).length;
+    textUi.selectionSummary.textContent = count > 1
+      ? `선택 ${count}개 · Shift+클릭으로 다중 선택`
+      : '선택 1개 · Shift+클릭으로 다중 선택';
+  }
+
+  function ensureTextEnhancementControls() {
+    if (textUi.selectionSummary) return;
+
+    const textSection = root.querySelector('[data-cardnews-section="text"]');
+    if (!textSection) return;
+
+    const host = document.createElement('div');
+    host.className = 'cardnews-option-panel cardnews-text-advanced-tools';
+    host.innerHTML = `
+      <div class="cardnews-text-selection-meta">
+        <strong>텍스트 개별 편집</strong>
+        <p id="cardnews-text-selection-summary">선택 1개 · Shift+클릭으로 다중 선택</p>
+      </div>
+      <div class="field-grid cardnews-text-advanced-grid">
+        <label class="field">
+          <span>글자 굵기</span>
+          <select id="cardnews-text-weight">
+            <option value="300">Light</option>
+            <option value="400">Regular</option>
+            <option value="500">Medium</option>
+            <option value="700">Bold</option>
+            <option value="800">Extra Bold</option>
+            <option value="900">Black</option>
+          </select>
+        </label>
+        <div class="field full-span">
+          <span>선택 텍스트 정렬</span>
+          <div class="cardnews-action-row cardnews-action-row--text-align">
+            <button type="button" class="btn btn-outline" id="btn-cardnews-text-align-top">위 정렬</button>
+            <button type="button" class="btn btn-outline" id="btn-cardnews-text-align-middle">가운데 정렬</button>
+            <button type="button" class="btn btn-outline" id="btn-cardnews-text-align-bottom">아래 정렬</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const firstFieldGrid = textSection.querySelector('.field-grid');
+    if (firstFieldGrid) {
+      firstFieldGrid.insertAdjacentElement('afterend', host);
+    } else {
+      textSection.appendChild(host);
+    }
+
+    textUi.selectionSummary = host.querySelector('#cardnews-text-selection-summary');
+    textUi.textWeight = host.querySelector('#cardnews-text-weight');
+    textUi.alignTop = host.querySelector('#btn-cardnews-text-align-top');
+    textUi.alignMiddle = host.querySelector('#btn-cardnews-text-align-middle');
+    textUi.alignBottom = host.querySelector('#btn-cardnews-text-align-bottom');
+
+    controls.textWeight = textUi.textWeight;
+
+    const fontLabel = controls.font?.closest('label')?.querySelector('span');
+    if (fontLabel) {
+      fontLabel.textContent = '선택 텍스트 글꼴';
+    }
+
+    textUi.textWeight?.addEventListener('change', () => {
+      applyToSelectedTexts((textItem) => {
+        textItem.fontWeight = clamp(Number(textUi.textWeight.value), 300, 900);
+      });
+    });
+
+    textUi.alignTop?.addEventListener('click', () => alignSelectedTexts('top'));
+    textUi.alignMiddle?.addEventListener('click', () => alignSelectedTexts('middle'));
+    textUi.alignBottom?.addEventListener('click', () => alignSelectedTexts('bottom'));
+  }
+
 
   const preview = {
     canvas: document.getElementById('cardnews-canvas'),
@@ -2307,7 +2489,8 @@ document.addEventListener('DOMContentLoaded', () => {
     controls.template.value = card.template;
 
     controls.textInput.value = activeText.content;
-    controls.font.value = card.font;
+    controls.font.value = activeText.fontFamily || card.font;
+    if (controls.textWeight) controls.textWeight.value = String(activeText.fontWeight || 800);
     controls.textAlign.value = activeText.align;
     controls.textFrameAlign.value = activeText.frameAlign || 'center';
     controls.textSize.value = String(activeText.size);
@@ -2364,6 +2547,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateValueLabels(card, activeText);
     syncOptionalControlStates(card, activeText);
+    updateTextSelectionSummary(card);
   }
 
   function updateValueLabels(card = getActiveCard(), activeText = getActiveText(card)) {
@@ -2418,15 +2602,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderTextList(card = getActiveCard()) {
     const activeText = getActiveText(card);
+    const selectedIds = new Set(ensureSelectedTextIds(card));
     ui.textList.innerHTML = '';
     card.texts.forEach((textItem) => {
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `cardnews-text-chip${textItem.id === activeText.id ? ' is-active' : ''}`;
+      const isActive = textItem.id === activeText.id;
+      const isMultiSelected = selectedIds.has(textItem.id);
+      button.className = `cardnews-text-chip${isActive ? ' is-active' : ''}${isMultiSelected ? ' is-multi-selected' : ''}`;
       button.textContent = textItem.name;
-      button.addEventListener('click', () => {
-        card.activeTextId = textItem.id;
-        card.activeLayer = buildTextLayerKey(textItem.id);
+      button.addEventListener('click', (event) => {
+        if (event.shiftKey) {
+          const nextIds = new Set(ensureSelectedTextIds(card));
+          if (nextIds.has(textItem.id) && nextIds.size > 1) {
+            nextIds.delete(textItem.id);
+          } else {
+            nextIds.add(textItem.id);
+          }
+          setSelectedTexts(card, Array.from(nextIds), textItem.id);
+        } else {
+          setSelectedTexts(card, [textItem.id], textItem.id);
+        }
         hydrateControls(card);
         renderTextList(card);
         renderShapeList(card);
@@ -2437,6 +2633,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       ui.textList.appendChild(button);
     });
+    updateTextSelectionSummary(card);
   }
 
   function renderShapeList(card = getActiveCard()) {
@@ -2507,7 +2704,8 @@ document.addEventListener('DOMContentLoaded', () => {
     node.style.fontSize = `${textItem.size}px`;
     node.style.color = hexToRgba(textItem.color, textItem.opacity);
     node.style.textAlign = textItem.align;
-    node.style.fontFamily = card.font;
+    node.style.fontFamily = textItem.fontFamily || card.font;
+    node.style.fontWeight = String(textItem.fontWeight || 800);
     node.style.backgroundColor = textItem.background.opacity > 0
       ? hexToRgba(textItem.background.color, textItem.background.opacity)
       : 'transparent';
@@ -2536,9 +2734,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateActivePreviewLayer(card = getActiveCard()) {
+    const selectedIds = new Set(ensureSelectedTextIds(card));
     preview.canvas.dataset.activeLayer = card.activeLayer;
     preview.canvas.querySelectorAll('.cardnews-canvas__layer').forEach((element) => {
       element.classList.toggle('is-selected', element.dataset.layerKey === card.activeLayer);
+      if (element.dataset.textId) {
+        element.classList.toggle('is-multi-selected', selectedIds.has(element.dataset.textId));
+      }
     });
   }
 
@@ -2657,7 +2859,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const shapeId = parseShapeLayerKey(layerKey);
     const textId = parseTextLayerKey(layerKey);
     if (textId) {
-      card.activeTextId = textId;
+      setSelectedTexts(card, [textId], textId);
       hydrateControls(card);
       renderTextList(card);
     } else if (shapeId) {
@@ -2744,15 +2946,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentTexts.length > seededCard.texts.length) {
       currentTexts.slice(seededCard.texts.length).forEach((textItem, index) => {
-        const sourceIndex = seededCard.texts.length + index;
-        const oldSeedText = oldSeedCard.texts?.[sourceIndex];
-        const oldSeedLength = oldSeedCard.texts?.length || 0;
-        const isUserAddedText = sourceIndex >= oldSeedLength;
-        const isEditedOldSeedText = oldSeedText ? !isTemplateSeedTextMatch(textItem, oldSeedText) : true;
-
-        if (isUserAddedText || isEditedOldSeedText) {
-          nextCard.texts.push(normalizeTextItem(textItem, sourceIndex));
-        }
+        nextCard.texts.push(normalizeTextItem(textItem, seededCard.texts.length + index));
       });
     }
 
@@ -2866,8 +3060,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, card.texts.length);
     card.texts.push(nextText);
     ensureTextNames(card);
-    card.activeTextId = nextText.id;
-    card.activeLayer = buildTextLayerKey(nextText.id);
+    setSelectedTexts(card, [nextText.id], nextText.id);
     card.layerOrder.push(buildTextLayerKey(nextText.id));
     activeSectionKey = 'text';
     renderWorkspace({ persist: true, statusMessage: '텍스트를 추가했습니다.' });
@@ -2899,8 +3092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     card.texts = card.texts.filter((textItem) => textItem.id !== activeText.id);
     card.layerOrder = card.layerOrder.filter((layerKey) => layerKey !== buildTextLayerKey(activeText.id));
     ensureTextNames(card);
-    card.activeTextId = card.texts[0].id;
-    card.activeLayer = buildTextLayerKey(card.activeTextId);
+    setSelectedTexts(card, [card.texts[0].id], card.texts[0].id);
     activeSectionKey = 'text';
     renderWorkspace({ persist: true, statusMessage: '텍스트를 삭제했습니다.' });
   }
@@ -3176,6 +3368,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWorkspace({ persist: true, statusMessage: '현재 카드를 초기화했습니다.' });
   });
 
+  ensureTextEnhancementControls();
+
   controls.textAdd.addEventListener('click', () => addTextItem());
   controls.textCopy.addEventListener('click', copyActiveText);
   controls.textRemove.addEventListener('click', removeActiveText);
@@ -3186,79 +3380,130 @@ document.addEventListener('DOMContentLoaded', () => {
     renderWorkspace({ persist: true });
   });
   controls.font.addEventListener('change', () => {
-    getActiveCard().font = controls.font.value;
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      textItem.fontFamily = controls.font.value;
+    });
   });
   controls.textAlign.addEventListener('change', () => {
-    getActiveText().align = controls.textAlign.value;
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      textItem.align = controls.textAlign.value;
+    });
   });
   controls.textFrameAlign.addEventListener('change', () => {
-    const activeText = getActiveText();
-    activeSectionKey = 'text';
-    applyTextFrameAlign(activeText, controls.textFrameAlign.value);
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      applyTextFrameAlign(textItem, controls.textFrameAlign.value);
+    });
   });
 
   [['textSize', 'size'], ['textWidth', 'width'], ['textX', 'x'], ['textY', 'y']].forEach(([controlKey, property]) => {
     controls[controlKey].addEventListener('input', () => {
+      const numericValue = Number(controls[controlKey].value);
+      if (property === 'size' || property === 'width') {
+        applyToSelectedTexts((textItem) => {
+          textItem[property] = numericValue;
+          if (property === 'width') {
+            applyTextFrameAlign(textItem, textItem.frameAlign);
+          }
+        });
+        return;
+      }
+
       const activeText = getActiveText();
       activeSectionKey = 'text';
-      activeText[property] = Number(controls[controlKey].value);
-      if (property === 'width') {
-        applyTextFrameAlign(activeText, activeText.frameAlign);
-      } else if (property === 'x') {
+      activeText[property] = numericValue;
+      if (property === 'x') {
         activeText.x = clampTextAnchorX(activeText, activeText.x);
       }
       renderWorkspace({ persist: true });
     });
   });
 
-  controls.textColor.addEventListener('input', () => { getActiveText().color = controls.textColor.value; renderWorkspace({ persist: true }); });
-  controls.textOpacity.addEventListener('input', () => { getActiveText().opacity = clamp(Number(controls.textOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
+  controls.textColor.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.color = controls.textColor.value;
+    });
+  });
+  controls.textOpacity.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.opacity = clamp(Number(controls.textOpacity.value), 0, 1);
+    });
+  });
   controls.textBgEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
-    activeText.background.opacity = controls.textBgEnabled.checked ? Math.max(activeText.background.opacity, 0.35) : 0;
     if (controls.textBgEnabled.checked) {
       openOptionPanel('text', 'bg');
     } else if (activeOptionPanels.text === 'bg') {
       activeOptionPanels.text = '';
     }
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      textItem.background.opacity = controls.textBgEnabled.checked ? Math.max(textItem.background.opacity, 0.35) : 0;
+    });
   });
-  controls.textBgColor.addEventListener('input', () => { getActiveText().background.color = controls.textBgColor.value; renderWorkspace({ persist: true }); });
-  controls.textBgOpacity.addEventListener('input', () => { getActiveText().background.opacity = clamp(Number(controls.textBgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
+  controls.textBgColor.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.background.color = controls.textBgColor.value;
+    });
+  });
+  controls.textBgOpacity.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.background.opacity = clamp(Number(controls.textBgOpacity.value), 0, 1);
+    });
+  });
   controls.textOutlineEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
-    activeText.outline.width = controls.textOutlineEnabled.checked ? Math.max(activeText.outline.width, 1) : 0;
     if (controls.textOutlineEnabled.checked) {
       openOptionPanel('text', 'outline');
     } else if (activeOptionPanels.text === 'outline') {
       activeOptionPanels.text = '';
     }
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      textItem.outline.width = controls.textOutlineEnabled.checked ? Math.max(textItem.outline.width, 1) : 0;
+    });
   });
-  controls.textOutlineColor.addEventListener('input', () => { getActiveText().outline.color = controls.textOutlineColor.value; renderWorkspace({ persist: true }); });
-  controls.textOutlineOpacity.addEventListener('input', () => { getActiveText().outline.opacity = clamp(Number(controls.textOutlineOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
-  controls.textOutlineWidth.addEventListener('input', () => { getActiveText().outline.width = clamp(Number(controls.textOutlineWidth.value), 0, 8); renderWorkspace({ persist: true }); });
+  controls.textOutlineColor.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.outline.color = controls.textOutlineColor.value;
+    });
+  });
+  controls.textOutlineOpacity.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.outline.opacity = clamp(Number(controls.textOutlineOpacity.value), 0, 1);
+    });
+  });
+  controls.textOutlineWidth.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.outline.width = clamp(Number(controls.textOutlineWidth.value), 0, 8);
+    });
+  });
   controls.textShadowEnabled.addEventListener('change', () => {
-    const activeText = getActiveText();
     if (controls.textShadowEnabled.checked) {
-      activeText.shadow.blur = Math.max(activeText.shadow.blur, 18);
-      activeText.shadow.opacity = Math.max(activeText.shadow.opacity, 0.18);
       openOptionPanel('text', 'shadow');
-    } else {
-      activeText.shadow.blur = 0;
-      activeText.shadow.opacity = 0;
-      if (activeOptionPanels.text === 'shadow') {
-        activeOptionPanels.text = '';
-      }
+    } else if (activeOptionPanels.text === 'shadow') {
+      activeOptionPanels.text = '';
     }
-    renderWorkspace({ persist: true });
+    applyToSelectedTexts((textItem) => {
+      if (controls.textShadowEnabled.checked) {
+        textItem.shadow.blur = Math.max(textItem.shadow.blur, 18);
+        textItem.shadow.opacity = Math.max(textItem.shadow.opacity, 0.18);
+      } else {
+        textItem.shadow.blur = 0;
+        textItem.shadow.opacity = 0;
+      }
+    });
   });
-  controls.textShadowColor.addEventListener('input', () => { getActiveText().shadow.color = controls.textShadowColor.value; renderWorkspace({ persist: true }); });
-  controls.textShadowBlur.addEventListener('input', () => { getActiveText().shadow.blur = clamp(Number(controls.textShadowBlur.value), 0, 60); renderWorkspace({ persist: true }); });
-  controls.textShadowOpacity.addEventListener('input', () => { getActiveText().shadow.opacity = clamp(Number(controls.textShadowOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
+  controls.textShadowColor.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.shadow.color = controls.textShadowColor.value;
+    });
+  });
+  controls.textShadowBlur.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.shadow.blur = clamp(Number(controls.textShadowBlur.value), 0, 60);
+    });
+  });
+  controls.textShadowOpacity.addEventListener('input', () => {
+    applyToSelectedTexts((textItem) => {
+      textItem.shadow.opacity = clamp(Number(controls.textShadowOpacity.value), 0, 1);
+    });
+  });
 
   controls.bgColor.addEventListener('input', () => { getActiveCard().background.color = controls.bgColor.value; renderWorkspace({ persist: true }); });
   controls.bgOpacity.addEventListener('input', () => { getActiveCard().background.opacity = clamp(Number(controls.bgOpacity.value), 0, 1); renderWorkspace({ persist: true }); });
