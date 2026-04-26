@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
@@ -101,7 +101,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260412-cardnews-folder-1">
+  <link rel="stylesheet" href="./style.css?v=20260426-pc-v3-apply-1">
 <link rel="stylesheet" href="./cardnews/card-news.css?v=20260414-cardnews-template-fix-3">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -111,44 +111,51 @@
   <!-- Google Tag Manager (noscript) START -->
   <!-- 여기에 Google Tag Manager noscript iframe 코드를 붙여넣으세요. -->
   <!-- Google Tag Manager (noscript) END -->
-  <header class="studio-home" id="studio-home">
-    <div class="studio-home__inner">
-      <div class="studio-home__copy">
-        <span class="studio-home__eyebrow">CARDSTUDIO</span>
-        <h1>카드스튜디오</h1>
-        <p><br>명함, 카드뉴스(섬네일)제작<br>누구나 쉽게 제작할 수 있습니다.</p>
-        <div class="studio-home__chips">
-          <span>실시간 미리보기</span>
-          <span>명함 PNG · PDF 저장</span>
-          <span>카드뉴스 ZIP 저장</span>
+  <header class="studio-home cs-home" id="studio-home">
+    <div class="cs-home__inner">
+      <section class="cs-home__hero" aria-label="CardStudio 메인">
+        <div class="cs-home__copy">
+          <span class="cs-home__eyebrow">CARDSTUDIO</span>
+          <h1>디자인 툴 몰라도<br>명함과 카드뉴스를<br>바로 만드세요</h1>
+          <div class="cs-home__actions" aria-label="제작 도구 선택">
+            <button type="button" class="cs-home__action" data-studio-target="business">명함 만들기</button>
+            <button type="button" class="cs-home__action" data-studio-target="cardnews">카드뉴스 만들기</button>
+          </div>
         </div>
-      </div>
 
-      <div class="studio-home__menu-wrap">
-        <div class="studio-home__menu-title">
-          <strong>원하는 작업을 선택해주세요 </strong>
-          <span>메뉴</span>
+        <div class="cs-home__showcase" aria-hidden="true">
+          <div class="cs-home__showcase-head">
+            <strong>작업 미리보기</strong>
+            <span>Business Card / Card News</span>
+          </div>
+          <div class="cs-home__mock-stack">
+            <div class="cs-home__business-card">
+              <div class="cs-home__mini-logo"></div>
+              <div class="cs-home__business-copy">
+                <strong>김도윤</strong>
+                <span>Marketing Director</span>
+                <p>010-0000-0000 · hello@cardstudio.kr</p>
+              </div>
+            </div>
+            <div class="cs-home__news-card">
+              <span>CARD NEWS</span>
+              <strong>한장으로<br>끝내는<br>홍보 이미지</strong>
+              <p>메인 문구와 이미지만 바꿔 바로 저장</p>
+            </div>
+          </div>
         </div>
-        <div class="studio-home__menu" aria-label="제작 도구 메뉴">
-          <button type="button" class="studio-menu-card" data-studio-target="business">
-            <span class="studio-menu-card__tag">BUSINESS CARD</span>
-            <strong>명함만들기</strong>
-            <p>이름, 연락처, 로고, QR 넣고 바로 저장</p>
-            <span class="studio-menu-card__cta">명함 작업 열기</span>
-          </button>
-
-          <button type="button" class="studio-menu-card" data-studio-target="cardnews">
-            <span class="studio-menu-card__tag">CARD NEWS</span>
-            <strong>카드뉴스 만들기</strong>
-            <p>카드뉴스 · 썸네일 여러 장 편집 후 한 번에 저장</p>
-            <span class="studio-menu-card__cta">카드뉴스 작업 열기</span>
-          </button>
-        </div>
-      </div>
+      </section>
     </div>
   </header>
 
   <section class="studio-workspace studio-workspace--business is-active" id="workspace-business" data-studio-panel="business">
+    <div class="studio-route-bar studio-route-bar--business">
+      <button type="button" class="studio-route-back" data-studio-target="home">← 메인으로</button>
+      <div class="studio-route-title">
+        <strong>명함 편집</strong>
+        <span>정보를 넣고 결과를 바로 확인하세요</span>
+      </div>
+    </div>
   <div class="app-container">
     <aside class="controls">
       <div class="controls-hero">
@@ -825,6 +832,13 @@
   </section>
 
   <section class="cardnews-lab studio-workspace studio-workspace--cardnews" id="cardnews-lab" data-studio-panel="cardnews" aria-labelledby="cardnews-lab-title">
+    <div class="studio-route-bar studio-route-bar--cardnews">
+      <button type="button" class="studio-route-back" data-studio-target="home">← 메인으로</button>
+      <div class="studio-route-title">
+        <strong>카드뉴스</strong>
+        <span>카드뉴스와 썸네일을 제작합니다</span>
+      </div>
+    </div>
     <div class="cardnews-lab__inner">
       <div class="cardnews-lab__intro">
         <span class="cardnews-lab__eyebrow">CARD NEWS LAB</span>
@@ -1490,7 +1504,7 @@
     </div>
   </footer>
 
-<script type="module" src="./main.js?v=20260412-card-standard-111"></script>
+<script type="module" src="./main.js?v=20260426-pc-v3-apply-1"></script>
 <script type="module" src="./cardnews/card-news.js?v=20260414-cardnews-template-fix-3"></script>
 </body>
 </html>
