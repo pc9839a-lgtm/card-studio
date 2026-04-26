@@ -5580,3 +5580,398 @@ body.is-studio-about-open {
     min-height: auto;
   }
 }
+
+
+/* =========================================================
+   2026-04-26 PC V3 실제 적용 패치
+   목적: 메인 화면 V3 고정 / 기존 기능 연결 / 푸터 유지
+   주의: 기존 명함·카드뉴스 기능 ID와 JS 로직은 건드리지 않음
+   ========================================================= */
+
+body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.10), transparent 26%),
+    radial-gradient(circle at 90% 15%, rgba(20, 184, 166, 0.09), transparent 24%),
+    #f4f7fb !important;
+}
+
+body[data-studio-mode="business"] #studio-home,
+body[data-studio-mode="cardnews"] #studio-home {
+  display: none !important;
+}
+
+body[data-studio-mode="home"] .studio-route-bar {
+  display: none !important;
+}
+
+body[data-studio-mode="business"] .studio-route-bar--business,
+body[data-studio-mode="cardnews"] .studio-route-bar--cardnews {
+  display: flex !important;
+}
+
+.cs-home.studio-home {
+  padding: 26px 24px 20px !important;
+}
+
+.cs-home__inner {
+  width: min(1480px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.cs-home__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(440px, 0.92fr);
+  gap: 26px;
+  align-items: stretch;
+}
+
+.cs-home__copy,
+.cs-home__showcase {
+  min-height: 720px;
+  border-radius: 32px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.cs-home__copy {
+  position: relative;
+  padding: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+}
+
+.cs-home__copy::before {
+  content: '';
+  position: absolute;
+  right: -140px;
+  bottom: -140px;
+  width: 360px;
+  height: 360px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 68%);
+  pointer-events: none;
+}
+
+.cs-home__eyebrow {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.cs-home__copy h1 {
+  position: relative;
+  z-index: 1;
+  margin: 24px 0 0;
+  max-width: 760px;
+  font-size: clamp(48px, 5vw, 76px);
+  line-height: 1.02;
+  letter-spacing: -0.075em;
+  color: #0f172a;
+}
+
+.cs-home__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 14px;
+  margin-top: 44px;
+  flex-wrap: wrap;
+}
+
+.cs-home__action {
+  appearance: none;
+  min-width: 220px;
+  min-height: 64px;
+  padding: 0 30px;
+  border: 0;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 18px 34px rgba(15, 23, 42, 0.18);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+
+.cs-home__action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 42px rgba(15, 23, 42, 0.22);
+}
+
+.cs-home__action:active {
+  transform: translateY(0);
+}
+
+.cs-home__showcase {
+  position: relative;
+  min-height: 720px;
+  padding: 24px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(30, 41, 59, 0.96) 100%);
+  border: 1px solid rgba(15, 23, 42, 0.2);
+}
+
+.cs-home__showcase-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.cs-home__showcase-head strong {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.cs-home__showcase-head span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.62);
+  font-weight: 800;
+}
+
+.cs-home__mock-stack {
+  position: relative;
+  height: 600px;
+}
+
+.cs-home__business-card,
+.cs-home__news-card {
+  position: absolute;
+  border-radius: 28px;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.cs-home__business-card {
+  width: 430px;
+  aspect-ratio: 9 / 5;
+  top: 54px;
+  left: 32px;
+  padding: 34px;
+  background: #ffffff;
+  transform: rotate(-4deg);
+}
+
+.cs-home__mini-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  background: #111827;
+  margin-bottom: 68px;
+}
+
+.cs-home__business-copy strong {
+  display: block;
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.05;
+  letter-spacing: -0.06em;
+  color: #0f172a;
+}
+
+.cs-home__business-copy span {
+  display: block;
+  margin-top: 7px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.cs-home__business-copy p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.cs-home__news-card {
+  width: 295px;
+  aspect-ratio: 1 / 1;
+  right: 28px;
+  bottom: 58px;
+  padding: 30px;
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.88), rgba(15, 23, 42, 0.92));
+  color: #fff;
+  transform: rotate(5deg);
+}
+
+.cs-home__news-card span {
+  display: inline-flex;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.cs-home__news-card strong {
+  display: block;
+  margin: 52px 0 0;
+  font-size: 38px;
+  line-height: 1.05;
+  letter-spacing: -0.075em;
+}
+
+.cs-home__news-card p {
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.studio-route-bar {
+  width: min(1480px, calc(100% - 48px));
+  margin: 26px auto 18px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.studio-route-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.studio-route-back:hover {
+  transform: translateX(-2px);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.studio-route-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.studio-route-title strong {
+  font-size: 26px;
+  line-height: 1.1;
+  font-weight: 900;
+  letter-spacing: -0.06em;
+  color: #0f172a;
+}
+
+.studio-route-title span {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 700;
+}
+
+body[data-studio-mode="business"] .studio-workspace--business,
+body[data-studio-mode="cardnews"] .studio-workspace--cardnews {
+  width: min(1480px, calc(100% - 48px));
+}
+
+body[data-studio-mode="business"] .studio-workspace--business .app-container {
+  border-radius: 32px;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+  background: rgba(255, 255, 255, 0.88);
+}
+
+body[data-studio-mode="cardnews"] .cardnews-lab {
+  border-radius: 32px;
+}
+
+.site-footer {
+  display: block !important;
+}
+
+@media (max-width: 1180px) {
+  .cs-home__hero {
+    grid-template-columns: 1fr;
+  }
+
+  .cs-home__copy,
+  .cs-home__showcase {
+    min-height: auto;
+  }
+
+  .cs-home__mock-stack {
+    min-height: 580px;
+  }
+}
+
+@media (max-width: 767px) {
+  .cs-home.studio-home {
+    padding: 16px 12px 8px !important;
+  }
+
+  .cs-home__inner,
+  .studio-route-bar,
+  body[data-studio-mode="business"] .studio-workspace--business,
+  body[data-studio-mode="cardnews"] .studio-workspace--cardnews {
+    width: 100%;
+  }
+
+  .cs-home__copy,
+  .cs-home__showcase {
+    border-radius: 24px;
+  }
+
+  .cs-home__copy {
+    padding: 34px 22px;
+  }
+
+  .cs-home__copy h1 {
+    font-size: 42px;
+  }
+
+  .cs-home__actions {
+    flex-direction: column;
+  }
+
+  .cs-home__action {
+    width: 100%;
+    min-width: 0;
+    font-size: 18px;
+  }
+
+  .cs-home__showcase {
+    display: none;
+  }
+
+  .studio-route-bar {
+    padding: 0 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .studio-route-title {
+    align-items: flex-start;
+  }
+}
