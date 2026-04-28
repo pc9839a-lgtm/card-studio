@@ -101,13 +101,13 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <link rel="stylesheet" href="./style.css?v=20260427-recovery-main-v3-1">
+  <link rel="stylesheet" href="./style.css?v=20260426-pc-v3-apply-1">
 <link rel="stylesheet" href="./cardnews/card-news.css?v=20260414-cardnews-template-fix-3">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 </head>
-<body data-studio-mode="home">
+<body class="is-guided-wizard is-wizard-step-1 is-wizard-preview-hidden" data-studio-mode="home">
   <!-- Google Tag Manager (noscript) START -->
   <!-- 여기에 Google Tag Manager noscript iframe 코드를 붙여넣으세요. -->
   <!-- Google Tag Manager (noscript) END -->
@@ -205,7 +205,7 @@
         <div id="wizard-recommend-grid" class="wizard-recommend-grid"></div>
       </section>
 
-      <section class="control-group quick-start-group" id="section-start">
+      <section class="control-group quick-start-group" id="section-start" hidden>
         <div class="section-heading">
           <span class="section-kicker">Start</span>
           <h3>빠른 시작</h3>
@@ -223,7 +223,7 @@
         </div>
       </section>
 
-      <section class="control-group" id="section-workspace">
+      <section class="control-group" id="section-workspace" hidden>
         <div class="section-heading">
           <span class="section-kicker">Workspace</span>
           <h3>프리셋 관리</h3>
@@ -275,7 +275,7 @@
         </div>
       </section>
 
-      <section class="control-group" id="section-info">
+      <section class="control-group" id="section-info" hidden>
         <div class="section-heading">
           <span class="section-kicker">Content</span>
           <h3>상세 정보</h3>
@@ -313,7 +313,7 @@
         <button id="btn-toggle-details-fields" class="btn btn-outline wizard-details-toggle" type="button" hidden>추가 정보 펼치기</button>
       </section>
 
-      <section class="control-group media-group" id="section-logo">
+      <section class="control-group media-group" id="section-logo" hidden>
         <div class="section-heading">
           <span class="section-kicker">Brand</span>
           <h3>로고 설정</h3>
@@ -385,7 +385,7 @@
         </section>
       </section>
 
-      <section class="control-group" id="section-text">
+      <section class="control-group" id="section-text" hidden>
         <div class="section-heading">
           <span class="section-kicker">Type</span>
           <h3>이름, 회사명 설정</h3>
@@ -431,7 +431,7 @@
         </div>
       </section>
 
-      <section class="control-group media-group" id="section-image">
+      <section class="control-group media-group" id="section-image" hidden>
         <div class="section-heading">
           <span class="section-kicker">Image</span>
           <h3>이미지 & 오버레이</h3>
@@ -517,7 +517,7 @@
         </section>
       </section>
 
-      <section class="control-group media-group" id="section-qr">
+      <section class="control-group media-group" id="section-qr" hidden>
         <div class="section-heading">
           <span class="section-kicker">QR</span>
           <h3>QR 생성</h3>
@@ -612,7 +612,7 @@
           </div>
         </section>
       </section>
-      <section class="control-group" id="section-style">
+      <section class="control-group" id="section-style" hidden>
         <div class="section-heading">
           <span class="section-kicker">Style</span>
           <h3>스타일 & 템플릿</h3>
@@ -692,7 +692,7 @@
 
       </section>
 
-      <div class="actions" id="section-export">
+      <div class="actions" id="section-export" hidden>
         <div class="actions-card">
           <div class="actions-copy">
             <strong>저장 및 보관</strong>
@@ -710,7 +710,7 @@
         </div>
       </div>
 
-      <div class="wizard-download-actions" id="wizard-download-actions">
+      <div class="wizard-download-actions" id="wizard-download-actions" hidden>
         <button id="btn-wizard-download-front" class="btn btn-outline" type="button">앞면 다운로드</button>
         <button id="btn-wizard-download-back" class="btn btn-outline" type="button">뒷면 다운로드</button>
         <button id="btn-wizard-download-pdf" class="btn btn-outline" type="button">양면 PDF</button>
@@ -725,7 +725,7 @@
       </div>
     </aside>
 
-    <main class="preview-area" id="preview-area">
+    <main class="preview-area" id="preview-area" hidden>
       <div class="preview-notice" id="preview-notice">
             <strong>CardStudio</strong>
         <span>명함 편집기</span>
@@ -1504,7 +1504,7 @@
     </div>
   </footer>
 
-<script type="module" src="./main.js?v=20260427-recovery-main-v3-1"></script>
+<script type="module" src="./main.js?v=20260426-pc-v3-apply-1"></script>
 <script type="module" src="./cardnews/card-news.js?v=20260414-cardnews-template-fix-3"></script>
 </body>
 </html>
